@@ -1,76 +1,76 @@
-# Kvaesitso
+# FocusLauncher
 
-<img src="https://raw.githubusercontent.com/MM2-0/Kvaesitso/main/assets/icons/ic_launcher.png" width="128">
+FocusLauncher is an Android launcher built to reduce distractions and make intentional app use easier.
+It is based on Kvaesitso, with the experience being adapted toward focus sessions, calmer browsing, and
+stronger friction around distracting apps.
 
-Kvaesitso is a search focused, free and open source launcher for Android.
+## What It Does
 
-[Website and documentation](https://kvaesitso.mm20.de)
+- keeps launcher search centered around apps
+- adds focus-oriented settings and app classification
+- lets you separate essential apps from distracting ones
+- adds launch friction and session-based unlocking for distracting apps
+- aims for a cleaner, less impulse-driven home experience
+
+## Project Status
+
+This repository is an actively customized fork of Kvaesitso.
+The current direction is focused on turning the launcher into a more intentional, focus-first Android experience.
 
 ## Installation
 
-### Using an F-Droid client and MM20's repo
+There is no public distribution channel configured yet.
+For now, the project is intended to be built locally from source or shared through GitHub releases later.
 
-The preferred way of installation is using the [F-Droid](https://f-droid.org) application. That way
-you will always be notified about updates. Kvaesitso is available in the official F-Droid
-repository, but all features depending on non-foss external APIs were removed.
-For feature-complete builds you can add [MM20's repository](https://fdroid.mm20.de). Just scan the code below or open
-the link on your phone:
+## Development
 
-<img src="https://fdroid.mm20.de/repo/index.png" width="150" alt="QR code">
+### Requirements
 
-https://fdroid.mm20.de/repo/
+- Android Studio
+- Android SDK
+- JDK 17 or newer
 
-The same version is also available in [IzzyOnDroid's repository](https://apt.izzysoft.de/fdroid/index/apk/de.mm20.launcher2.release).
+### Build
 
-### Manual installation
+From the project root:
 
-You can also download the latest release from
-the [releases page](https://github.com/MM2-0/Kvaesitso/releases/latest) and install it manually.
+```bash
+./gradlew assembleDebug
+```
 
-## Report issues
+If your local environment does not already expose the Android SDK path, create a `local.properties`
+file with your `sdk.dir`.
 
-If you notice any bugs or issues create a new issue in
-the [issue tracker](https://github.com/MM2-0/Kvaesitso/issues). Before you do, please search the
-existing issues for any similar issues. Please include any relevant information such as steps to
-reproduce, stack traces, logs, and device information. These information can be founder under
-Settings > Debug > Crash reporter and Settings > Debug > Export debug information.
+## Reporting Issues
 
-## Feature requests
+If you notice a bug or regression, open an issue in this repository:
+[github.com/siudajakub/focuslauncher/issues](https://github.com/siudajakub/focuslauncher/issues)
 
-If you have an idea for a new feature, just create a new issue. However, there is no guarantee that
-they will be implemented. If it's important for you, consider implementing it yourself,
-see [contribute](#contribute).
+Please include:
 
+- steps to reproduce
+- device model and Android version
+- logs, screenshots, or recordings if available
+- any relevant launcher settings involved in the problem
 
-## Contribute
+## Contributing
 
-Contributions are always welcome. If you want to fix any existing issues or implement smaller new
-features just create a new pull request. If you plan to implement any (bigger) new features, please
-create an issue first so we can discuss if and how this feature should be implemented.
+Contributions are welcome.
+If you want to work on a larger change, it is best to open an issue first so the direction can be discussed before implementation starts.
 
-If you want to help translating, see [how to translate the project.](https://kvaesitso.mm20.de/docs/contributor-guide/i18n)
+## Acknowledgements
 
-<a href="https://i18n.mm20.de/engage/kvaesitso/">
-<img src="https://i18n.mm20.de/widgets/kvaesitso/-/287x66-grey.png" alt ="Translation Status">
-</a>
+FocusLauncher builds on top of the Kvaesitso codebase and the work of its contributors:
 
-## Links
-
-- User guide: https://kvaesitso.mm20.de/docs/user-guide
-- F-Droid-Repository: https://fdroid.mm20.de
-
-## Thanks to
-
-- [@EliotAku](https://github.com/EliotAku) for the app icon
-- All [translators and code contributors](https://github.com/MM2-0/Kvaesitso/graphs/contributors)
+- [Kvaesitso](https://github.com/MM2-0/Kvaesitso)
+- [Kvaesitso contributors](https://github.com/MM2-0/Kvaesitso/graphs/contributors)
 
 ## License
 
-This software is free software licensed under the GNU General Public License 3.0.
+This project remains licensed under the GNU General Public License 3.0 unless noted otherwise.
 
-```
-
-Copyright (C) 2021–2026 MM2-0 and the Kvaesitso contributors
+```text
+Copyright (C) 2021-2026 MM2-0, the Kvaesitso contributors, and FocusLauncher contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -79,11 +79,11 @@ the Free Software Foundation, either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 ```
 
-The plugin SDK modules (`plugins/sdk` and `core/shared`) are licensed under the Apache License 2.0.
+The plugin SDK modules (`plugins/sdk` and `core/shared`) remain licensed under the Apache License 2.0.
