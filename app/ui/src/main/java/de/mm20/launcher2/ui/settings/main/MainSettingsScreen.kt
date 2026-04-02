@@ -8,16 +8,10 @@ import de.mm20.launcher2.ui.component.preferences.Preference
 import de.mm20.launcher2.ui.component.preferences.PreferenceCategory
 import de.mm20.launcher2.ui.component.preferences.PreferenceScreen
 import de.mm20.launcher2.ui.locals.LocalBackStack
-import de.mm20.launcher2.ui.settings.about.AboutSettingsRoute
+import de.mm20.launcher2.ui.settings.advanced.AdvancedSettingsRoute
 import de.mm20.launcher2.ui.settings.appearance.AppearanceSettingsRoute
-import de.mm20.launcher2.ui.settings.backup.BackupSettingsRoute
-import de.mm20.launcher2.ui.settings.debug.DebugSettingsRoute
-import de.mm20.launcher2.ui.settings.gestures.GesturesSettingsRoute
 import de.mm20.launcher2.ui.settings.homescreen.HomescreenSettingsRoute
-import de.mm20.launcher2.ui.settings.icons.IconsSettingsRoute
-import de.mm20.launcher2.ui.settings.integrations.IntegrationsSettingsRoute
 import de.mm20.launcher2.ui.settings.locale.LocaleSettingsRoute
-import de.mm20.launcher2.ui.settings.plugins.PluginsSettingsRoute
 import de.mm20.launcher2.ui.settings.search.SearchSettingsRoute
 import kotlinx.serialization.Serializable
 
@@ -49,43 +43,11 @@ fun MainSettingsScreen() {
                     }
                 )
                 Preference(
-                    icon = R.drawable.apps_24px,
-                    title = stringResource(id = R.string.preference_screen_icons),
-                    summary = stringResource(id = R.string.preference_screen_icons_summary),
-                    onClick = {
-                        backStack.add(IconsSettingsRoute)
-                    }
-                )
-                Preference(
                     icon = R.drawable.search_24px,
-                    title = stringResource(id = R.string.preference_screen_search),
-                    summary = stringResource(id = R.string.preference_screen_search_summary),
+                    title = stringResource(id = R.string.focus_settings_section_title),
+                    summary = stringResource(id = R.string.focus_settings_entry_summary),
                     onClick = {
                         backStack.add(SearchSettingsRoute)
-                    }
-                )
-                Preference(
-                    icon = R.drawable.gesture_24px,
-                    title = stringResource(id = R.string.preference_screen_gestures),
-                    summary = stringResource(id = R.string.preference_screen_gestures_summary),
-                    onClick = {
-                        backStack.add(GesturesSettingsRoute)
-                    }
-                )
-                Preference(
-                    icon = R.drawable.power_24px,
-                    title = stringResource(id = R.string.preference_screen_integrations),
-                    summary = stringResource(id = R.string.preference_screen_integrations_summary),
-                    onClick = {
-                        backStack.add(IntegrationsSettingsRoute)
-                    }
-                )
-                Preference(
-                    icon = R.drawable.extension_24px,
-                    title = stringResource(id = R.string.preference_screen_plugins),
-                    summary = stringResource(id = R.string.preference_screen_plugins_summary),
-                    onClick = {
-                        backStack.add(PluginsSettingsRoute)
                     }
                 )
                 Preference(
@@ -97,27 +59,11 @@ fun MainSettingsScreen() {
                     }
                 )
                 Preference(
-                    icon = R.drawable.settings_backup_restore_24px,
-                    title = stringResource(id = R.string.preference_screen_backup),
-                    summary = stringResource(id = R.string.preference_screen_backup_summary),
+                    icon = R.drawable.more_vert_24px,
+                    title = stringResource(id = R.string.preference_screen_advanced),
+                    summary = stringResource(id = R.string.preference_screen_advanced_summary),
                     onClick = {
-                        backStack.add(BackupSettingsRoute)
-                    }
-                )
-                Preference(
-                    icon = R.drawable.bug_report_24px,
-                    title = stringResource(id = R.string.preference_screen_debug),
-                    summary = stringResource(id = R.string.preference_screen_debug_summary),
-                    onClick = {
-                        backStack.add(DebugSettingsRoute)
-                    }
-                )
-                Preference(
-                    icon = R.drawable.info_24px,
-                    title = stringResource(id = R.string.preference_screen_about),
-                    summary = stringResource(id = R.string.preference_screen_about_summary),
-                    onClick = {
-                        backStack.add(AboutSettingsRoute)
+                        backStack.add(AdvancedSettingsRoute)
                     }
                 )
             }

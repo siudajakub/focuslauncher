@@ -88,6 +88,12 @@
         <activity android:name=".launcher.sheets.BindAndConfigureAppWidgetActivity" />
 
         <activity
+            android:name=".launcher.focus.FocusGateActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/DialogTheme" />
+
+        <activity
             android:name=".launcher.ImportThemeActivity"
             android:excludeFromRecents="true"
             android:exported="true"

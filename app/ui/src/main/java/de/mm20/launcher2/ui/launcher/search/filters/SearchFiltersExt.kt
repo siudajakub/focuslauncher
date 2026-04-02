@@ -5,9 +5,9 @@ import de.mm20.launcher2.search.SearchFilters
 fun SearchFilters.withAllCategories(): SearchFilters {
     return copy(
         apps = true,
-        websites = true,
-        articles = true,
-        places = true,
+        websites = false,
+        articles = false,
+        places = false,
         files = true,
         shortcuts = true,
         contacts = true,

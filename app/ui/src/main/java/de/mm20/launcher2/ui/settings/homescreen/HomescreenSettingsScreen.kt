@@ -71,6 +71,9 @@ fun HomescreenSettingsScreen() {
     val dockRows by viewModel.dockRows.collectAsStateWithLifecycle(1)
     val fixedRotation by viewModel.fixedRotation.collectAsStateWithLifecycle(null)
     val widgetsOnHomeScreen by viewModel.widgetsOnHomeScreen.collectAsStateWithLifecycle(null)
+    val focusMinimalHome by viewModel.focusMinimalHome.collectAsStateWithLifecycle(true)
+    val focusCommuteMode by viewModel.focusCommuteMode.collectAsStateWithLifecycle(false)
+    val focusAtAGlance by viewModel.focusAtAGlance.collectAsStateWithLifecycle(true)
     val editButton by viewModel.widgetEditButton.collectAsStateWithLifecycle(null)
     val searchBarStyle by viewModel.searchBarStyle.collectAsStateWithLifecycle(null)
     val searchBarColor by viewModel.searchBarColor.collectAsStateWithLifecycle(null)
@@ -100,8 +103,48 @@ fun HomescreenSettingsScreen() {
         }
         item {
             PreferenceCategory(
+                title = stringResource(R.string.focus_home_settings_title)
+            ) {
+                SwitchPreference(
+                    title = stringResource(R.string.focus_home_preference_title),
+                    summary = stringResource(R.string.focus_home_preference_summary),
+                    value = focusMinimalHome,
+                    onValueChanged = {
+                        viewModel.setFocusMinimalHome(it)
+                    },
+                )
+                AnimatedVisibility(focusMinimalHome) {
+                    Column {
+                        SwitchPreference(
+                            title = stringResource(R.string.focus_home_commute_mode_title),
+                            summary = stringResource(R.string.focus_home_commute_mode_summary),
+                            value = focusCommuteMode,
+                            onValueChanged = {
+                                viewModel.setFocusCommuteMode(it)
+                            },
+                        )
+                        SwitchPreference(
+                            title = stringResource(R.string.focus_home_at_a_glance_title),
+                            summary = stringResource(R.string.focus_home_at_a_glance_summary),
+                            value = focusAtAGlance,
+                            onValueChanged = {
+                                viewModel.setFocusAtAGlance(it)
+                            },
+                        )
+                    }
+                }
+            }
+        }
+        item {
+            PreferenceCategory(
                 title = stringResource(id = R.string.preference_category_widgets)
             ) {
+                Text(
+                    text = stringResource(R.string.focus_home_widgets_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
                 Preference(
                     title = stringResource(R.string.preference_screen_clockwidget),
                     summary = stringResource(R.string.preference_screen_clockwidget_summary),

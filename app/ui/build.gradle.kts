@@ -136,6 +136,8 @@ dependencies {
     implementation(project(":data:files"))
     implementation(project(":data:widgets"))
     implementation(project(":data:searchable"))
+    implementation(project(":data:database"))
+    implementation(project(":data:customattrs"))
     implementation(project(":data:themes"))
     implementation(project(":data:wikipedia"))
     implementation(project(":services:badges"))
@@ -157,4 +159,6 @@ dependencies {
     implementation(project(":services:favorites"))
     implementation(project(":services:feed"))
     implementation(project(":core:devicepose"))
+
+    testImplementation(libs.bundles.tests)
 }

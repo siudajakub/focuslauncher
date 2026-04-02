@@ -82,7 +82,6 @@ fun FavoritesSettingsScreen() {
         }
         item {
             val editButton by viewModel.editButton.collectAsState()
-            val compactTags by viewModel.compactTags.collectAsState()
             PreferenceCategory {
                 SwitchPreference(
                     title = stringResource(R.string.preference_edit_button),
@@ -92,14 +91,6 @@ fun FavoritesSettingsScreen() {
                         viewModel.setEditButton(it)
                     },
                     icon = R.drawable.edit_24px,
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.preference_compact_tags),
-                    summary = stringResource(R.string.preference_compact_tags_summary),
-                    value = compactTags == true,
-                    onValueChanged = {
-                        viewModel.setCompactTags(it)
-                    },
                 )
             }
         }

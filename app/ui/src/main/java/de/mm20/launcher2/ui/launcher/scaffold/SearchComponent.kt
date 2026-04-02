@@ -51,7 +51,7 @@ internal class SearchComponent(
             }
         }
 
-        LaunchedEffect(searchVM.searchQuery.value, searchVM.filters.value) {
+        LaunchedEffect(searchVM.searchQuery.value) {
             lazyGridState.requestScrollToItem(0, 0)
         }
 

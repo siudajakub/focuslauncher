@@ -8,11 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActionScope
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -94,42 +91,6 @@ fun LauncherSearchBar(
                             ),
                             contentDescription = null
                         )
-                    }
-                }
-                AnimatedVisibility(
-                    isSearchOpen,
-                    enter = scaleIn(tween(100)),
-                    exit = scaleOut(tween(100))
-                ) {
-                    IconToggleButton(
-                        checked = searchVM.showFilters.value,
-                        onCheckedChange = {
-                            searchVM.showFilters.value = it
-                        },
-                    ) {
-                        Box {
-                            Icon(
-                                painter = painterResource(
-                                    if (searchVM.showFilters.value)R.drawable.filter_alt_24px_filled
-                                    else R.drawable.filter_alt_24px
-                                ),
-                                contentDescription = stringResource(
-                                    if (searchVM.showFilters.value) R.string.menu_hide_filters else R.string.menu_show_filters
-                                )
-                            )
-                            androidx.compose.animation.AnimatedVisibility(
-                                !searchVM.filters.value.allCategoriesEnabled,
-                                enter = scaleIn(tween(100)),
-                                exit = scaleOut(tween(100)),
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .offset(-3.dp, -3.dp)
-                            ) {
-                                Badge(
-                                    containerColor = MaterialTheme.colorScheme.tertiary,
-                                )
-                            }
-                        }
                     }
                 }
                 SearchBarMenu(searchBarValue = value, onInputClear = {

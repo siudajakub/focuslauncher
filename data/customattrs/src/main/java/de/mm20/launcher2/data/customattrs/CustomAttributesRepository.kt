@@ -34,6 +34,10 @@ interface CustomAttributesRepository: Backupable {
     fun setTags(searchable: SavableSearchable, tags: List<String>)
     fun getTags(searchable: SavableSearchable): Flow<List<String>>
 
+    fun getFocusProfile(searchable: SavableSearchable): Flow<FocusProfile>
+    fun getFocusProfiles(searchables: List<SavableSearchable>): Flow<Map<String, FocusProfile>>
+    fun setFocusProfile(searchable: SavableSearchable, profile: FocusProfile)
+
     fun getAllTags(startsWith: String? = null): Flow<List<String>>
     fun getItemsForTag(tag: String): Flow<List<SavableSearchable>>
     fun setItemsForTag(tag: String, items: List<SavableSearchable>): Job
@@ -124,6 +128,52 @@ internal class CustomAttributesRepositoryImpl(
         val dao = appDatabase.customAttrsDao()
         return dao.getCustomAttributes(listOf(searchable.key), CustomAttributeType.Tag.value).map {
             it.map { it.value }
+        }
+    }
+
+    override fun getFocusProfile(searchable: SavableSearchable): Flow<FocusProfile> {
+        val dao = appDatabase.customAttrsDao()
+        return dao.getCustomAttribute(searchable.key, CustomAttributeType.Focus.value)
+            .map {
+                (CustomAttribute.fromDatabaseEntity(it) as? FocusProfile) ?: FocusProfile()
+            }
+    }
+
+    override fun getFocusProfiles(searchables: List<SavableSearchable>): Flow<Map<String, FocusProfile>> {
+        if (searchables.isEmpty()) {
+            return flow { emit(emptyMap()) }
+        }
+        val dao = appDatabase.customAttrsDao()
+        if (searchables.size <= 999) {
+            return dao.getCustomAttributes(
+                searchables.map { it.key },
+                CustomAttributeType.Focus.value,
+            ).map { attrs ->
+                attrs.associate { attr ->
+                    attr.key to ((CustomAttribute.fromDatabaseEntity(attr) as? FocusProfile) ?: FocusProfile())
+                }
+            }
+        }
+        return combine(searchables.chunked(999).map { chunk ->
+            dao.getCustomAttributes(
+                chunk.map { it.key },
+                CustomAttributeType.Focus.value,
+            )
+        }) { chunks ->
+            chunks.asList().flatten().associate { attr ->
+                attr.key to ((CustomAttribute.fromDatabaseEntity(attr) as? FocusProfile) ?: FocusProfile())
+            }
+        }
+    }
+
+    override fun setFocusProfile(searchable: SavableSearchable, profile: FocusProfile) {
+        val dao = appDatabase.customAttrsDao()
+        scope.launch {
+            searchableRepository.insert(searchable)
+            appDatabase.runInTransaction {
+                dao.clearCustomAttribute(searchable.key, CustomAttributeType.Focus.value)
+                dao.setCustomAttribute(profile.toDatabaseEntity(searchable.key))
+            }
         }
     }
 

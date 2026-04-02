@@ -5,15 +5,33 @@ import de.mm20.launcher2.preferences.LauncherDataStore
 import de.mm20.launcher2.search.SearchFilters
 import kotlinx.coroutines.flow.map
 
+private val disallowedFocusFirstItems = setOf(
+    KeyboardFilterBarItem.OnlineResults,
+    KeyboardFilterBarItem.Websites,
+    KeyboardFilterBarItem.Articles,
+    KeyboardFilterBarItem.Places,
+)
+
+val focusFirstFilterBarItems = KeyboardFilterBarItem.entries.filterNot { it in disallowedFocusFirstItems }
+
+fun SearchFilters.sanitizedForFocusFirst(): SearchFilters {
+    return copy(
+        allowNetwork = false,
+        websites = false,
+        articles = false,
+        places = false,
+    )
+}
+
 class SearchFilterSettings internal constructor(
     private val launcherDataStore: LauncherDataStore,
 ) {
     val defaultFilter
-        get() = launcherDataStore.data.map { it.searchFilter }
+        get() = launcherDataStore.data.map { it.searchFilter.sanitizedForFocusFirst() }
 
     fun setDefaultFilter(filter: SearchFilters) {
         launcherDataStore.update {
-            it.copy(searchFilter = filter)
+            it.copy(searchFilter = filter.sanitizedForFocusFirst())
         }
     }
 
@@ -27,11 +45,19 @@ class SearchFilterSettings internal constructor(
     }
 
     val filterBarItems
-        get() = launcherDataStore.data.map { it.searchFilterBarItems.distinct() }
+        get() = launcherDataStore.data.map {
+            it.searchFilterBarItems
+                .filterNot { item -> item in disallowedFocusFirstItems }
+                .distinct()
+        }
 
     fun setFilterBarItems(items: List<KeyboardFilterBarItem>) {
         launcherDataStore.update {
-            it.copy(searchFilterBarItems = items)
+            it.copy(
+                searchFilterBarItems = items
+                    .filterNot { item -> item in disallowedFocusFirstItems }
+                    .distinct()
+            )
         }
     }
 }

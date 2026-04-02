@@ -3,6 +3,7 @@ package de.mm20.launcher2.ui.launcher.sheets
 import androidx.compose.runtime.mutableStateOf
 import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
 import de.mm20.launcher2.data.customattrs.CustomIcon
+import de.mm20.launcher2.preferences.ui.FocusSettings
 import de.mm20.launcher2.icons.CustomIconWithPreview
 import de.mm20.launcher2.icons.IconPack
 import de.mm20.launcher2.icons.IconService
@@ -28,6 +29,7 @@ class CustomizeSearchableSheetVM(
     private val iconService: IconService by inject()
     private val customAttributesRepository: CustomAttributesRepository by inject()
     private val favoritesService: FavoritesService by inject()
+    private val focusSettings: FocusSettings by inject()
 
     val isIconPickerOpen = mutableStateOf(false)
 
@@ -55,23 +57,16 @@ class CustomizeSearchableSheetVM(
         }
     }
 
-    fun setTags(tags: List<String>) {
-        customAttributesRepository.setTags(searchable, tags)
-    }
-
     fun setVisibility(visibility: VisibilityLevel) {
         favoritesService.setVisibility(searchable, visibility)
-    }
-
-    fun getTags(): Flow<List<String>> {
-        return customAttributesRepository.getTags(searchable)
     }
 
     fun getVisibility(): Flow<VisibilityLevel> {
         return favoritesService.getVisibility(searchable)
     }
 
-    suspend fun autocompleteTags(query: String): List<String> {
-        return customAttributesRepository.getAllTags(startsWith = query).first()
+    fun setNoIconsMode(enabled: Boolean) {
+        focusSettings.setNoIconsMode(enabled)
     }
+
 }

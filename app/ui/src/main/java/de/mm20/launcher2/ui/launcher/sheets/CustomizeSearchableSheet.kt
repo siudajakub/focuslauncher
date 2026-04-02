@@ -48,7 +48,6 @@ import de.mm20.launcher2.searchable.VisibilityLevel
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.common.IconPicker
 import de.mm20.launcher2.ui.component.DismissableBottomSheet
-import de.mm20.launcher2.ui.component.OutlinedTagsInputField
 import de.mm20.launcher2.ui.component.ShapedLauncherIcon
 import de.mm20.launcher2.ui.ktx.toPixels
 import kotlinx.coroutines.flow.first
@@ -118,29 +117,11 @@ fun CustomizeSearchableSheet(
                 }
             )
 
-            var tags by remember { mutableStateOf(emptyList<String>()) }
             var visibility by remember { mutableStateOf(VisibilityLevel.Default) }
 
             LaunchedEffect(searchable.key) {
                 visibility = viewModel.getVisibility().first()
-                tags = viewModel.getTags().first()
             }
-
-            OutlinedTagsInputField(
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .fillMaxWidth(),
-                tags = tags, onTagsChange = { tags = it.distinct() },
-                label = {
-                    Text(stringResource(R.string.customize_item_tags))
-                },
-                onAutocomplete = {
-                    viewModel.autocompleteTags(it).minus(tags.toSet())
-                },
-                leadingIcon = {
-                    Icon(painterResource(R.drawable.tag_24px), null)
-                }
-            )
 
             var showDropdown by remember {
                 mutableStateOf(false)
@@ -271,7 +252,6 @@ fun CustomizeSearchableSheet(
             DisposableEffect(searchable.key) {
                 onDispose {
                     viewModel.setCustomLabel(customLabelValue)
-                    viewModel.setTags(tags)
                     viewModel.setVisibility(visibility)
                 }
             }

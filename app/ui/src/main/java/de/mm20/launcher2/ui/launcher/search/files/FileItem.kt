@@ -95,15 +95,6 @@ fun FileItem(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            val tags by viewModel.tags.collectAsState(emptyList())
-                            if (tags.isNotEmpty()) {
-                                Text(
-                                    modifier = Modifier.padding(top = 1.dp),
-                                    text = tags.joinToString(separator = " #", prefix = "#"),
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
                             Text(
                                 modifier = Modifier.padding(top = 8.dp),
                                 text = stringResource(

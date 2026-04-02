@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityOptionsCompat
 import de.mm20.launcher2.search.SavableSearchable
+import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
 import de.mm20.launcher2.ui.component.FakeSplashScreen
 import de.mm20.launcher2.ui.ktx.toIntOffset
 
@@ -19,6 +20,7 @@ internal class LaunchComponent(
     private val activity: Activity,
     private val searchable: SavableSearchable,
 ): ScaffoldComponent() {
+    private val focusLaunchCoordinator = FocusLaunchCoordinator()
     override val permanent: Boolean = false
     override val resetDelay: Long = 500L
     override val showSearchBar = false
@@ -49,7 +51,7 @@ internal class LaunchComponent(
             view.height
         )
 
-        searchable.launch(activity, options.toBundle())
+        focusLaunchCoordinator.launch(searchable, activity, options.toBundle())
     }
 
     override fun homePageModifier(

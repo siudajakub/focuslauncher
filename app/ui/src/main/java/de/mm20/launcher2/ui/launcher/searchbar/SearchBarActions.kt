@@ -73,22 +73,6 @@ fun ColumnScope.SearchBarActions(
                     }
                 )
             }
-            item {
-                SmallFloatingActionButton(
-                    modifier = Modifier.padding(start = 4.dp),
-                    elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(),
-                    onClick = {
-                        context.startActivity(
-                            Intent(context, SettingsActivity::class.java).apply {
-                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_SEARCH_ACTIONS)
-                            }
-                        )
-                    }
-                ) {
-
-                    Icon(painterResource(R.drawable.edit_24px), contentDescription = null)
-                }
-            }
         }
     }
 }

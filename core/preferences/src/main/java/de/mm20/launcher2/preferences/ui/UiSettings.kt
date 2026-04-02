@@ -84,6 +84,39 @@ class UiSettings internal constructor(
         }
     }
 
+    val focusMinimalHome
+        get() = launcherDataStore.data.map {
+            it.focusMinimalHome
+        }.distinctUntilChanged()
+
+    fun setFocusMinimalHome(enabled: Boolean) {
+        launcherDataStore.update {
+            it.copy(focusMinimalHome = enabled)
+        }
+    }
+
+    val focusCommuteMode
+        get() = launcherDataStore.data.map {
+            it.focusCommuteModeEnabled
+        }.distinctUntilChanged()
+
+    fun setFocusCommuteMode(enabled: Boolean) {
+        launcherDataStore.update {
+            it.copy(focusCommuteModeEnabled = enabled)
+        }
+    }
+
+    val focusAtAGlance
+        get() = launcherDataStore.data.map {
+            it.focusAtAGlanceEnabled
+        }.distinctUntilChanged()
+
+    fun setFocusAtAGlance(enabled: Boolean) {
+        launcherDataStore.update {
+            it.copy(focusAtAGlanceEnabled = enabled)
+        }
+    }
+
     val cardStyle
         get() = launcherDataStore.data.map {
             CardStyle(

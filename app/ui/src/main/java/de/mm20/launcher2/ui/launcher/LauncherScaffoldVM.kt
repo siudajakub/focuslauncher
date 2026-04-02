@@ -68,6 +68,8 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
 
     val widgetsOnHomeScreen = uiSettings.homeScreenWidgets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    val focusMinimalHome = uiSettings.focusMinimalHome
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
 
     val autoFocusSearch = uiSettings.openKeyboardOnSearch
 
@@ -90,7 +92,6 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
             val swipeDownAction = settings.swipeDown
             val swipeUpAction = settings.swipeUp
             val longPressAction = settings.longPress
-            val doubleTapAction = settings.doubleTap
             val homeButtonAction = settings.homeButton
 
             val swipeLeftAppKey = (swipeLeftAction as? GestureAction.Launch)?.key
@@ -98,7 +99,6 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
             val swipeDownAppKey = (swipeDownAction as? GestureAction.Launch)?.key
             val swipeUpAppKey = (swipeUpAction as? GestureAction.Launch)?.key
             val longPressAppKey = (longPressAction as? GestureAction.Launch)?.key
-            val doubleTapAppKey = (doubleTapAction as? GestureAction.Launch)?.key
             val homeButtonAppKey = (homeButtonAction as? GestureAction.Launch)?.key
             val apps = listOfNotNull(
                 swipeLeftAppKey,
@@ -106,7 +106,6 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
                 swipeDownAppKey,
                 swipeUpAppKey,
                 longPressAppKey,
-                doubleTapAppKey,
                 homeButtonAppKey,
             ).let { searchableRepository.getByKeys(it).first() }
 
@@ -116,14 +115,12 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
                 swipeDownAction = swipeDownAction,
                 swipeUpAction = swipeUpAction,
                 longPressAction = longPressAction,
-                doubleTapAction = doubleTapAction,
                 homeButtonAction = homeButtonAction,
                 swipeLeftApp = apps.find { it.key == swipeLeftAppKey },
                 swipeRightApp = apps.find { it.key == swipeRightAppKey },
                 swipeDownApp = apps.find { it.key == swipeDownAppKey },
                 swipeUpApp = apps.find { it.key == swipeUpAppKey },
                 longPressApp = apps.find { it.key == longPressAppKey },
-                doubleTapApp = apps.find { it.key == doubleTapAppKey },
                 homeButtonApp = apps.find { it.key == homeButtonAppKey },
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -135,14 +132,11 @@ data class GestureState(
     val swipeDownAction: GestureAction = GestureAction.NoAction,
     val swipeUpAction: GestureAction = GestureAction.NoAction,
     val longPressAction: GestureAction = GestureAction.NoAction,
-    val doubleTapAction: GestureAction = GestureAction.NoAction,
     val homeButtonAction: GestureAction = GestureAction.NoAction,
     val swipeLeftApp: SavableSearchable? = null,
     val swipeRightApp: SavableSearchable? = null,
     val swipeDownApp: SavableSearchable? = null,
     val swipeUpApp: SavableSearchable? = null,
     val longPressApp: SavableSearchable? = null,
-    val doubleTapApp: SavableSearchable? = null,
     val homeButtonApp: SavableSearchable? = null,
 )
-

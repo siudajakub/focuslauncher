@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
-import de.mm20.launcher2.FeatureFlags
 import de.mm20.launcher2.icons.LauncherIcon
 import de.mm20.launcher2.ktx.isAtLeastApiLevel
 import de.mm20.launcher2.preferences.GestureAction
@@ -56,7 +55,6 @@ fun GestureSettingsScreen() {
         add(stringResource(R.string.gesture_action_none) to GestureAction.NoAction)
         add(stringResource(R.string.gesture_action_notifications) to GestureAction.Notifications)
         add(stringResource(R.string.gesture_action_quick_settings) to GestureAction.QuickSettings)
-        if (isAtLeastApiLevel(28)) add(stringResource(R.string.gesture_action_lock_screen) to GestureAction.ScreenLock)
         add(stringResource(R.string.gesture_action_recents) to GestureAction.Recents)
         add(stringResource(R.string.gesture_action_power_menu) to GestureAction.PowerMenu)
         add(stringResource(R.string.gesture_action_open_search) to GestureAction.Search)
@@ -76,12 +74,6 @@ fun GestureSettingsScreen() {
         }
         add(stringResource(R.string.gesture_action_launch_app) to GestureAction.Launch(null))
     }
-
-    val optionsWithFeed =
-        if (FeatureFlags.feed) {
-            options + (stringResource(R.string.gesture_action_feed) to GestureAction.Feed)
-        } else options
-
 
     val context = LocalContext.current
     PreferenceScreen(title = stringResource(R.string.preference_screen_gestures)) {
@@ -148,7 +140,7 @@ fun GestureSettingsScreen() {
                         icon = R.drawable.swipe_right_alt_24px,
                         value = swipeRight,
                         onValueChanged = { viewModel.setSwipeRight(it) },
-                        options = optionsWithFeed,
+                        options = options,
                         app = swipeRightApp,
                         appIcon = swipeRightAppIcon,
                         onAppChanged = { viewModel.setSwipeRightApp(it) },
@@ -174,28 +166,6 @@ fun GestureSettingsScreen() {
                         app = swipeUpApp,
                         appIcon = swipeUpAppIcon,
                         onAppChanged = { viewModel.setSwipeUpApp(it) },
-                    )
-                }
-
-                val doubleTap by viewModel.doubleTap.collectAsStateWithLifecycle(null)
-                val doubleTapApp by viewModel.doubleTapApp.collectAsState(null)
-                val doubleTapAppIcon by remember(doubleTapApp?.key) {
-                    viewModel.getIcon(doubleTapApp, appIconSize.toInt())
-                }.collectAsState(null)
-                GuardedPreference(
-                    locked = hasPermission == false && requiresAccessibilityService(doubleTap),
-                    description = stringResource(R.string.missing_permission_accessibility_gesture_settings),
-                    onUnlock = { viewModel.requestPermission(context as AppCompatActivity) },
-                ) {
-                    GesturePreference(
-                        title = stringResource(R.string.preference_gesture_double_tap),
-                        icon = R.drawable.adjust_24px,
-                        value = doubleTap,
-                        onValueChanged = { viewModel.setDoubleTap(it) },
-                        options = options,
-                        app = doubleTapApp,
-                        appIcon = doubleTapAppIcon,
-                        onAppChanged = { viewModel.setDoubleTapApp(it) },
                     )
                 }
 

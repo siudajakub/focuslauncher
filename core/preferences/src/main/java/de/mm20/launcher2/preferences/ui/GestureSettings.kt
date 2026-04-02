@@ -11,7 +11,6 @@ data class GestureSettingsData(
     val swipeLeft: GestureAction,
     val swipeRight: GestureAction,
     val swipeUp: GestureAction,
-    val doubleTap: GestureAction,
     val longPress: GestureAction,
     val homeButton: GestureAction,
 )
@@ -25,7 +24,6 @@ class GestureSettings internal constructor(
             swipeLeft = it.gesturesSwipeLeft,
             swipeRight = it.gesturesSwipeRight,
             swipeUp = it.gesturesSwipeUp,
-            doubleTap = it.gesturesDoubleTap,
             longPress = it.gesturesLongPress,
             homeButton = it.gesturesHomeButton,
         )
@@ -41,9 +39,6 @@ class GestureSettings internal constructor(
         .distinctUntilChanged()
 
     val swipeUp: Flow<GestureAction> = dataStore.data.map { it.gesturesSwipeUp }
-        .distinctUntilChanged()
-
-    val doubleTap: Flow<GestureAction> = dataStore.data.map { it.gesturesDoubleTap }
         .distinctUntilChanged()
 
     val longPress: Flow<GestureAction> = dataStore.data.map { it.gesturesLongPress }
@@ -73,12 +68,6 @@ class GestureSettings internal constructor(
     fun setSwipeUp(action: GestureAction) {
         dataStore.update {
             it.copy(gesturesSwipeUp = action)
-        }
-    }
-
-    fun setDoubleTap(action: GestureAction) {
-        dataStore.update {
-            it.copy(gesturesDoubleTap = action)
         }
     }
 

@@ -47,7 +47,6 @@ fun FailedGestureSheet(
             else -> R.string.gesture_action_none
         })
         val gestureName = stringResource(when(it.gesture) {
-            Gesture.DoubleTap -> R.string.preference_gesture_double_tap
             Gesture.LongPress -> R.string.preference_gesture_long_press
             Gesture.SwipeDown -> R.string.preference_gesture_swipe_down
             Gesture.SwipeLeft -> R.string.preference_gesture_swipe_left

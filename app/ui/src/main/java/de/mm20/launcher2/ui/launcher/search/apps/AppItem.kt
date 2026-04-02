@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -80,6 +81,10 @@ fun AppItem(
 
     val badge by viewModel.badge.collectAsStateWithLifecycle(null)
     val icon by viewModel.icon.collectAsStateWithLifecycle()
+    val appType by viewModel.appType.collectAsStateWithLifecycle()
+    val fadeDistractingApps by viewModel.fadeDistractingApps.collectAsStateWithLifecycle()
+    val noIconsMode by viewModel.noIconsMode.collectAsStateWithLifecycle()
+    val hideFromBrowse by viewModel.hideFromBrowse.collectAsStateWithLifecycle()
 
     LaunchedEffect(app) {
         viewModel.init(app, iconSize.toInt())
@@ -111,18 +116,6 @@ fun AppItem(
                             )
 
                             if (!app.isPrivate) {
-
-                                val tags by viewModel.tags.collectAsState(emptyList())
-                                if (tags.isNotEmpty()) {
-                                    Text(
-                                        modifier = Modifier.padding(top = 1.dp, bottom = 4.dp),
-                                        text = tags.joinToString(separator = " #", prefix = "#"),
-                                        color = MaterialTheme.colorScheme.secondary,
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                }
-
-
                                 app.versionName?.let {
                                     Text(
                                         text = stringResource(R.string.app_info_version, it),
@@ -498,11 +491,15 @@ fun AppItem(
                     )
                 }
             } else {
+                val deemphasize = fadeDistractingApps && hideFromBrowse
+                val textOnly = noIconsMode && appType != de.mm20.launcher2.ui.launcher.focus.FocusAppType.Essential
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .alpha(if (deemphasize) 0.55f else 1f),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (LocalGridSettings.current.showListIcons) {
+                    if (LocalGridSettings.current.showListIcons && !textOnly) {
                         ShapedLauncherIcon(
                             size = LocalGridSettings.current.iconSize.dp,
                             modifier = Modifier

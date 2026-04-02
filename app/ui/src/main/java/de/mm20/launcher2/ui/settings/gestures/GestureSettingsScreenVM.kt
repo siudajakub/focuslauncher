@@ -48,8 +48,6 @@ class GestureSettingsScreenVM : ViewModel(), KoinComponent {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
     val swipeUp = gestureSettings.swipeUp
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-    val doubleTap = gestureSettings.doubleTap
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
     val longPress = gestureSettings.longPress
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
     val homeButton = gestureSettings.homeButton
@@ -69,10 +67,6 @@ class GestureSettingsScreenVM : ViewModel(), KoinComponent {
 
     fun setSwipeUp(action: GestureAction) {
         gestureSettings.setSwipeUp(action)
-    }
-
-    fun setDoubleTap(action: GestureAction) {
-        gestureSettings.setDoubleTap(action)
     }
 
     fun setLongPress(action: GestureAction) {
@@ -151,20 +145,6 @@ class GestureSettingsScreenVM : ViewModel(), KoinComponent {
     fun setLongPressApp(searchable: SavableSearchable?) {
         searchable?.let { searchableRepository.insert(it) } ?: return
         setLongPress(GestureAction.Launch(searchable.key))
-    }
-
-    val doubleTapApp: Flow<SavableSearchable?> = doubleTap
-        .flatMapLatest {
-            if (it !is GestureAction.Launch || it.key == null) flowOf(null)
-            else searchableRepository.getByKeys(listOf(it.key!!)).map {
-                it.firstOrNull()
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 10000), null)
-
-    fun setDoubleTapApp(searchable: SavableSearchable?) {
-        searchable?.let { searchableRepository.insert(it) } ?: return
-        setDoubleTap(GestureAction.Launch(searchable.key))
     }
 
     val homeButtonApp: Flow<SavableSearchable?> = homeButton

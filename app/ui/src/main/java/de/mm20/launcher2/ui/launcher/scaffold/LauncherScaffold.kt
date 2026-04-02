@@ -99,7 +99,6 @@ import de.mm20.launcher2.ui.ktx.toPixels
 import de.mm20.launcher2.ui.launcher.SharedLauncherActivity
 import de.mm20.launcher2.ui.launcher.helper.WallpaperBlur
 import de.mm20.launcher2.ui.launcher.search.SearchVM
-import de.mm20.launcher2.ui.launcher.search.filters.KeyboardFilterBar
 import de.mm20.launcher2.ui.launcher.searchbar.LauncherSearchBar
 import de.mm20.launcher2.ui.theme.transparency.transparency
 import dev.chrisbanes.haze.hazeEffect
@@ -142,7 +141,6 @@ internal data class ScaffoldConfiguration(
     val swipeDown: ScaffoldGesture? = null,
     val swipeLeft: ScaffoldGesture? = null,
     val swipeRight: ScaffoldGesture? = null,
-    val doubleTap: ScaffoldGesture? = null,
     val longPress: ScaffoldGesture? = null,
     val homeButton: ScaffoldGesture? = null,
     /**
@@ -195,7 +193,6 @@ internal data class ScaffoldConfiguration(
                     swipeDown,
                     swipeLeft,
                     swipeRight,
-                    doubleTap,
                     longPress,
                     homeButton,
                 ).none { it.component.showSearchBar }
@@ -208,7 +205,6 @@ private operator fun ScaffoldConfiguration.get(gesture: Gesture): ScaffoldGestur
         Gesture.SwipeDown -> swipeDown
         Gesture.SwipeLeft -> swipeLeft
         Gesture.SwipeRight -> swipeRight
-        Gesture.DoubleTap -> doubleTap
         Gesture.LongPress -> longPress
         Gesture.HomeButton -> homeButton
         Gesture.TapSearchBar -> searchBarTap
@@ -220,7 +216,6 @@ enum class Gesture(val orientation: Orientation?) {
     SwipeDown(Orientation.Vertical),
     SwipeLeft(Orientation.Horizontal),
     SwipeRight(Orientation.Horizontal),
-    DoubleTap(null),
     LongPress(null),
     TapSearchBar(null),
     HomeButton(null),
@@ -749,10 +744,6 @@ internal class LauncherScaffoldState(
         }
     }
 
-    suspend fun onDoubleTap() {
-        performTapGesture(Gesture.DoubleTap)
-    }
-
     suspend fun onLongPress() {
         performTapGesture(Gesture.LongPress)
     }
@@ -796,7 +787,7 @@ internal class LauncherScaffoldState(
         val anim = currentAnimation ?: return
 
         when (gesture) {
-            Gesture.TapSearchBar, Gesture.DoubleTap, Gesture.LongPress -> {
+            Gesture.TapSearchBar, Gesture.LongPress -> {
                 currentZOffset = progress
             }
 
@@ -1122,9 +1113,6 @@ internal fun LauncherScaffold(
     val searchVM = viewModel<SearchVM>()
     val searchActions = searchVM.searchActionResults
     val highlightedResult by searchVM.bestMatch
-    val filters by searchVM.filters
-    val filterBar by searchVM.filterBar.collectAsState(false)
-    val filterBarItems by searchVM.filterBarItems.collectAsState(emptyList())
     val launchOnEnter by searchVM.launchOnEnter.collectAsState(false)
 
     val hazeState = rememberHazeState(blurEnabled = isAtLeastApiLevel(33))
@@ -1207,21 +1195,6 @@ internal fun LauncherScaffold(
             else if (searchActions.isEmpty()) 56.dp
             else 104.dp
         )
-
-        val isFilterBarVisible =
-            (state.currentProgress == 1f && state.currentComponent is SearchComponent ||
-                    state.currentProgress == 0f && config.homeComponent is SearchComponent) &&
-                    filterBar && WindowInsets.isImeVisible
-
-
-        val imeCurrent = WindowInsets.ime.getBottom(LocalDensity.current).toFloat()
-        val imeSource = WindowInsets.imeAnimationSource.getBottom(LocalDensity.current).toFloat()
-        val imeTarget = WindowInsets.imeAnimationTarget.getBottom(LocalDensity.current).toFloat()
-        val imeProgress = (imeCurrent /
-                (imeSource - imeTarget).absoluteValue.coerceAtLeast(imeCurrent))
-            .coerceIn(0f, 1f)
-
-        val filterBarHeight by animateDpAsState(if (isFilterBarVisible) imeProgress * 50.dp else 0.dp)
 
         LaunchedEffect(state) {
             config.homeComponent.onPreActivate(state)
@@ -1432,21 +1405,14 @@ internal fun LauncherScaffold(
                 bottom = if (config.searchBarPosition == SearchBarPosition.Bottom) searchBarHeight + 8.dp else 8.dp
             )
 
-            val filterBarInsets = WindowInsets(
-                bottom = filterBarHeight
-            )
-
             CompositionLocalProvider(
                 LocalScaffoldPage provides ScaffoldPage.Home,
             ) {
                 config.homeComponent.Component(
                     Modifier
                         .fillMaxSize()
-                        .pointerInput(wallpaperManager, config.doubleTap) {
+                        .pointerInput(wallpaperManager, config.longPress) {
                             detectTapGestures(
-                                onDoubleTap = config.doubleTap?.let {
-                                    { scope.launch { state.onDoubleTap() } }
-                                },
                                 onLongPress = config.longPress?.let {
                                     { scope.launch { state.onLongPress() } }
                                 },
@@ -1489,20 +1455,19 @@ internal fun LauncherScaffold(
                     .fillMaxSize(),
                 insets = systemBarInsets
                     .let { if (state.currentComponent?.hasIme == true) it.union(WindowInsets.ime) else it }
-                    .add(searchBarInsets).add(filterBarInsets)
+                    .add(searchBarInsets)
                     .asPaddingValues(),
             )
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .searchBarAnimation(
-                        state,
-                        config,
-                        systemBarInsets
-                            .union(WindowInsets.ime)
-                            .add(filterBarInsets)
-                            .asPaddingValues()
+                        .searchBarAnimation(
+                            state,
+                            config,
+                            systemBarInsets
+                                .union(WindowInsets.ime)
+                                .asPaddingValues()
                     )
             ) {
                 LauncherSearchBar(
@@ -1532,21 +1497,6 @@ internal fun LauncherScaffold(
                     isSearchOpen = state.currentComponent is SearchComponent && state.isSettledOnSecondaryPage ||
                             config.homeComponent is SearchComponent && !state.isSettledOnSecondaryPage,
                 )
-            }
-            if (isFilterBarVisible) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset(y = (1f - imeProgress) * 50.dp)
-                        .alpha(imeProgress),
-                    contentAlignment = Alignment.BottomCenter,
-                ) {
-                    KeyboardFilterBar(
-                        filters = filters,
-                        onFiltersChange = { searchVM.setFilters(it) },
-                        items = filterBarItems
-                    )
-                }
             }
         }
 
@@ -1610,7 +1560,6 @@ private fun SecondaryPage(
             config.swipeDown?.component,
             config.swipeLeft?.component,
             config.swipeRight?.component,
-            config.doubleTap?.component,
             config.longPress?.component,
             config.searchComponent,
         )

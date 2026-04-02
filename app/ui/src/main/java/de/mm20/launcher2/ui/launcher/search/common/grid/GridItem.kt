@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
@@ -59,6 +60,7 @@ import de.mm20.launcher2.search.Location
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.search.Searchable
 import de.mm20.launcher2.search.Website
+import de.mm20.launcher2.data.customattrs.FocusClassification
 import de.mm20.launcher2.ui.component.LauncherCard
 import de.mm20.launcher2.ui.component.LocalIconShape
 import de.mm20.launcher2.ui.component.ShapedLauncherIcon
@@ -98,6 +100,10 @@ fun GridItem(
     }
 
     val context = LocalContext.current
+    val appType by viewModel.appType.collectAsStateWithLifecycle()
+    val fadeDistractingApps by viewModel.fadeDistractingApps.collectAsStateWithLifecycle()
+    val noIconsMode by viewModel.noIconsMode.collectAsStateWithLifecycle()
+    val hideFromBrowse by viewModel.hideFromBrowse.collectAsStateWithLifecycle()
 
     var showPopup by remember(item.key) { mutableStateOf(false) }
     var bounds by remember { mutableStateOf(IntRect.Zero) }
@@ -112,6 +118,7 @@ fun GridItem(
     Column(
         modifier = modifier
             .padding(4.dp)
+            .alpha(if (fadeDistractingApps && hideFromBrowse) 0.55f else 1f)
             .combinedClickable(
                 onClick = {
                     if (!launchOnPress || !viewModel.launch(context, bounds)) {
@@ -155,6 +162,7 @@ fun GridItem(
         }
 
         val iconShape = LocalIconShape.current
+        val textOnly = noIconsMode && appType != de.mm20.launcher2.ui.launcher.focus.FocusAppType.Essential
 
         Box(
             modifier = if (highlight) {
@@ -168,23 +176,43 @@ fun GridItem(
                     contentDescription = item.label
                 },
         ) {
-            ShapedLauncherIcon(
-                modifier = Modifier
-                    .padding(4.dp)
-                    .onGloballyPositioned {
-                        bounds = it
-                            .boundsInWindow()
-                            .roundToIntRect()
-                    } then
-                        if (highlight) Modifier.background(
-                            MaterialTheme.colorScheme.surface,
+            if (textOnly) {
+                Box(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .onGloballyPositioned {
+                            bounds = it.boundsInWindow().roundToIntRect()
+                        }
+                        .background(
+                            if (highlight) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
                             iconShape
                         )
-                        else Modifier,
-                size = LocalGridSettings.current.iconSize.dp,
-                badge = { badge },
-                icon = { icon },
-            )
+                        .padding(horizontal = 8.dp, vertical = 16.dp)
+                ) {
+                    Text(
+                        text = (item.labelOverride ?: item.label).take(1).uppercase(),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+            } else {
+                ShapedLauncherIcon(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .onGloballyPositioned {
+                            bounds = it
+                                .boundsInWindow()
+                                .roundToIntRect()
+                        } then
+                            if (highlight) Modifier.background(
+                                MaterialTheme.colorScheme.surface,
+                                iconShape
+                            )
+                            else Modifier,
+                    size = LocalGridSettings.current.iconSize.dp,
+                    badge = { badge },
+                    icon = { icon },
+                )
+            }
         }
         if (showLabels) {
             Text(

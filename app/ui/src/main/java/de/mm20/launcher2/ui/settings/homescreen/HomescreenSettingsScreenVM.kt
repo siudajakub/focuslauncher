@@ -166,6 +166,27 @@ class HomescreenSettingsScreenVM(
         uiSettings.setHomeScreenWidgets(widgetsOnHomeScreen)
     }
 
+    val focusMinimalHome = uiSettings.focusMinimalHome
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
+
+    fun setFocusMinimalHome(enabled: Boolean) {
+        uiSettings.setFocusMinimalHome(enabled)
+    }
+
+    val focusCommuteMode = uiSettings.focusCommuteMode
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    fun setFocusCommuteMode(enabled: Boolean) {
+        uiSettings.setFocusCommuteMode(enabled)
+    }
+
+    val focusAtAGlance = uiSettings.focusAtAGlance
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
+
+    fun setFocusAtAGlance(enabled: Boolean) {
+        uiSettings.setFocusAtAGlance(enabled)
+    }
+
     val widgetScreenCount = uiSettings.widgetScreenCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 1)
 

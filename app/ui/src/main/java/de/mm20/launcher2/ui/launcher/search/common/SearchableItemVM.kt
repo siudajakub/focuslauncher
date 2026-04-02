@@ -9,6 +9,7 @@ import androidx.core.app.ActivityOptionsCompat
 import de.mm20.launcher2.applications.AppRepository
 import de.mm20.launcher2.appshortcuts.AppShortcutRepository
 import de.mm20.launcher2.badges.BadgeService
+import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
 import de.mm20.launcher2.devicepose.DevicePoseProvider
 import de.mm20.launcher2.icons.IconService
 import de.mm20.launcher2.icons.LauncherIcon
@@ -19,6 +20,7 @@ import de.mm20.launcher2.permissions.PermissionsManager
 import de.mm20.launcher2.preferences.MeasurementSystem
 import de.mm20.launcher2.preferences.search.ContactSearchSettings
 import de.mm20.launcher2.preferences.search.LocationSearchSettings
+import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.search.AppShortcut
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.search.File
@@ -26,8 +28,10 @@ import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.search.UpdatableSearchable
 import de.mm20.launcher2.search.UpdateResult
 import de.mm20.launcher2.services.favorites.FavoritesService
-import de.mm20.launcher2.services.tags.TagsService
 import de.mm20.launcher2.ui.R
+import de.mm20.launcher2.ui.launcher.focus.FocusAppClassifier
+import de.mm20.launcher2.ui.launcher.focus.FocusAppType
+import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
 import de.mm20.launcher2.ui.launcher.search.ListItemViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -46,16 +50,19 @@ import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchableItemVM : ListItemViewModel(), KoinComponent {
+    private val focusLaunchCoordinator = FocusLaunchCoordinator()
+    private val focusAppClassifier = FocusAppClassifier()
     private val favoritesService: FavoritesService by inject()
+    private val customAttributesRepository: CustomAttributesRepository by inject()
     private val badgeService: BadgeService by inject()
     private val iconService: IconService by inject()
-    private val tagsService: TagsService by inject()
     private val notificationRepository: NotificationRepository by inject()
     private val appRepository: AppRepository by inject()
     private val appShortcutRepository: AppShortcutRepository by inject()
     private val permissionsManager: PermissionsManager by inject()
     private val locationSearchSettings: LocationSearchSettings by inject()
     private val contactSearchSettings: ContactSearchSettings by inject()
+    private val searchUiSettings: SearchUiSettings by inject()
 
     val isUpToDate = MutableStateFlow(true)
 
@@ -88,9 +95,32 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
         if (s == null || size == 0) emptyFlow() else iconService.getIcon(s, size)
     }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-    val tags = searchable.flatMapLatest {
-        if (it == null) emptyFlow() else tagsService.getTags(it)
-    }
+    val focusProfile = searchable.flatMapLatest {
+        if (it == null) emptyFlow() else customAttributesRepository.getFocusProfile(it)
+    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    val appType = searchable.flatMapLatest {
+        when (it) {
+            is Application -> focusAppClassifier.classify(it.key)
+            else -> flowOf(FocusAppType.Normal)
+        }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, FocusAppType.Normal)
+
+    val fadeDistractingApps = searchUiSettings.focusFadeDistractingApps
+        .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    val noIconsMode = searchUiSettings.focusNoIconsMode
+        .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    val hideFromBrowse = combine(
+        appType,
+        focusProfile,
+        searchUiSettings.focusHideDistractingApps,
+    ) { appType, profile, hideDistractingApps ->
+        appType == FocusAppType.Distracting &&
+            hideDistractingApps &&
+            profile?.hasTemporaryUnlock() != true
+    }.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val notifications = searchable.flatMapLatest { searchable ->
         if (searchable !is Application) emptyFlow()
@@ -140,11 +170,8 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
             ActivityOptionsCompat.makeBasic()
         }
         val bundle = options.toBundle()
-        if (searchable.launch(context, bundle)) {
-            reportUsage(searchable)
+        if (focusLaunchCoordinator.launch(searchable, context, bundle)) {
             return true
-        } else if (searchable is Application || searchable is AppShortcut) {
-            favoritesService.reset(searchable)
         }
         return false
     }
@@ -170,9 +197,7 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
     }
 
     fun launchChild(context: Context, child: SavableSearchable) {
-        if (child.launch(context, null)) {
-            reportUsage(child)
-        }
+        focusLaunchCoordinator.launch(child, context, null)
     }
 
     fun delete(context: Context) {

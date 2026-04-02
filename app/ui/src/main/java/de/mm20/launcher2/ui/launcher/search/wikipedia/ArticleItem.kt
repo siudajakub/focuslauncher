@@ -164,16 +164,6 @@ fun ArticleItem(
                                 this@AnimatedContent,
                             ),
                         )
-                        val tags by viewModel.tags.collectAsState(emptyList())
-                        if (tags.isNotEmpty()) {
-                            Text(
-                                modifier = Modifier
-                                    .padding(top = 1.dp, bottom = 4.dp),
-                                text = tags.joinToString(separator = " #", prefix = "#"),
-                                color = MaterialTheme.colorScheme.secondary,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
                         Text(
                             modifier = Modifier
                                 .padding(top = 4.dp)

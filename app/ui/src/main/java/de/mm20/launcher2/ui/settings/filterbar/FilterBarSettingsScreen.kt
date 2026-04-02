@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import de.mm20.launcher2.preferences.KeyboardFilterBarItem
+import de.mm20.launcher2.preferences.search.focusFirstFilterBarItems
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.component.dragndrop.DraggableItem
 import de.mm20.launcher2.ui.component.dragndrop.LazyDragAndDropColumn
@@ -76,7 +77,7 @@ fun FilterBarSettingsScreen() {
 
     val disabledItems by remember {
         derivedStateOf {
-            KeyboardFilterBarItem.entries.filter { enabledItems?.contains(it) == false }
+            focusFirstFilterBarItems.filter { enabledItems?.contains(it) == false }
         }
     }
 
@@ -142,7 +143,7 @@ fun FilterBarSettingsScreen() {
                     )
                 }
             }
-            for (i in 0 until KeyboardFilterBarItem.entries.size) {
+            for (i in 0 until focusFirstFilterBarItems.size) {
                 val item = enabledItems!!.getOrNull(i) ?: disabledItems[i - enabledItems!!.size]
                 val prevItem = enabledItems!!.getOrNull(i - 1)
                     ?: disabledItems.getOrNull(i - enabledItems!!.size - 1)

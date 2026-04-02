@@ -21,6 +21,7 @@ sealed interface CustomAttribute {
                     tagName = entity.value
                 )
                 CustomAttributeType.Icon.value -> CustomIcon.fromDatabaseEntity(entity)
+                CustomAttributeType.Focus.value -> FocusProfile.fromDatabaseEntity(entity)
                 else -> {
                     Log.e("MM20", "Invalid custom attribute type: ${entity.type}")
                     null

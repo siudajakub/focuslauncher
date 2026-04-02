@@ -13,6 +13,7 @@ import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.searchable.VisibilityLevel
+import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,6 +27,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 class HiddenItemsSettingsScreenVM : ViewModel(), KoinComponent {
+    private val focusLaunchCoordinator = FocusLaunchCoordinator()
     private val appRepository: AppRepository by inject()
     private val searchableRepository: SavableSearchableRepository by inject()
     private val iconService: IconService by inject()
@@ -59,7 +61,7 @@ class HiddenItemsSettingsScreenVM : ViewModel(), KoinComponent {
         if (isAtLeastApiLevel(31)) {
             bundle.putInt("android.activity.splashScreenStyle", 1)
         }
-        searchable.launch(context, bundle)
+        focusLaunchCoordinator.launch(searchable, context, bundle)
     }
 
     fun openAppInfo(context: Context, app: Application) {

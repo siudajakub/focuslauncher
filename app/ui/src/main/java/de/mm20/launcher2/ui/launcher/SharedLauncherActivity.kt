@@ -49,7 +49,7 @@ import de.mm20.launcher2.ui.ktx.animateTo
 import de.mm20.launcher2.ui.launcher.scaffold.ClockAndWidgetsHomeComponent
 import de.mm20.launcher2.ui.launcher.scaffold.ClockHomeComponent
 import de.mm20.launcher2.ui.launcher.scaffold.DismissComponent
-import de.mm20.launcher2.ui.launcher.scaffold.FeedComponent
+import de.mm20.launcher2.ui.launcher.scaffold.FocusHomeComponent
 import de.mm20.launcher2.ui.launcher.scaffold.Gesture
 import de.mm20.launcher2.ui.launcher.scaffold.LaunchComponent
 import de.mm20.launcher2.ui.launcher.scaffold.LauncherScaffold
@@ -149,6 +149,7 @@ abstract class SharedLauncherActivity(
                         val searchBarColor by viewModel.searchBarColor.collectAsState()
                         val searchBarAutofocus by viewModel.autoFocusSearch.collectAsState(false)
                         val widgetsOnHomeScreen by viewModel.widgetsOnHomeScreen.collectAsState()
+                        val focusMinimalHome by viewModel.focusMinimalHome.collectAsState()
                         val wallpaperBlur by viewModel.wallpaperBlur.collectAsState()
                         val wallpaperBlurRadius by viewModel.wallpaperBlurRadius.collectAsState()
 
@@ -156,7 +157,7 @@ abstract class SharedLauncherActivity(
 
                         val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
 
-                        if (gestures == null || widgetsOnHomeScreen == null) return@ProvideCompositionLocals
+                        if (gestures == null || widgetsOnHomeScreen == null || focusMinimalHome == null) return@ProvideCompositionLocals
 
                         LaunchedEffect(fixedRotation) {
                             requestedOrientation = if (fixedRotation) {
@@ -283,7 +284,6 @@ abstract class SharedLauncherActivity(
                                                 animation = when (gesture) {
                                                     Gesture.SwipeDown -> ScaffoldAnimation.Rubberband
                                                     Gesture.LongPress -> ScaffoldAnimation.ZoomIn
-                                                    Gesture.DoubleTap -> ScaffoldAnimation.ZoomIn
                                                     else -> ScaffoldAnimation.Push
                                                 },
                                             )
@@ -323,10 +323,7 @@ abstract class SharedLauncherActivity(
                                                 animation = if (gesture.orientation == null) ScaffoldAnimation.ZoomIn else ScaffoldAnimation.Push,
                                             )
 
-                                            is GestureAction.Feed -> ScaffoldGesture(
-                                                component = FeedComponent,
-                                                animation = if (gesture.orientation == null) ScaffoldAnimation.ZoomIn else ScaffoldAnimation.Push,
-                                            )
+                                            is GestureAction.Feed -> null
 
                                             is GestureAction.Launch if (searchable != null) -> ScaffoldGesture(
                                                 component = LaunchComponent(
@@ -343,10 +340,10 @@ abstract class SharedLauncherActivity(
                                     val gestures = gestures!!
 
                                     val config = ScaffoldConfiguration(
-                                        homeComponent = if (widgetsOnHomeScreen == true) {
-                                            ClockAndWidgetsHomeComponent
-                                        } else {
-                                            ClockHomeComponent
+                                        homeComponent = when {
+                                            focusMinimalHome == true -> FocusHomeComponent
+                                            widgetsOnHomeScreen == true -> ClockAndWidgetsHomeComponent
+                                            else -> ClockHomeComponent
                                         },
                                         searchComponent = searchComponent,
                                         swipeUp = getScaffoldGesture(
@@ -368,11 +365,6 @@ abstract class SharedLauncherActivity(
                                             gestures.swipeRightAction,
                                             gestures.swipeRightApp,
                                             Gesture.SwipeRight,
-                                        ),
-                                        doubleTap = getScaffoldGesture(
-                                            gestures.doubleTapAction,
-                                            gestures.doubleTapApp,
-                                            Gesture.DoubleTap,
                                         ),
                                         longPress = getScaffoldGesture(
                                             gestures.longPressAction,
