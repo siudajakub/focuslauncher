@@ -74,14 +74,24 @@ import de.mm20.launcher2.ui.settings.easteregg.EasterEggSettingsRoute
 import de.mm20.launcher2.ui.settings.easteregg.EasterEggSettingsScreen
 import de.mm20.launcher2.ui.settings.favorites.FavoritesSettingsRoute
 import de.mm20.launcher2.ui.settings.favorites.FavoritesSettingsScreen
+import de.mm20.launcher2.ui.settings.focushabits.DailyHabitsSettingsRoute
+import de.mm20.launcher2.ui.settings.focushabits.DailyHabitsSettingsScreen
+import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsRoute
+import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsScreen
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsRoute
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsScreen
+import de.mm20.launcher2.ui.settings.focusschedule.ScheduleDockSettingsRoute
+import de.mm20.launcher2.ui.settings.focusschedule.ScheduleDockSettingsScreen
 import de.mm20.launcher2.ui.settings.focusreport.FocusReportSettingsRoute
 import de.mm20.launcher2.ui.settings.focusreport.FocusReportSettingsScreen
+import de.mm20.launcher2.ui.settings.focussupport.FocusSupportSettingsRoute
+import de.mm20.launcher2.ui.settings.focussupport.FocusSupportSettingsScreen
 import de.mm20.launcher2.ui.settings.gestures.GestureSettingsScreen
 import de.mm20.launcher2.ui.settings.gestures.GesturesSettingsRoute
 import de.mm20.launcher2.ui.settings.hiddenitems.HiddenItemsSettingsRoute
 import de.mm20.launcher2.ui.settings.hiddenitems.HiddenItemsSettingsScreen
+import de.mm20.launcher2.ui.settings.homepanels.HomePanelsSettingsRoute
+import de.mm20.launcher2.ui.settings.homepanels.HomePanelsSettingsScreen
 import de.mm20.launcher2.ui.settings.homescreen.HomescreenSettingsRoute
 import de.mm20.launcher2.ui.settings.homescreen.HomescreenSettingsScreen
 import de.mm20.launcher2.ui.settings.icons.IconsSettingsRoute
@@ -159,6 +169,9 @@ class SettingsActivity : BaseActivity() {
             entry<HomescreenSettingsRoute> {
                 HomescreenSettingsScreen()
             }
+            entry<HomePanelsSettingsRoute> {
+                HomePanelsSettingsScreen()
+            }
             entry<IconsSettingsRoute> {
                 IconsSettingsScreen()
             }
@@ -192,6 +205,18 @@ class SettingsActivity : BaseActivity() {
             }
             entry<FocusAppsSettingsRoute> {
                 FocusAppsSettingsScreen()
+            }
+            entry<FocusSupportSettingsRoute> {
+                FocusSupportSettingsScreen()
+            }
+            entry<DailyHabitsSettingsRoute> {
+                DailyHabitsSettingsScreen()
+            }
+            entry<DailyScheduleSettingsRoute> {
+                DailyScheduleSettingsScreen()
+            }
+            entry<ScheduleDockSettingsRoute> {
+                ScheduleDockSettingsScreen()
             }
             entry<FocusReportSettingsRoute> {
                 FocusReportSettingsScreen()

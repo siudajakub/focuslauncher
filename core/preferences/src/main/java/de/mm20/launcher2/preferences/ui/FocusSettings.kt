@@ -1,6 +1,8 @@
 package de.mm20.launcher2.preferences.ui
 
 import de.mm20.launcher2.preferences.LauncherDataStore
+import de.mm20.launcher2.preferences.FocusHabit
+import de.mm20.launcher2.preferences.ScheduleDockMapping
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
@@ -17,15 +19,22 @@ data class FocusSettingsData(
     val noIconsMode: Boolean = false,
     val enableDnd: Boolean = false,
     val productivityTimeEnabled: Boolean = false,
-    val productivityWindow1StartMinutes: Int = 5 * 60,
-    val productivityWindow1EndMinutes: Int = 9 * 60,
-    val productivityWindow2StartMinutes: Int = 22 * 60,
-    val productivityWindow2EndMinutes: Int = 7 * 60,
+    val productivityWindows: List<de.mm20.launcher2.preferences.FocusProductivityWindow> = emptyList(),
+    val dailyScheduleEnabled: Boolean = false,
+    val dailyScheduleCalendarId: String? = null,
+    val scheduleDockMappings: List<ScheduleDockMapping> = emptyList(),
+    val habitsEnabled: Boolean = false,
+    val habits: List<FocusHabit> = emptyList(),
     val applyToPersonalProfile: Boolean = true,
     val applyToWorkProfile: Boolean = true,
     val applyToPrivateProfile: Boolean = true,
     val commuteModeEnabled: Boolean = false,
     val atAGlanceEnabled: Boolean = true,
+    val adaptiveFrictionMode: de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode =
+        de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode.Auto,
+    val environmentContextEnabled: Boolean = true,
+    val environmentExplainabilityEnabled: Boolean = true,
+    val reviewSuggestionsEnabled: Boolean = true,
 )
 
 class FocusSettings internal constructor(
@@ -45,15 +54,21 @@ class FocusSettings internal constructor(
             noIconsMode = it.focusNoIconsMode,
             enableDnd = it.focusEnableDnd,
             productivityTimeEnabled = it.focusProductivityTimeEnabled,
-            productivityWindow1StartMinutes = it.focusProductivityWindow1StartMinutes,
-            productivityWindow1EndMinutes = it.focusProductivityWindow1EndMinutes,
-            productivityWindow2StartMinutes = it.focusProductivityWindow2StartMinutes,
-            productivityWindow2EndMinutes = it.focusProductivityWindow2EndMinutes,
+            productivityWindows = it.focusProductivityWindows,
+            dailyScheduleEnabled = it.focusDailyScheduleEnabled,
+            dailyScheduleCalendarId = it.focusDailyScheduleCalendarId,
+            scheduleDockMappings = it.focusScheduleDockMappings,
+            habitsEnabled = it.focusHabitsEnabled,
+            habits = it.focusHabits,
             applyToPersonalProfile = it.focusApplyToPersonalProfile,
             applyToWorkProfile = it.focusApplyToWorkProfile,
             applyToPrivateProfile = it.focusApplyToPrivateProfile,
             commuteModeEnabled = it.focusCommuteModeEnabled,
             atAGlanceEnabled = it.focusAtAGlanceEnabled,
+            adaptiveFrictionMode = it.focusAdaptiveFrictionMode,
+            environmentContextEnabled = it.focusEnvironmentContextEnabled,
+            environmentExplainabilityEnabled = it.focusEnvironmentExplainabilityEnabled,
+            reviewSuggestionsEnabled = it.focusReviewSuggestionsEnabled,
         )
     }.distinctUntilChanged()
 
@@ -123,5 +138,21 @@ class FocusSettings internal constructor(
 
     fun setAtAGlanceEnabled(enabled: Boolean) {
         launcherDataStore.update { it.copy(focusAtAGlanceEnabled = enabled) }
+    }
+
+    fun setAdaptiveFrictionMode(mode: de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode) {
+        launcherDataStore.update { it.copy(focusAdaptiveFrictionMode = mode) }
+    }
+
+    fun setEnvironmentContextEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusEnvironmentContextEnabled = enabled) }
+    }
+
+    fun setEnvironmentExplainabilityEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusEnvironmentExplainabilityEnabled = enabled) }
+    }
+
+    fun setReviewSuggestionsEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusReviewSuggestionsEnabled = enabled) }
     }
 }

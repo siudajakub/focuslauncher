@@ -68,7 +68,8 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
 
     val widgetsOnHomeScreen = uiSettings.homeScreenWidgets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-    val focusMinimalHome = uiSettings.focusMinimalHome
+
+    val widgetPagesEnabled = uiSettings.widgetPagesEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
 
     val autoFocusSearch = uiSettings.openKeyboardOnSearch

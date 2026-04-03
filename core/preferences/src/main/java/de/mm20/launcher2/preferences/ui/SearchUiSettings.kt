@@ -1,12 +1,42 @@
 package de.mm20.launcher2.preferences.ui
 
 import de.mm20.launcher2.preferences.LauncherDataStore
+import de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode
+import de.mm20.launcher2.preferences.FocusBlockPlan
+import de.mm20.launcher2.preferences.FocusExperiment
+import de.mm20.launcher2.preferences.FocusHabit
+import de.mm20.launcher2.preferences.FocusResumeContext
+import de.mm20.launcher2.preferences.ScheduleDockMapping
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 class SearchUiSettings internal constructor(
     private val launcherDataStore: LauncherDataStore,
 ) {
+    private fun resolvedProductivityWindows(data: de.mm20.launcher2.preferences.LauncherSettingsData): List<de.mm20.launcher2.preferences.FocusProductivityWindow> {
+        val windows = data.focusProductivityWindows
+        if (windows.isNotEmpty()) return windows
+        return buildList {
+            add(
+                de.mm20.launcher2.preferences.FocusProductivityWindow(
+                    startMinutes = data.focusProductivityWindow1StartMinutes,
+                    endMinutes = data.focusProductivityWindow1EndMinutes,
+                )
+            )
+            if (
+                data.focusProductivityWindow2StartMinutes != data.focusProductivityWindow1StartMinutes ||
+                data.focusProductivityWindow2EndMinutes != data.focusProductivityWindow1EndMinutes
+            ) {
+                add(
+                    de.mm20.launcher2.preferences.FocusProductivityWindow(
+                        startMinutes = data.focusProductivityWindow2StartMinutes,
+                        endMinutes = data.focusProductivityWindow2EndMinutes,
+                    )
+                )
+            }
+        }
+    }
+
     val launchOnEnter
         get() = launcherDataStore.data.map { it.searchLaunchOnEnter }.distinctUntilChanged()
 
@@ -235,32 +265,127 @@ class SearchUiSettings internal constructor(
         launcherDataStore.update { it.copy(focusProductivityTimeEnabled = enabled) }
     }
 
-    val focusProductivityWindow1StartMinutes
-        get() = launcherDataStore.data.map { it.focusProductivityWindow1StartMinutes }.distinctUntilChanged()
+    val focusProductivityWindows
+        get() = launcherDataStore.data.map(::resolvedProductivityWindows).distinctUntilChanged()
 
-    fun setFocusProductivityWindow1StartMinutes(minutes: Int) {
-        launcherDataStore.update { it.copy(focusProductivityWindow1StartMinutes = minutes) }
+    val focusDailyScheduleEnabled
+        get() = launcherDataStore.data.map { it.focusDailyScheduleEnabled }.distinctUntilChanged()
+
+    fun setFocusDailyScheduleEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusDailyScheduleEnabled = enabled) }
     }
 
-    val focusProductivityWindow1EndMinutes
-        get() = launcherDataStore.data.map { it.focusProductivityWindow1EndMinutes }.distinctUntilChanged()
+    val focusDailyScheduleCalendarId
+        get() = launcherDataStore.data.map { it.focusDailyScheduleCalendarId }.distinctUntilChanged()
 
-    fun setFocusProductivityWindow1EndMinutes(minutes: Int) {
-        launcherDataStore.update { it.copy(focusProductivityWindow1EndMinutes = minutes) }
+    fun setFocusDailyScheduleCalendarId(calendarId: String?) {
+        launcherDataStore.update { it.copy(focusDailyScheduleCalendarId = calendarId) }
     }
 
-    val focusProductivityWindow2StartMinutes
-        get() = launcherDataStore.data.map { it.focusProductivityWindow2StartMinutes }.distinctUntilChanged()
+    val focusScheduleDockMappings
+        get() = launcherDataStore.data.map { it.focusScheduleDockMappings }.distinctUntilChanged()
 
-    fun setFocusProductivityWindow2StartMinutes(minutes: Int) {
-        launcherDataStore.update { it.copy(focusProductivityWindow2StartMinutes = minutes) }
+    fun upsertFocusScheduleDockMapping(eventName: String, appKeys: List<String>) {
+        launcherDataStore.update { data ->
+            val updated = data.focusScheduleDockMappings
+                .filterNot { it.eventName == eventName } + ScheduleDockMapping(
+                eventName = eventName,
+                appKeys = appKeys.distinct(),
+            )
+            data.copy(focusScheduleDockMappings = updated.sortedBy { it.eventName.lowercase() })
+        }
     }
 
-    val focusProductivityWindow2EndMinutes
-        get() = launcherDataStore.data.map { it.focusProductivityWindow2EndMinutes }.distinctUntilChanged()
+    fun removeFocusScheduleDockMapping(eventName: String) {
+        launcherDataStore.update { data ->
+            data.copy(
+                focusScheduleDockMappings = data.focusScheduleDockMappings.filterNot { it.eventName == eventName }
+            )
+        }
+    }
 
-    fun setFocusProductivityWindow2EndMinutes(minutes: Int) {
-        launcherDataStore.update { it.copy(focusProductivityWindow2EndMinutes = minutes) }
+    val focusHabitsEnabled
+        get() = launcherDataStore.data.map { it.focusHabitsEnabled }.distinctUntilChanged()
+
+    fun setFocusHabitsEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusHabitsEnabled = enabled) }
+    }
+
+    val focusHabits
+        get() = launcherDataStore.data.map { it.focusHabits }.distinctUntilChanged()
+
+    fun upsertFocusHabit(habit: FocusHabit) {
+        launcherDataStore.update { data ->
+            val updated = data.focusHabits.filterNot { it.id == habit.id } + habit
+            data.copy(focusHabits = updated.sortedBy { it.deadlineMinutes })
+        }
+    }
+
+    fun removeFocusHabit(id: String) {
+        launcherDataStore.update { data ->
+            data.copy(focusHabits = data.focusHabits.filterNot { it.id == id })
+        }
+    }
+
+    fun setFocusHabitCompleted(id: String, date: String, completed: Boolean) {
+        launcherDataStore.update { data ->
+            data.copy(
+                focusHabits = data.focusHabits.map { habit ->
+                    if (habit.id != id) habit else habit.copy(
+                        completedDates = if (completed) habit.completedDates + date else habit.completedDates - date
+                    )
+                }
+            )
+        }
+    }
+
+    val focusUpcomingEventsCalendarIds
+        get() = launcherDataStore.data.map { it.focusUpcomingEventsCalendarIds }.distinctUntilChanged()
+
+    fun setFocusUpcomingEventsCalendarIds(calendarIds: Set<String>) {
+        launcherDataStore.update { it.copy(focusUpcomingEventsCalendarIds = calendarIds) }
+    }
+
+    fun addFocusProductivityWindow() {
+        launcherDataStore.update { data ->
+            val windows = resolvedProductivityWindows(data)
+            if (windows.size >= 3) return@update data
+            val lastWindow = windows.lastOrNull()
+                ?: de.mm20.launcher2.preferences.FocusProductivityWindow(5 * 60, 9 * 60)
+            data.copy(
+                focusProductivityWindows = windows + lastWindow
+            )
+        }
+    }
+
+    fun removeFocusProductivityWindow(index: Int) {
+        launcherDataStore.update { data ->
+            val windows = resolvedProductivityWindows(data)
+            if (windows.size <= 1 || index !in windows.indices) return@update data
+            data.copy(
+                focusProductivityWindows = windows.filterIndexed { currentIndex, _ ->
+                    currentIndex != index
+                }
+            )
+        }
+    }
+
+    fun updateFocusProductivityWindowStart(index: Int, minutes: Int) {
+        launcherDataStore.update { data ->
+            val windows = resolvedProductivityWindows(data).toMutableList()
+            if (index !in windows.indices) return@update data
+            windows[index] = windows[index].copy(startMinutes = minutes)
+            data.copy(focusProductivityWindows = windows)
+        }
+    }
+
+    fun updateFocusProductivityWindowEnd(index: Int, minutes: Int) {
+        launcherDataStore.update { data ->
+            val windows = resolvedProductivityWindows(data).toMutableList()
+            if (index !in windows.indices) return@update data
+            windows[index] = windows[index].copy(endMinutes = minutes)
+            data.copy(focusProductivityWindows = windows)
+        }
     }
 
     val focusApplyToPersonalProfile
@@ -296,6 +421,211 @@ class SearchUiSettings internal constructor(
 
     fun setFocusAtAGlanceEnabled(enabled: Boolean) {
         launcherDataStore.update { it.copy(focusAtAGlanceEnabled = enabled) }
+    }
+
+    val focusStartRitualEnabled
+        get() = launcherDataStore.data.map { it.focusStartRitualEnabled }.distinctUntilChanged()
+
+    fun setFocusStartRitualEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusStartRitualEnabled = enabled) }
+    }
+
+    val focusMicroStepPromptEnabled
+        get() = launcherDataStore.data.map { it.focusMicroStepPromptEnabled }.distinctUntilChanged()
+
+    fun setFocusMicroStepPromptEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusMicroStepPromptEnabled = enabled) }
+    }
+
+    val focusRecoveryEnabled
+        get() = launcherDataStore.data.map { it.focusRecoveryEnabled }.distinctUntilChanged()
+
+    fun setFocusRecoveryEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusRecoveryEnabled = enabled) }
+    }
+
+    val focusRecoveryResumeTimeoutMinutes
+        get() = launcherDataStore.data.map { it.focusRecoveryResumeTimeoutMinutes }.distinctUntilChanged()
+
+    fun setFocusRecoveryResumeTimeoutMinutes(minutes: Int) {
+        launcherDataStore.update { it.copy(focusRecoveryResumeTimeoutMinutes = minutes) }
+    }
+
+    val focusRecoveryFollowsCurrentBlockEnabled
+        get() = launcherDataStore.data.map { it.focusRecoveryFollowsCurrentBlockEnabled }.distinctUntilChanged()
+
+    fun setFocusRecoveryFollowsCurrentBlockEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusRecoveryFollowsCurrentBlockEnabled = enabled) }
+    }
+
+    val focusTransitionWarningsEnabled
+        get() = launcherDataStore.data.map { it.focusTransitionWarningsEnabled }.distinctUntilChanged()
+
+    fun setFocusTransitionWarningsEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusTransitionWarningsEnabled = enabled) }
+    }
+
+    val focusTransitionWarningLeadMinutes
+        get() = launcherDataStore.data.map { it.focusTransitionWarningLeadMinutes }.distinctUntilChanged()
+
+    fun setFocusTransitionWarningLeadMinutes(minutes: Int) {
+        launcherDataStore.update { it.copy(focusTransitionWarningLeadMinutes = minutes) }
+    }
+
+    val focusBlockPrepPromptsEnabled
+        get() = launcherDataStore.data.map { it.focusBlockPrepPromptsEnabled }.distinctUntilChanged()
+
+    fun setFocusBlockPrepPromptsEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusBlockPrepPromptsEnabled = enabled) }
+    }
+
+    val focusPrepLeadTimeMinutes
+        get() = launcherDataStore.data.map { it.focusPrepLeadTimeMinutes }.distinctUntilChanged()
+
+    fun setFocusPrepLeadTimeMinutes(minutes: Int) {
+        launcherDataStore.update { it.copy(focusPrepLeadTimeMinutes = minutes) }
+    }
+
+    val focusBlockAwareSessionSizingEnabled
+        get() = launcherDataStore.data.map { it.focusBlockAwareSessionSizingEnabled }.distinctUntilChanged()
+
+    fun setFocusBlockAwareSessionSizingEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusBlockAwareSessionSizingEnabled = enabled) }
+    }
+
+    val focusEscalatingFrictionEnabled
+        get() = launcherDataStore.data.map { it.focusEscalatingFrictionEnabled }.distinctUntilChanged()
+
+    fun setFocusEscalatingFrictionEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusEscalatingFrictionEnabled = enabled) }
+    }
+
+    val focusEscalationWindowMinutes
+        get() = launcherDataStore.data.map { it.focusEscalationWindowMinutes }.distinctUntilChanged()
+
+    fun setFocusEscalationWindowMinutes(minutes: Int) {
+        launcherDataStore.update { it.copy(focusEscalationWindowMinutes = minutes) }
+    }
+
+    val focusEscalationExtraDelaySeconds
+        get() = launcherDataStore.data.map { it.focusEscalationExtraDelaySeconds }.distinctUntilChanged()
+
+    fun setFocusEscalationExtraDelaySeconds(seconds: Int) {
+        launcherDataStore.update { it.copy(focusEscalationExtraDelaySeconds = seconds) }
+    }
+
+    val focusDistractingSessionCapMinutes
+        get() = launcherDataStore.data.map { it.focusDistractingSessionCapMinutes }.distinctUntilChanged()
+
+    fun setFocusDistractingSessionCapMinutes(minutes: Int) {
+        launcherDataStore.update { it.copy(focusDistractingSessionCapMinutes = minutes) }
+    }
+
+    val focusResetButtonEnabled
+        get() = launcherDataStore.data.map { it.focusResetButtonEnabled }.distinctUntilChanged()
+
+    fun setFocusResetButtonEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusResetButtonEnabled = enabled) }
+    }
+
+    val focusLastResumeContext
+        get() = launcherDataStore.data.map { it.focusLastResumeContext }.distinctUntilChanged()
+
+    fun setFocusLastResumeContext(context: FocusResumeContext?) {
+        launcherDataStore.update { it.copy(focusLastResumeContext = context) }
+    }
+
+    val focusBlockPlans
+        get() = launcherDataStore.data.map { it.focusBlockPlans }.distinctUntilChanged()
+
+    fun setFocusBlockPlans(plans: List<FocusBlockPlan>) {
+        launcherDataStore.update { it.copy(focusBlockPlans = plans) }
+    }
+
+    fun upsertFocusBlockPlan(plan: FocusBlockPlan) {
+        launcherDataStore.update { data ->
+            data.copy(
+                focusBlockPlans = data.focusBlockPlans
+                    .filterNot { it.date == plan.date && it.normalizedBlockLabel == plan.normalizedBlockLabel } +
+                    plan
+            )
+        }
+    }
+
+    fun removeFocusBlockPlan(date: String, normalizedBlockLabel: String) {
+        launcherDataStore.update { data ->
+            data.copy(
+                focusBlockPlans = data.focusBlockPlans.filterNot {
+                    it.date == date && it.normalizedBlockLabel == normalizedBlockLabel
+                }
+            )
+        }
+    }
+
+    val focusAdaptiveFrictionMode
+        get() = launcherDataStore.data.map { it.focusAdaptiveFrictionMode }.distinctUntilChanged()
+
+    fun setFocusAdaptiveFrictionMode(mode: FocusAdaptiveFrictionMode) {
+        launcherDataStore.update { it.copy(focusAdaptiveFrictionMode = mode) }
+    }
+
+    val focusEnvironmentContextEnabled
+        get() = launcherDataStore.data.map { it.focusEnvironmentContextEnabled }.distinctUntilChanged()
+
+    fun setFocusEnvironmentContextEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusEnvironmentContextEnabled = enabled) }
+    }
+
+    val focusEnvironmentChargingContextEnabled
+        get() = launcherDataStore.data.map { it.focusEnvironmentChargingContextEnabled }.distinctUntilChanged()
+
+    fun setFocusEnvironmentChargingContextEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusEnvironmentChargingContextEnabled = enabled) }
+    }
+
+    val focusEnvironmentExplainabilityEnabled
+        get() = launcherDataStore.data.map { it.focusEnvironmentExplainabilityEnabled }.distinctUntilChanged()
+
+    fun setFocusEnvironmentExplainabilityEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusEnvironmentExplainabilityEnabled = enabled) }
+    }
+
+    val focusReviewSuggestionsEnabled
+        get() = launcherDataStore.data.map { it.focusReviewSuggestionsEnabled }.distinctUntilChanged()
+
+    fun setFocusReviewSuggestionsEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusReviewSuggestionsEnabled = enabled) }
+    }
+
+    val focusDismissedRecommendationKeys
+        get() = launcherDataStore.data.map { it.focusDismissedRecommendationKeys }.distinctUntilChanged()
+
+    fun dismissFocusRecommendation(key: String) {
+        launcherDataStore.update {
+            it.copy(focusDismissedRecommendationKeys = it.focusDismissedRecommendationKeys + key)
+        }
+    }
+
+    fun restoreFocusRecommendation(key: String) {
+        launcherDataStore.update {
+            it.copy(focusDismissedRecommendationKeys = it.focusDismissedRecommendationKeys - key)
+        }
+    }
+
+    val focusActiveExperiment
+        get() = launcherDataStore.data.map { it.focusActiveExperiment }.distinctUntilChanged()
+
+    fun setFocusActiveExperiment(experiment: FocusExperiment?) {
+        launcherDataStore.update { it.copy(focusActiveExperiment = experiment) }
+    }
+
+    val focusCompletedExperiments
+        get() = launcherDataStore.data.map { it.focusCompletedExperiments }.distinctUntilChanged()
+
+    fun addCompletedFocusExperiment(experiment: FocusExperiment) {
+        launcherDataStore.update {
+            it.copy(focusCompletedExperiments = it.focusCompletedExperiments + experiment)
+        }
     }
 
 }

@@ -26,7 +26,7 @@ data class LauncherSettingsData internal constructor(
     val uiCompatModeColors: Boolean = false,
     @Deprecated("No longer in use, only used for migration")
     val uiBaseLayout: BaseLayout = BaseLayout.PullDown,
-    val uiOrientation: ScreenOrientation = ScreenOrientation.Auto,
+    val uiOrientation: ScreenOrientation = ScreenOrientation.Portrait,
 
     val wallpaperDim: Boolean = false,
     val wallpaperBlur: Boolean = true,
@@ -64,8 +64,9 @@ data class LauncherSettingsData internal constructor(
     val homeScreenDock: Boolean = true,
     val homeScreenDockRows: Int = 1,
     val homeScreenWidgets: Boolean = false,
+    val homeScreenWidgetPagesEnabled: Boolean = true,
 
-    val favoritesEnabled: Boolean = true,
+    val favoritesEnabled: Boolean = false,
     val favoritesFrequentlyUsed: Boolean = false,
     val favoritesFrequentlyUsedRows: Int = 1,
     val favoritesEditButton: Boolean = true,
@@ -96,6 +97,43 @@ data class LauncherSettingsData internal constructor(
     val focusSleepStartMinutes: Int = 22 * 60,
     val focusSleepEndMinutes: Int = 7 * 60,
     val focusProductivityTimeEnabled: Boolean = false,
+    val focusProductivityWindows: List<FocusProductivityWindow> = listOf(
+        FocusProductivityWindow(
+            startMinutes = 5 * 60,
+            endMinutes = 9 * 60,
+        )
+    ),
+    val focusDailyScheduleEnabled: Boolean = false,
+    val focusDailyScheduleCalendarId: String? = null,
+    val focusScheduleDockMappings: List<ScheduleDockMapping> = emptyList(),
+    val focusHabitsEnabled: Boolean = false,
+    val focusHabits: List<FocusHabit> = emptyList(),
+    val focusUpcomingEventsCalendarIds: Set<String> = emptySet(),
+    val focusStartRitualEnabled: Boolean = true,
+    val focusMicroStepPromptEnabled: Boolean = true,
+    val focusRecoveryEnabled: Boolean = true,
+    val focusRecoveryResumeTimeoutMinutes: Int = 30,
+    val focusRecoveryFollowsCurrentBlockEnabled: Boolean = true,
+    val focusTransitionWarningsEnabled: Boolean = true,
+    val focusTransitionWarningLeadMinutes: Int = 5,
+    val focusBlockPrepPromptsEnabled: Boolean = true,
+    val focusPrepLeadTimeMinutes: Int = 10,
+    val focusBlockAwareSessionSizingEnabled: Boolean = true,
+    val focusEscalatingFrictionEnabled: Boolean = true,
+    val focusEscalationWindowMinutes: Int = 15,
+    val focusEscalationExtraDelaySeconds: Int = 10,
+    val focusDistractingSessionCapMinutes: Int = 15,
+    val focusResetButtonEnabled: Boolean = true,
+    val focusLastResumeContext: FocusResumeContext? = null,
+    val focusBlockPlans: List<FocusBlockPlan> = emptyList(),
+    val focusAdaptiveFrictionMode: FocusAdaptiveFrictionMode = FocusAdaptiveFrictionMode.Auto,
+    val focusEnvironmentContextEnabled: Boolean = true,
+    val focusEnvironmentChargingContextEnabled: Boolean = true,
+    val focusEnvironmentExplainabilityEnabled: Boolean = true,
+    val focusReviewSuggestionsEnabled: Boolean = true,
+    val focusDismissedRecommendationKeys: Set<String> = emptySet(),
+    val focusActiveExperiment: FocusExperiment? = null,
+    val focusCompletedExperiments: List<FocusExperiment> = emptyList(),
     val focusProductivityWindow1StartMinutes: Int = 5 * 60,
     val focusProductivityWindow1EndMinutes: Int = 9 * 60,
     val focusProductivityWindow2StartMinutes: Int = 22 * 60,
@@ -397,6 +435,90 @@ enum class ScreenOrientation {
     Portrait,
     Landscape,
 }
+
+@Serializable
+data class FocusProductivityWindow(
+    val startMinutes: Int,
+    val endMinutes: Int,
+)
+
+@Serializable
+data class ScheduleDockMapping(
+    val eventName: String,
+    val appKeys: List<String>,
+)
+
+@Serializable
+data class FocusHabit(
+    val id: String,
+    val title: String,
+    val deadlineMinutes: Int,
+    val completedDates: Set<String> = emptySet(),
+)
+
+@Serializable
+data class FocusResumeContext(
+    val taskLabel: String,
+    val scheduleBlockLabel: String? = null,
+    val microStep: String? = null,
+    val appKey: String? = null,
+    val interruptedAtMillis: Long,
+)
+
+@Serializable
+enum class FocusReadinessSource {
+    Habit,
+    Prep,
+}
+
+@Serializable
+data class FocusReadinessCheck(
+    val id: String,
+    val label: String,
+    val source: FocusReadinessSource,
+)
+
+@Serializable
+data class FocusBlockPlan(
+    val date: String,
+    val normalizedBlockLabel: String,
+    val blockLabel: String,
+    val intention: String = "",
+    val tinyStep: String = "",
+    val note: String? = null,
+    val recommendedAppKeys: List<String> = emptyList(),
+    val readinessChecks: List<FocusReadinessCheck> = emptyList(),
+    val doneForBlock: Boolean = false,
+    val lastUpdatedAtMillis: Long = 0L,
+)
+
+@Serializable
+enum class FocusAdaptiveFrictionMode {
+    Auto,
+    Light,
+    Normal,
+    Strict,
+}
+
+@Serializable
+enum class FocusExperimentKind {
+    PrepLeadTime,
+    AppFriction,
+    UnlockCap,
+}
+
+@Serializable
+data class FocusExperiment(
+    val key: String,
+    val kind: FocusExperimentKind,
+    val startedAtMillis: Long,
+    val endsAtMillis: Long,
+    val title: String,
+    val summary: String,
+    val baselineValue: Int = 0,
+    val outcomeValue: Int? = null,
+    val completedAtMillis: Long? = null,
+)
 
 @Serializable
 sealed interface GestureAction {

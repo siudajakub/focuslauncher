@@ -10,6 +10,8 @@ data class FocusEventEntity(
     val appKey: String,
     val appLabel: String,
     val reason: String,
+    val eventKind: String = "unlock",
+    val scheduleBlockLabel: String? = null,
     val unlockDurationMinutes: Int,
     val usedEmergencyBypass: Boolean,
     val duringFocusSession: Boolean,

@@ -149,7 +149,7 @@ abstract class SharedLauncherActivity(
                         val searchBarColor by viewModel.searchBarColor.collectAsState()
                         val searchBarAutofocus by viewModel.autoFocusSearch.collectAsState(false)
                         val widgetsOnHomeScreen by viewModel.widgetsOnHomeScreen.collectAsState()
-                        val focusMinimalHome by viewModel.focusMinimalHome.collectAsState()
+                        val widgetPagesEnabled by viewModel.widgetPagesEnabled.collectAsState()
                         val wallpaperBlur by viewModel.wallpaperBlur.collectAsState()
                         val wallpaperBlurRadius by viewModel.wallpaperBlurRadius.collectAsState()
 
@@ -157,7 +157,7 @@ abstract class SharedLauncherActivity(
 
                         val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
 
-                        if (gestures == null || widgetsOnHomeScreen == null || focusMinimalHome == null) return@ProvideCompositionLocals
+                        if (gestures == null || widgetsOnHomeScreen == null) return@ProvideCompositionLocals
 
                         LaunchedEffect(fixedRotation) {
                             requestedOrientation = if (fixedRotation) {
@@ -289,7 +289,7 @@ abstract class SharedLauncherActivity(
                                             )
 
                                             is GestureAction.Widgets ->
-                                                if (widgetsOnHomeScreen == true) {
+                                                if (widgetsOnHomeScreen == true || widgetPagesEnabled != true) {
                                                     null
                                                 } else {
                                                     ScaffoldGesture(
@@ -341,9 +341,8 @@ abstract class SharedLauncherActivity(
 
                                     val config = ScaffoldConfiguration(
                                         homeComponent = when {
-                                            focusMinimalHome == true -> FocusHomeComponent
                                             widgetsOnHomeScreen == true -> ClockAndWidgetsHomeComponent
-                                            else -> ClockHomeComponent
+                                            else -> FocusHomeComponent
                                         },
                                         searchComponent = searchComponent,
                                         swipeUp = getScaffoldGesture(

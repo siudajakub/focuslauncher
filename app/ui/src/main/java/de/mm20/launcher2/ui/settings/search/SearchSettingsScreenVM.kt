@@ -101,31 +101,22 @@ class SearchSettingsScreenVM : ViewModel(), KoinComponent {
         searchUiSettings.setFocusProductivityTimeEnabled(enabled)
     }
 
-    val focusProductivityWindow1StartMinutes = searchUiSettings.focusProductivityWindow1StartMinutes
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    val focusProductivityWindows = searchUiSettings.focusProductivityWindows
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
-    fun setFocusProductivityWindow1StartMinutes(minutes: Int) {
-        searchUiSettings.setFocusProductivityWindow1StartMinutes(minutes)
+    fun addFocusProductivityWindow() {
+        searchUiSettings.addFocusProductivityWindow()
     }
 
-    val focusProductivityWindow1EndMinutes = searchUiSettings.focusProductivityWindow1EndMinutes
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-
-    fun setFocusProductivityWindow1EndMinutes(minutes: Int) {
-        searchUiSettings.setFocusProductivityWindow1EndMinutes(minutes)
+    fun removeFocusProductivityWindow(index: Int) {
+        searchUiSettings.removeFocusProductivityWindow(index)
     }
 
-    val focusProductivityWindow2StartMinutes = searchUiSettings.focusProductivityWindow2StartMinutes
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-
-    fun setFocusProductivityWindow2StartMinutes(minutes: Int) {
-        searchUiSettings.setFocusProductivityWindow2StartMinutes(minutes)
+    fun updateFocusProductivityWindowStart(index: Int, minutes: Int) {
+        searchUiSettings.updateFocusProductivityWindowStart(index, minutes)
     }
 
-    val focusProductivityWindow2EndMinutes = searchUiSettings.focusProductivityWindow2EndMinutes
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-
-    fun setFocusProductivityWindow2EndMinutes(minutes: Int) {
-        searchUiSettings.setFocusProductivityWindow2EndMinutes(minutes)
+    fun updateFocusProductivityWindowEnd(index: Int, minutes: Int) {
+        searchUiSettings.updateFocusProductivityWindowEnd(index, minutes)
     }
 }

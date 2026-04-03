@@ -53,8 +53,10 @@ import de.mm20.launcher2.ui.component.preferences.PreferenceScreen
 import de.mm20.launcher2.ui.component.preferences.SliderPreference
 import de.mm20.launcher2.ui.component.preferences.SwitchPreference
 import de.mm20.launcher2.ui.launcher.widgets.clock.ConfigureClockWidgetSheet
+import de.mm20.launcher2.ui.locals.LocalBackStack
 import de.mm20.launcher2.ui.locals.LocalDarkTheme
 import de.mm20.launcher2.ui.locals.LocalPreferDarkContentOverWallpaper
+import de.mm20.launcher2.ui.settings.homepanels.HomePanelsSettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -71,9 +73,7 @@ fun HomescreenSettingsScreen() {
     val dockRows by viewModel.dockRows.collectAsStateWithLifecycle(1)
     val fixedRotation by viewModel.fixedRotation.collectAsStateWithLifecycle(null)
     val widgetsOnHomeScreen by viewModel.widgetsOnHomeScreen.collectAsStateWithLifecycle(null)
-    val focusMinimalHome by viewModel.focusMinimalHome.collectAsStateWithLifecycle(true)
-    val focusCommuteMode by viewModel.focusCommuteMode.collectAsStateWithLifecycle(false)
-    val focusAtAGlance by viewModel.focusAtAGlance.collectAsStateWithLifecycle(true)
+    val widgetPagesEnabled by viewModel.widgetPagesEnabled.collectAsStateWithLifecycle(true)
     val editButton by viewModel.widgetEditButton.collectAsStateWithLifecycle(null)
     val searchBarStyle by viewModel.searchBarStyle.collectAsStateWithLifecycle(null)
     val searchBarColor by viewModel.searchBarColor.collectAsStateWithLifecycle(null)
@@ -87,6 +87,7 @@ fun HomescreenSettingsScreen() {
     val hideStatusBar by viewModel.hideStatusBar.collectAsStateWithLifecycle(null)
     val hideNavBar by viewModel.hideNavBar.collectAsStateWithLifecycle(null)
     val chargingAnimation by viewModel.chargingAnimation.collectAsStateWithLifecycle(null)
+    val backStack = LocalBackStack.current
 
     PreferenceScreen(title = stringResource(id = R.string.preference_screen_homescreen)) {
         item {
@@ -102,37 +103,12 @@ fun HomescreenSettingsScreen() {
             }
         }
         item {
-            PreferenceCategory(
-                title = stringResource(R.string.focus_home_settings_title)
-            ) {
-                SwitchPreference(
-                    title = stringResource(R.string.focus_home_preference_title),
-                    summary = stringResource(R.string.focus_home_preference_summary),
-                    value = focusMinimalHome,
-                    onValueChanged = {
-                        viewModel.setFocusMinimalHome(it)
-                    },
+            PreferenceCategory(title = stringResource(R.string.home_panels_title)) {
+                Preference(
+                    title = stringResource(R.string.home_panels_title),
+                    summary = stringResource(R.string.home_panels_summary),
+                    onClick = { backStack.add(HomePanelsSettingsRoute) }
                 )
-                AnimatedVisibility(focusMinimalHome) {
-                    Column {
-                        SwitchPreference(
-                            title = stringResource(R.string.focus_home_commute_mode_title),
-                            summary = stringResource(R.string.focus_home_commute_mode_summary),
-                            value = focusCommuteMode,
-                            onValueChanged = {
-                                viewModel.setFocusCommuteMode(it)
-                            },
-                        )
-                        SwitchPreference(
-                            title = stringResource(R.string.focus_home_at_a_glance_title),
-                            summary = stringResource(R.string.focus_home_at_a_glance_summary),
-                            value = focusAtAGlance,
-                            onValueChanged = {
-                                viewModel.setFocusAtAGlance(it)
-                            },
-                        )
-                    }
-                }
             }
         }
         item {
@@ -182,22 +158,35 @@ fun HomescreenSettingsScreen() {
                     val widgetScreenCount by viewModel.widgetScreenCount.collectAsStateWithLifecycle(1)
 
                     Column {
-                        SliderPreference(
-                            title = stringResource(R.string.preference_widget_screen_count),
-                            value = widgetScreenCount,
-                            min = 1,
-                            max = 4,
+                        SwitchPreference(
+                            title = stringResource(R.string.preference_widget_pages_enabled),
+                            summary = stringResource(R.string.preference_widget_pages_enabled_summary),
+                            value = widgetPagesEnabled,
                             onValueChanged = {
-                                viewModel.setWidgetScreenCount(it)
+                                viewModel.setWidgetPagesEnabled(it)
                             }
                         )
 
-                        Text(
-                            text = stringResource(R.string.preference_widget_screen_count_info),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
+                        AnimatedVisibility(widgetPagesEnabled) {
+                            Column {
+                                SliderPreference(
+                                    title = stringResource(R.string.preference_widget_screen_count),
+                                    value = widgetScreenCount,
+                                    min = 1,
+                                    max = 4,
+                                    onValueChanged = {
+                                        viewModel.setWidgetScreenCount(it)
+                                    }
+                                )
+
+                                Text(
+                                    text = stringResource(R.string.preference_widget_screen_count_info),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
                     }
                 }
                 SwitchPreference(

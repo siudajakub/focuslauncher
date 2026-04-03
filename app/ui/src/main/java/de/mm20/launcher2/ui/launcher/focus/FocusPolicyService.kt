@@ -14,15 +14,28 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.ZoneId
 
 enum class FocusBlockReason {
     None,
     HardBlockWindow,
+    HabitDeadline,
     DailyBudget,
     FocusSessionLock,
     Classification,
 }
+
+data class FocusFrictionResolution(
+    val mode: FocusAdaptiveFrictionMode,
+    val profile: FocusAdaptiveFrictionProfile,
+    val baseDelaySeconds: Int,
+    val launchAttemptCount: Int,
+    val launchEscalationDelaySeconds: Int,
+    val attentionDelaySeconds: Int,
+    val resolvedDelaySeconds: Int,
+    val graceWindowActive: Boolean,
+    val driftScore: Int,
+    val signals: List<FocusAttentionSignal>,
+)
 
 data class FocusPolicyDecision(
     val appType: FocusAppType,
@@ -32,11 +45,13 @@ data class FocusPolicyDecision(
     val hardBlocked: Boolean,
     val budgetBlocked: Boolean,
     val focusSessionLocked: Boolean,
+    val habitBlocked: Boolean,
     val temporaryUnlockActive: Boolean,
-    val emergencyBypassActive: Boolean,
-    val bypassAllowed: Boolean,
     val effectiveDelaySeconds: Int,
     val blockReason: FocusBlockReason,
+    val blockingHabitTitle: String?,
+    val attentionState: FocusAttentionState,
+    val frictionResolution: FocusFrictionResolution,
 )
 
 class FocusPolicyService : KoinComponent {
@@ -54,10 +69,49 @@ class FocusPolicyService : KoinComponent {
     suspend fun evaluate(app: Application): FocusPolicyDecision {
         val profile = getProfile(app)
         val appType = focusAppClassifier.classifyNow(app.key)
-        val sessionActive = searchUiSettings.focusSessionEndsAt.first() > System.currentTimeMillis()
-        val emergencyBypassActive = searchUiSettings.focusEmergencyBypassEndsAt.first() > System.currentTimeMillis()
+        val nowMillis = System.currentTimeMillis()
+        val sessionActive = searchUiSettings.focusSessionEndsAt.first() > nowMillis
         val productivityTimeActive = isProductivityTimeActive()
         val temporaryUnlockActive = profile.hasTemporaryUnlock()
+        val defaultDelaySeconds = searchUiSettings.focusDefaultDelaySeconds.first()
+        val escalatingFrictionEnabled = searchUiSettings.focusEscalatingFrictionEnabled.first()
+        val escalationWindowMinutes = searchUiSettings.focusEscalationWindowMinutes.first()
+        val escalationExtraDelaySeconds = searchUiSettings.focusEscalationExtraDelaySeconds.first()
+        val protectionWindowMillis = escalationWindowMinutes * 60_000L
+        val recentLaunchEscalation = if (appType == FocusAppType.Distracting && escalatingFrictionEnabled) {
+            resolveLaunchEscalation(
+                launchTimestamps = historyRepository.getRecentAppLaunchTimestamps(
+                    appKey = app.key,
+                    sinceMillis = nowMillis - protectionWindowMillis,
+                ),
+                nowMillis = nowMillis,
+                windowMillis = protectionWindowMillis,
+                baseExtraDelaySeconds = escalationExtraDelaySeconds,
+            )
+        } else {
+            LaunchEscalationState(recentAttempts = 0, extraDelaySeconds = 0)
+        }
+        val attentionState = if (appType == FocusAppType.Distracting) {
+            historyRepository.getAttentionStateForApp(
+                appKey = app.key,
+                sinceMillis = nowMillis - protectionWindowMillis,
+                nowMillis = nowMillis,
+            )
+        } else {
+            FocusAttentionState.idle(
+                appKey = app.key,
+                windowStartMillis = nowMillis - protectionWindowMillis,
+                windowEndMillis = nowMillis,
+            )
+        }
+        val frictionResolution = resolveFrictionResolution(
+            mode = searchUiSettings.focusAdaptiveFrictionMode.first(),
+            baseDelaySeconds = defaultDelaySeconds,
+            escalatingFrictionEnabled = escalatingFrictionEnabled,
+            attentionState = attentionState,
+            launchAttemptCount = recentLaunchEscalation.recentAttempts,
+            launchEscalationDelaySeconds = recentLaunchEscalation.extraDelaySeconds,
+        )
         if (!shouldApplyToProfile(app)) {
             return FocusPolicyDecision(
                 appType = appType,
@@ -67,14 +121,16 @@ class FocusPolicyService : KoinComponent {
                 hardBlocked = false,
                 budgetBlocked = false,
                 focusSessionLocked = false,
+                habitBlocked = false,
                 temporaryUnlockActive = temporaryUnlockActive,
-                emergencyBypassActive = emergencyBypassActive,
-                bypassAllowed = profile.allowEmergencyBypass,
                 effectiveDelaySeconds = 0,
                 blockReason = FocusBlockReason.None,
+                blockingHabitTitle = null,
+                attentionState = attentionState,
+                frictionResolution = frictionResolution,
             )
         }
-        if (productivityTimeActive && !emergencyBypassActive && appType == FocusAppType.Distracting) {
+        if (productivityTimeActive && appType == FocusAppType.Distracting) {
             return FocusPolicyDecision(
                 appType = appType,
                 profile = profile,
@@ -83,11 +139,40 @@ class FocusPolicyService : KoinComponent {
                 hardBlocked = true,
                 budgetBlocked = false,
                 focusSessionLocked = false,
+                habitBlocked = false,
                 temporaryUnlockActive = temporaryUnlockActive,
-                emergencyBypassActive = emergencyBypassActive,
-                bypassAllowed = profile.allowEmergencyBypass,
-                effectiveDelaySeconds = 0,
+                effectiveDelaySeconds = frictionResolution.resolvedDelaySeconds.coerceAtLeast(defaultDelaySeconds),
                 blockReason = FocusBlockReason.HardBlockWindow,
+                blockingHabitTitle = null,
+                attentionState = attentionState,
+                frictionResolution = frictionResolution,
+            )
+        }
+        val habitGate = if (appType == FocusAppType.Distracting && searchUiSettings.focusHabitsEnabled.first()) {
+            resolveHabitGate(
+                habits = searchUiSettings.focusHabits.first(),
+                today = LocalDate.now(),
+                now = LocalDateTime.now(),
+            )
+        } else {
+            HabitGateState(blocked = false, overdueCount = 0)
+        }
+        if (habitGate.blocked) {
+            return FocusPolicyDecision(
+                appType = appType,
+                profile = profile,
+                requiresGate = true,
+                hiddenFromBrowse = searchUiSettings.focusHideDistractingApps.first(),
+                hardBlocked = true,
+                budgetBlocked = false,
+                focusSessionLocked = false,
+                habitBlocked = true,
+                temporaryUnlockActive = false,
+                effectiveDelaySeconds = frictionResolution.resolvedDelaySeconds.coerceAtLeast(defaultDelaySeconds),
+                blockReason = FocusBlockReason.HabitDeadline,
+                blockingHabitTitle = habitGate.primaryOverdueHabitTitle,
+                attentionState = attentionState,
+                frictionResolution = frictionResolution,
             )
         }
         if (temporaryUnlockActive) {
@@ -99,26 +184,22 @@ class FocusPolicyService : KoinComponent {
                 hardBlocked = false,
                 budgetBlocked = false,
                 focusSessionLocked = false,
+                habitBlocked = false,
                 temporaryUnlockActive = true,
-                emergencyBypassActive = emergencyBypassActive,
-                bypassAllowed = profile.allowEmergencyBypass,
                 effectiveDelaySeconds = 0,
                 blockReason = FocusBlockReason.None,
+                blockingHabitTitle = null,
+                attentionState = attentionState,
+                frictionResolution = frictionResolution,
             )
         }
-        val effectiveDelay = if (appType == FocusAppType.Distracting) {
-            searchUiSettings.focusDefaultDelaySeconds.first()
-        } else {
-            0
-        }
-
         val scheduleBlocked = false
         val budgetBlocked = false
         val sessionLocked = sessionActive && appType == FocusAppType.Distracting
-        val hardBlocked = !emergencyBypassActive && (scheduleBlocked || budgetBlocked)
+        val hardBlocked = scheduleBlocked || budgetBlocked
         val gatedByClassification = appType == FocusAppType.Distracting
-        val requiresGate = !emergencyBypassActive && (hardBlocked || sessionLocked || gatedByClassification)
-        val hiddenFromBrowse = !emergencyBypassActive &&
+        val requiresGate = hardBlocked || sessionLocked || gatedByClassification
+        val hiddenFromBrowse =
             appType == FocusAppType.Distracting &&
             searchUiSettings.focusHideDistractingApps.first()
 
@@ -129,6 +210,15 @@ class FocusPolicyService : KoinComponent {
             else -> FocusBlockReason.None
         }
 
+        val effectiveDelay = when {
+            appType != FocusAppType.Distracting -> 0
+            temporaryUnlockActive -> 0
+            hardBlocked -> frictionResolution.resolvedDelaySeconds.coerceAtLeast(defaultDelaySeconds)
+            sessionLocked -> frictionResolution.resolvedDelaySeconds
+            escalatingFrictionEnabled -> frictionResolution.resolvedDelaySeconds
+            else -> defaultDelaySeconds
+        }
+
         return FocusPolicyDecision(
             appType = appType,
             profile = profile,
@@ -137,11 +227,13 @@ class FocusPolicyService : KoinComponent {
             hardBlocked = hardBlocked,
             budgetBlocked = budgetBlocked,
             focusSessionLocked = sessionLocked,
+            habitBlocked = false,
             temporaryUnlockActive = false,
-            emergencyBypassActive = emergencyBypassActive,
-            bypassAllowed = profile.allowEmergencyBypass,
             effectiveDelaySeconds = effectiveDelay,
             blockReason = reason,
+            blockingHabitTitle = null,
+            attentionState = attentionState,
+            frictionResolution = frictionResolution,
         )
     }
 
@@ -171,17 +263,6 @@ class FocusPolicyService : KoinComponent {
         sessionRepository.endActiveSession(endedAt)
     }
 
-    suspend fun activateEmergencyBypass(reason: String, minutes: Int) {
-        val until = System.currentTimeMillis() + minutes.coerceIn(1, 60) * 60_000L
-        searchUiSettings.setFocusEmergencyBypassReason(reason)
-        searchUiSettings.setFocusEmergencyBypassEndsAt(until)
-    }
-
-    suspend fun clearEmergencyBypass() {
-        searchUiSettings.setFocusEmergencyBypassReason(null)
-        searchUiSettings.setFocusEmergencyBypassEndsAt(0L)
-    }
-
     fun getDndSettingsIntent(): android.content.Intent {
         return android.content.Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
             .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -198,15 +279,13 @@ class FocusPolicyService : KoinComponent {
     private suspend fun isProductivityTimeActive(): Boolean {
         if (!searchUiSettings.focusProductivityTimeEnabled.first()) return false
         val now = LocalDateTime.now()
-        return isWithinWindow(
-            startMinutes = searchUiSettings.focusProductivityWindow1StartMinutes.first(),
-            endMinutes = searchUiSettings.focusProductivityWindow1EndMinutes.first(),
-            now = now,
-        ) || isWithinWindow(
-            startMinutes = searchUiSettings.focusProductivityWindow2StartMinutes.first(),
-            endMinutes = searchUiSettings.focusProductivityWindow2EndMinutes.first(),
-            now = now,
-        )
+        return searchUiSettings.focusProductivityWindows.first().any { window ->
+            isWithinWindow(
+                startMinutes = window.startMinutes,
+                endMinutes = window.endMinutes,
+                now = now,
+            )
+        }
     }
 
     private fun isWithinWindow(startMinutes: Int, endMinutes: Int, now: LocalDateTime): Boolean {
@@ -216,5 +295,74 @@ class FocusPolicyService : KoinComponent {
         } else {
             current >= startMinutes || current < endMinutes
         }
+    }
+
+    private fun resolveFrictionResolution(
+        mode: FocusAdaptiveFrictionMode,
+        baseDelaySeconds: Int,
+        escalatingFrictionEnabled: Boolean,
+        attentionState: FocusAttentionState,
+        launchAttemptCount: Int,
+        launchEscalationDelaySeconds: Int,
+    ): FocusFrictionResolution {
+        if (!escalatingFrictionEnabled) {
+            val staticProfile = when (mode) {
+                FocusAdaptiveFrictionMode.Light -> FocusAdaptiveFrictionProfile.Light
+                FocusAdaptiveFrictionMode.Normal -> FocusAdaptiveFrictionProfile.Normal
+                FocusAdaptiveFrictionMode.Strict -> FocusAdaptiveFrictionProfile.Strict
+                FocusAdaptiveFrictionMode.Auto -> FocusAdaptiveFrictionProfile.Light
+            }
+            return FocusFrictionResolution(
+                mode = mode,
+                profile = staticProfile,
+                baseDelaySeconds = baseDelaySeconds,
+                launchAttemptCount = 0,
+                launchEscalationDelaySeconds = 0,
+                attentionDelaySeconds = 0,
+                resolvedDelaySeconds = when (staticProfile) {
+                    FocusAdaptiveFrictionProfile.Light -> (baseDelaySeconds / 2).coerceAtLeast(0)
+                    FocusAdaptiveFrictionProfile.Normal -> baseDelaySeconds
+                    FocusAdaptiveFrictionProfile.Strict -> baseDelaySeconds + (baseDelaySeconds / 2)
+                }.coerceIn(0, 120),
+                graceWindowActive = true,
+                driftScore = attentionState.driftScore,
+                signals = attentionState.signals,
+            )
+        }
+
+        val profile = resolveAdaptiveFrictionProfile(
+            mode = mode,
+            repeatedDistractingLaunches = attentionState.recentUnlockCount + attentionState.sameAppRepeatCount,
+            mismatchUnlocks = attentionState.mismatchUnlockCount + attentionState.missedHabitSignalCount,
+            abandonedSessions = attentionState.abandonedSessionCount,
+            launcherBounceCount = attentionState.launcherBounceCount,
+            repeatedBlockInterruptions = attentionState.repeatedBlockInterruptionCount,
+            graceWindowActive = attentionState.graceWindowActive,
+        )
+        val attentionDelaySeconds = when (profile) {
+            FocusAdaptiveFrictionProfile.Light -> (attentionState.driftScore / 2).coerceAtLeast(0)
+            FocusAdaptiveFrictionProfile.Normal -> attentionState.driftScore.coerceAtLeast(0)
+            FocusAdaptiveFrictionProfile.Strict -> (attentionState.driftScore * 2).coerceAtLeast(0)
+        }
+        val profileDelaySeconds = when (profile) {
+            FocusAdaptiveFrictionProfile.Light -> baseDelaySeconds / 2
+            FocusAdaptiveFrictionProfile.Normal -> baseDelaySeconds
+            FocusAdaptiveFrictionProfile.Strict -> baseDelaySeconds + attentionDelaySeconds
+        }
+        val resolvedDelaySeconds =
+            (profileDelaySeconds + attentionDelaySeconds + launchEscalationDelaySeconds).coerceIn(0, 120)
+
+        return FocusFrictionResolution(
+            mode = mode,
+            profile = profile,
+            baseDelaySeconds = baseDelaySeconds,
+            launchAttemptCount = launchAttemptCount,
+            launchEscalationDelaySeconds = launchEscalationDelaySeconds,
+            attentionDelaySeconds = attentionDelaySeconds,
+            resolvedDelaySeconds = resolvedDelaySeconds,
+            graceWindowActive = attentionState.graceWindowActive,
+            driftScore = attentionState.driftScore,
+            signals = attentionState.signals,
+        )
     }
 }

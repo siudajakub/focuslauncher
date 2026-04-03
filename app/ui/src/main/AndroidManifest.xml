@@ -91,7 +91,7 @@
             android:name=".launcher.focus.FocusGateActivity"
             android:excludeFromRecents="true"
             android:exported="false"
-            android:theme="@style/DialogTheme" />
+            android:theme="@style/LauncherTheme" />
 
         <activity
             android:name=".launcher.ImportThemeActivity"

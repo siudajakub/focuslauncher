@@ -402,6 +402,29 @@ class UiSettings internal constructor(
         }
     }
 
+    val widgetPagesEnabled
+        get() = launcherDataStore.data.map {
+            it.homeScreenWidgetPagesEnabled
+        }.distinctUntilChanged()
+
+    fun setWidgetPagesEnabled(enabled: Boolean) {
+        launcherDataStore.update { data ->
+            val resetGesture: (GestureAction) -> GestureAction = { action ->
+                if (!enabled && action is GestureAction.Widgets) GestureAction.NoAction else action
+            }
+            data.copy(
+                homeScreenWidgetPagesEnabled = enabled,
+                gesturesSwipeUp = resetGesture(data.gesturesSwipeUp),
+                gesturesSwipeDown = resetGesture(data.gesturesSwipeDown),
+                gesturesSwipeLeft = resetGesture(data.gesturesSwipeLeft),
+                gesturesSwipeRight = resetGesture(data.gesturesSwipeRight),
+                gesturesDoubleTap = resetGesture(data.gesturesDoubleTap),
+                gesturesLongPress = resetGesture(data.gesturesLongPress),
+                gesturesHomeButton = resetGesture(data.gesturesHomeButton),
+            )
+        }
+    }
+
     val widgetEditButton
         get() = launcherDataStore.data.map {
             it.widgetsEditButton

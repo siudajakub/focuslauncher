@@ -1,28 +1,29 @@
 package de.mm20.launcher2.ui.launcher.scaffold
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.app.AlarmManager
-import android.provider.MediaStore
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -31,32 +32,72 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewModelScope
 import androidx.core.content.getSystemService
-import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
+import de.mm20.launcher2.applications.AppRepository
 import de.mm20.launcher2.calendar.CalendarRepository
-import de.mm20.launcher2.ktx.tryStartActivity
 import de.mm20.launcher2.permissions.PermissionGroup
 import de.mm20.launcher2.permissions.PermissionsManager
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
-import de.mm20.launcher2.search.CalendarEvent
-import de.mm20.launcher2.searchable.PinnedLevel
-import de.mm20.launcher2.services.favorites.FavoritesService
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.launcher.focus.FocusHistoryRepository
-import de.mm20.launcher2.ui.launcher.focus.FocusAppClassifier
-import de.mm20.launcher2.ui.launcher.focus.FocusAppType
+import de.mm20.launcher2.ui.launcher.focus.FocusBlockPlan
+import de.mm20.launcher2.ui.launcher.focus.FocusBlockReadiness
+import de.mm20.launcher2.ui.launcher.focus.FocusBlockSetupSheet
+import de.mm20.launcher2.ui.launcher.focus.FocusEventKind
+import de.mm20.launcher2.ui.launcher.focus.FocusLogEvent
+import de.mm20.launcher2.ui.launcher.focus.FocusGuidanceState
+import de.mm20.launcher2.ui.launcher.focus.FocusGuidanceType
 import de.mm20.launcher2.ui.launcher.focus.FocusPolicyService
 import de.mm20.launcher2.ui.launcher.focus.FocusSessionRepository
-import de.mm20.launcher2.weather.WeatherRepository
+import de.mm20.launcher2.ui.launcher.focus.PrepCardState
+import de.mm20.launcher2.ui.launcher.focus.ResumeCardState
+import de.mm20.launcher2.ui.launcher.focus.TransitionWarningState
+import de.mm20.launcher2.ui.launcher.focus.findBlockPlan
+import de.mm20.launcher2.ui.launcher.focus.resolveActiveDockApps
+import de.mm20.launcher2.ui.launcher.focus.resolveBlockReadiness
+import de.mm20.launcher2.ui.launcher.focus.resolveDailyScheduleSnapshot
+import de.mm20.launcher2.ui.launcher.focus.resolveFocusGuidance
+import de.mm20.launcher2.ui.launcher.focus.HabitGateState
+import de.mm20.launcher2.ui.launcher.focus.HabitStatus
+import de.mm20.launcher2.ui.launcher.focus.DailyScheduleSnapshot
+import de.mm20.launcher2.ui.launcher.focus.resolveHabitGate
+import de.mm20.launcher2.ui.launcher.focus.resolveHabitStatuses
+import de.mm20.launcher2.ui.launcher.focus.resolvePrepCard
+import de.mm20.launcher2.ui.launcher.focus.resolveScheduleAwareResumeCard
+import de.mm20.launcher2.ui.launcher.focus.resolveTransitionWarning
+import de.mm20.launcher2.ui.launcher.focus.normalizeScheduleEventName
+import de.mm20.launcher2.ui.launcher.focus.toDailyScheduleBlock
+import de.mm20.launcher2.ui.launcher.focus.toLocalDate
+import de.mm20.launcher2.ui.launcher.search.SearchVM
 import de.mm20.launcher2.ui.launcher.search.common.list.SearchResultList
 import de.mm20.launcher2.ui.launcher.widgets.clock.ClockWidget
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.isActive
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.koin.compose.koinInject
+import java.time.LocalDate
+import java.time.ZoneId
+
+private val FocusSessionDurationOptions = listOf(5, 15, 30, 45, 60, 75, 90)
+
+private fun formatSessionDuration(minutes: Int): String {
+    val hours = minutes / 60
+    val remainder = minutes % 60
+    return when {
+        hours == 0 -> "${minutes} min"
+        remainder == 0 -> "${hours} h"
+        else -> "${hours} h ${remainder} min"
+    }
+}
 
 internal object FocusHomeComponent : ScaffoldComponent() {
     override val drawBackground: Boolean = false
@@ -70,19 +111,155 @@ internal object FocusHomeComponent : ScaffoldComponent() {
         state: LauncherScaffoldState,
     ) {
         val viewModel: FocusHomeVM = viewModel()
-        val essentials by viewModel.essentials.collectAsStateWithLifecycle(initialValue = emptyList())
-        val nextEvent by viewModel.nextEvent.collectAsStateWithLifecycle(initialValue = null)
+        val nextEvents by viewModel.nextEvents.collectAsStateWithLifecycle(initialValue = emptyList())
         val focusSessionEndsAt by viewModel.focusSessionEndsAt.collectAsStateWithLifecycle(initialValue = 0L)
         val minutesRemaining by viewModel.minutesRemaining.collectAsStateWithLifecycle(initialValue = 0)
-        val emergencyBypassActive by viewModel.emergencyBypassActive.collectAsStateWithLifecycle(initialValue = false)
-        val commuteModeEnabled by viewModel.commuteModeEnabled.collectAsStateWithLifecycle(initialValue = false)
-        val atAGlanceEnabled by viewModel.atAGlanceEnabled.collectAsStateWithLifecycle(initialValue = true)
-        val atAGlance by viewModel.atAGlance.collectAsStateWithLifecycle(initialValue = FocusAtAGlance())
+        val defaultSessionMinutes by viewModel.defaultSessionMinutes.collectAsStateWithLifecycle(initialValue = 15)
+        val nextAlarm by viewModel.nextAlarm.collectAsStateWithLifecycle(initialValue = null)
         val sessionSummary by viewModel.sessionSummary.collectAsStateWithLifecycle(initialValue = FocusSessionUiSummary())
+        val dailyScheduleState by viewModel.dailyScheduleState.collectAsStateWithLifecycle(
+            initialValue = DailySchedulePanelState(),
+        )
+        val transitionWarningState by viewModel.transitionWarningState.collectAsStateWithLifecycle(
+            initialValue = TransitionWarningState(show = false),
+        )
+        val showResetButton by viewModel.showResetButton.collectAsStateWithLifecycle(initialValue = false)
+        val habitState by viewModel.habitState.collectAsStateWithLifecycle(
+            initialValue = HabitPanelState(),
+        )
+        val activeDockApps by viewModel.activeDockApps.collectAsStateWithLifecycle(initialValue = emptyList())
+        val searchUiSettings: SearchUiSettings = koinInject()
+        val focusRecoveryEnabled by searchUiSettings.focusRecoveryEnabled.collectAsStateWithLifecycle(initialValue = true)
+        val focusLastResumeContext by searchUiSettings.focusLastResumeContext.collectAsStateWithLifecycle(initialValue = null)
+        val focusRecoveryResumeTimeoutMinutes by searchUiSettings.focusRecoveryResumeTimeoutMinutes.collectAsStateWithLifecycle(
+            initialValue = 30
+        )
+        val focusRecoveryFollowsCurrentBlockEnabled by searchUiSettings.focusRecoveryFollowsCurrentBlockEnabled.collectAsStateWithLifecycle(
+            initialValue = true
+        )
+        val focusBlockPlans by searchUiSettings.focusBlockPlans.collectAsStateWithLifecycle(initialValue = emptyList())
+        val focusBlockPrepPromptsEnabled by searchUiSettings.focusBlockPrepPromptsEnabled.collectAsStateWithLifecycle(
+            initialValue = true
+        )
+        val focusPrepLeadTimeMinutes by searchUiSettings.focusPrepLeadTimeMinutes.collectAsStateWithLifecycle(initialValue = 10)
+        var showCustomTimeDialog by remember { mutableStateOf(false) }
+        var showBlockSetupSheet by remember { mutableStateOf(false) }
+        val searchVM: SearchVM = viewModel()
+        val scrollState = rememberScrollState()
+        val scope = rememberCoroutineScope()
+        val lastSessionMinutes = sessionSummary.lastSessionDurationMinutes ?: defaultSessionMinutes
+        val today = remember { LocalDate.now(ZoneId.systemDefault()) }
+        val blockPlanTarget by remember(dailyScheduleState) {
+            derivedStateOf {
+                dailyScheduleState.snapshot.currentBlock ?: dailyScheduleState.snapshot.upcomingBlock
+            }
+        }
+        val currentBlockPlan by remember(blockPlanTarget, focusBlockPlans, today) {
+            derivedStateOf {
+                blockPlanTarget?.let { findBlockPlan(focusBlockPlans, today, it.label) }
+            }
+        }
+        val resumeCardState by remember(
+            focusRecoveryEnabled,
+            focusLastResumeContext,
+            focusRecoveryResumeTimeoutMinutes,
+            focusRecoveryFollowsCurrentBlockEnabled,
+            dailyScheduleState,
+        ) {
+            derivedStateOf {
+                if (!focusRecoveryEnabled) {
+                    ResumeCardState(show = false)
+                } else {
+                    resolveScheduleAwareResumeCard(
+                        lastContext = focusLastResumeContext,
+                        currentBlockLabel = dailyScheduleState.snapshot.currentBlock?.label,
+                        nowMillis = System.currentTimeMillis(),
+                        expiryMillis = focusRecoveryResumeTimeoutMinutes * 60_000L,
+                        followsCurrentBlock = focusRecoveryFollowsCurrentBlockEnabled,
+                    )
+                }
+            }
+        }
+        val prepCardState by remember(
+            dailyScheduleState,
+            focusBlockPrepPromptsEnabled,
+            focusPrepLeadTimeMinutes,
+        ) {
+            derivedStateOf {
+                if (!focusBlockPrepPromptsEnabled) {
+                    PrepCardState(show = false)
+                } else {
+                    resolvePrepCard(
+                        currentBlock = dailyScheduleState.snapshot.currentBlock,
+                        nextBlock = dailyScheduleState.snapshot.nextBlock,
+                        minutesUntilCurrentBlockEnds = dailyScheduleState.snapshot.minutesUntilCurrentBlockEnds,
+                        leadMinutes = focusPrepLeadTimeMinutes,
+                    )
+                }
+            }
+        }
+        val blockReadiness by remember(
+            currentBlockPlan,
+            habitState,
+            prepCardState,
+            dailyScheduleState,
+        ) {
+            derivedStateOf {
+                val requiresPrep = currentBlockPlan?.readinessChecks?.any {
+                    it.source == de.mm20.launcher2.preferences.FocusReadinessSource.Prep
+                } == true
+                val prepSatisfied = !requiresPrep || dailyScheduleState.snapshot.currentBlock != null || prepCardState.show
+                resolveBlockReadiness(
+                    plan = currentBlockPlan,
+                    habitsSatisfied = !habitState.gate.blocked,
+                    prepSatisfied = prepSatisfied,
+                )
+            }
+        }
+        val guidanceState by remember(
+            dailyScheduleState,
+            prepCardState,
+            resumeCardState,
+            focusLastResumeContext,
+            currentBlockPlan,
+            blockReadiness,
+            blockPlanTarget,
+        ) {
+            derivedStateOf {
+                val base = resolveFocusGuidance(
+                    currentBlock = dailyScheduleState.snapshot.currentBlock,
+                    prepState = prepCardState,
+                    resumeState = resumeCardState,
+                    blockPlan = currentBlockPlan,
+                    blockReadiness = blockReadiness,
+                    guidanceBlock = blockPlanTarget,
+                )
+                when (base.type) {
+                    FocusGuidanceType.Now -> base.copy(
+                        minutesRemaining = dailyScheduleState.snapshot.minutesUntilCurrentBlockEnds,
+                    )
+
+                    FocusGuidanceType.Prep -> {
+                        val prepMicroStep = focusLastResumeContext?.takeIf {
+                            val contextBlock = it.scheduleBlockLabel
+                            val nextBlock = prepCardState.nextBlockLabel
+                            contextBlock != null &&
+                                nextBlock != null &&
+                                normalizeScheduleEventName(contextBlock) == normalizeScheduleEventName(nextBlock)
+                        }?.microStep
+                        base.copy(suggestedMicroStep = prepMicroStep)
+                    }
+
+                    FocusGuidanceType.Ready -> base
+
+                    else -> base
+                }
+            }
+        }
 
         Column(
             modifier = modifier
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(insets)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -92,198 +269,235 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                 fillScreenHeight = false,
             )
 
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
+            FocusGuidanceCard(
+                state = guidanceState,
+                onRecoverAccepted = { viewModel.acceptResumeContext() },
+                onRecoverDismissed = { viewModel.dismissResumeContext() },
+                onOpenBlockSetup = {
+                    if (blockPlanTarget != null) {
+                        showBlockSetupSheet = true
+                    }
+                },
+            )
+            FocusDailyScheduleCard(
+                state = dailyScheduleState,
+                onOpenBlockSetup = {
+                    if (blockPlanTarget != null) {
+                        showBlockSetupSheet = true
+                    }
+                },
+            )
+            FocusTransitionWarningCard(state = transitionWarningState)
+
+            FocusScheduleDockCard(
+                currentBlock = dailyScheduleState.snapshot.currentBlock,
+                dockApps = activeDockApps,
+            )
+
+            FocusHabitCard(
+                state = habitState,
+                onHabitCheckedChanged = { habitId, completed ->
+                    viewModel.setHabitCompleted(habitId, completed)
+                },
+            )
+
+            nextAlarm?.let {
+                Text(
+                    text = stringResource(R.string.focus_home_next_alarm, it),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            }
+
+            FocusSection(
+                title = stringResource(R.string.focus_home_session_title),
+                supportingText = if (focusSessionEndsAt > System.currentTimeMillis()) {
+                    stringResource(R.string.focus_home_session_active, minutesRemaining)
+                } else {
+                    stringResource(R.string.focus_home_session_idle)
+                },
+            ) {
+                if (focusSessionEndsAt > System.currentTimeMillis() && sessionSummary.currentSessionUnlocks > 0) {
                     Text(
-                        text = stringResource(R.string.focus_home_session_title),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Text(
-                        text = if (focusSessionEndsAt > System.currentTimeMillis()) {
-                            stringResource(R.string.focus_home_session_active, minutesRemaining)
-                        } else {
-                            stringResource(R.string.focus_home_session_idle)
-                        },
+                        text = stringResource(
+                            R.string.focus_home_session_unlocks,
+                            sessionSummary.currentSessionUnlocks,
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    if (emergencyBypassActive) {
-                        Text(
-                            text = stringResource(R.string.focus_home_bypass_active),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                        )
+                } else if (focusSessionEndsAt <= System.currentTimeMillis() && sessionSummary.lastSessionDurationMinutes != null) {
+                    val lastSessionDurationMinutes = sessionSummary.lastSessionDurationMinutes ?: 0
+                    Text(
+                        text = stringResource(
+                            R.string.focus_home_last_session_summary,
+                            lastSessionDurationMinutes,
+                            sessionSummary.lastSessionUnlocks,
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (focusSessionEndsAt > System.currentTimeMillis()) {
+                    FilledTonalButton(
+                        onClick = { viewModel.endFocusSession() },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.focus_home_end_session))
                     }
-                    if (atAGlanceEnabled && (atAGlance.nextAlarm != null || atAGlance.weatherSummary != null)) {
-                        Text(
-                            text = buildString {
-                                atAGlance.nextAlarm?.let {
-                                    append(stringResource(R.string.focus_home_next_alarm, it))
-                                }
-                                if (atAGlance.nextAlarm != null && atAGlance.weatherSummary != null) append(" • ")
-                                atAGlance.weatherSummary?.let { append(it) }
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    if (focusSessionEndsAt > System.currentTimeMillis() && sessionSummary.currentSessionUnlocks > 0) {
-                        Text(
-                            text = stringResource(
-                                R.string.focus_home_session_unlocks,
-                                sessionSummary.currentSessionUnlocks,
-                            ),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else if (focusSessionEndsAt <= System.currentTimeMillis() && sessionSummary.lastSessionDurationMinutes != null) {
-                        val lastSessionDurationMinutes = sessionSummary.lastSessionDurationMinutes ?: 0
-                        Text(
-                            text = stringResource(
-                                R.string.focus_home_last_session_summary,
-                                lastSessionDurationMinutes,
-                                sessionSummary.lastSessionUnlocks,
-                            ),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (focusSessionEndsAt > System.currentTimeMillis()) {
-                            OutlinedButton(
-                                onClick = { viewModel.endFocusSession() },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(stringResource(R.string.focus_home_end_session))
-                            }
-                        } else {
-                            listOf(10, 25).forEach { minutes ->
-                                Button(
-                                    onClick = { viewModel.startFocusSession(minutes) },
-                                    modifier = Modifier.weight(1f),
-                                ) {
-                                    Text(stringResource(R.string.focus_home_start_session, minutes))
-                                }
-                            }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        FilledTonalButton(
+                            onClick = { viewModel.startFocusSession(lastSessionMinutes) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                stringResource(
+                                    R.string.focus_home_start_session_last,
+                                    formatSessionDuration(lastSessionMinutes),
+                                )
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = { showCustomTimeDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.focus_home_custom_time))
                         }
                     }
-                    if (commuteModeEnabled) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(
-                            stringResource(R.string.focus_quick_phone) to Intent(Intent.ACTION_DIAL),
-                            stringResource(R.string.focus_quick_sms) to Intent(Intent.ACTION_MAIN).apply { type = "vnd.android-dir/mms-sms" },
-                            stringResource(R.string.focus_quick_camera) to Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA),
-                            stringResource(R.string.focus_quick_maps) to Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=")),
-                            stringResource(R.string.focus_quick_calendar) to Intent(Intent.ACTION_MAIN).apply {
-                                addCategory(Intent.CATEGORY_APP_CALENDAR)
-                            },
-                        ).forEach { (label, intent) ->
-                            OutlinedButton(
-                                onClick = { viewModel.launchQuickAction(intent) },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(label)
+                }
+
+                if (showResetButton) {
+                    OutlinedButton(
+                        onClick = {
+                            searchVM.reset()
+                            viewModel.resetFocusHome()
+                            scope.launch {
+                                scrollState.scrollTo(0)
                             }
-                        }
-                    }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.focus_home_reset))
                     }
                 }
             }
 
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
+            FocusSection(
+                title = stringResource(R.string.focus_home_agenda_title),
+            ) {
+                if (nextEvents.isEmpty()) {
                     Text(
-                        text = stringResource(R.string.focus_home_essentials_title),
-                        style = MaterialTheme.typography.titleMedium,
+                        text = stringResource(R.string.focus_home_agenda_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    if (essentials.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.focus_home_essentials_empty),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else {
-                        SearchResultList(essentials)
-                    }
+                } else {
+                    SearchResultList(nextEvents)
                 }
             }
+        }
 
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.focus_home_agenda_title),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    if (nextEvent == null) {
-                        Text(
-                            text = stringResource(R.string.focus_home_agenda_empty),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else {
-                        SearchResultList(listOf(nextEvent!!))
+        if (showCustomTimeDialog) {
+            AlertDialog(
+                onDismissRequest = { showCustomTimeDialog = false },
+                title = { Text(stringResource(R.string.focus_home_custom_time_title)) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        for (minutes in FocusSessionDurationOptions) {
+                            TextButton(
+                                onClick = {
+                                    showCustomTimeDialog = false
+                                    viewModel.startFocusSession(minutes)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(formatSessionDuration(minutes))
+                            }
+                        }
                     }
-                }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(onClick = { showCustomTimeDialog = false }) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                },
+            )
+        }
+
+        blockPlanTarget?.let { targetBlock ->
+            if (showBlockSetupSheet) {
+                FocusBlockSetupSheet(
+                    expanded = true,
+                    block = targetBlock,
+                    date = today,
+                    existingPlan = currentBlockPlan,
+                    suggestedApps = activeDockApps,
+                    onDismissRequest = { showBlockSetupSheet = false },
+                    onSave = viewModel::saveBlockPlan,
+                )
             }
         }
     }
 }
 
 internal class FocusHomeVM : ViewModel(), KoinComponent {
-    private val favoritesService: FavoritesService by inject()
+    private val appRepository: AppRepository by inject()
     private val calendarRepository: CalendarRepository by inject()
-    private val customAttributesRepository: CustomAttributesRepository by inject()
     private val permissionsManager: PermissionsManager by inject()
     private val searchUiSettings: SearchUiSettings by inject()
-    private val weatherRepository: WeatherRepository by inject()
     private val context: Context by inject()
     private val historyRepository = FocusHistoryRepository()
     private val sessionRepository = FocusSessionRepository()
     private val focusPolicyService = FocusPolicyService()
-    private val focusAppClassifier = FocusAppClassifier()
-
-    private val baseEssentials = favoritesService.getFavorites(
-        excludeTypes = listOf("calendar", "tasks.org", "plugin.calendar", "tag"),
-        minPinnedLevel = PinnedLevel.AutomaticallySorted,
-        maxPinnedLevel = PinnedLevel.ManuallySorted,
-        limit = 6,
-    )
-
-    val essentials = combine(
-        baseEssentials,
-        searchUiSettings.focusSessionEndsAt,
-    ) { apps, sessionEndsAt -> apps to (sessionEndsAt > System.currentTimeMillis()) }
-        .flatMapLatest { (apps, sessionActive) ->
-            focusAppClassifier.classify(apps.map { it.key }).map { appTypes ->
-                if (!sessionActive) apps
-                else apps.filter { appTypes[it.key] == FocusAppType.Essential }
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+    private val currentTime = MutableStateFlow(System.currentTimeMillis())
 
     private val hasCalendarPermission = permissionsManager.hasPermission(PermissionGroup.Calendar)
+    private val availableCalendars = calendarRepository.getCalendars()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
-    val nextEvent = hasCalendarPermission.combine(
-        calendarRepository.findMany(
-            from = System.currentTimeMillis(),
-            to = System.currentTimeMillis() + 24 * 60 * 60 * 1000L,
-        ),
-    ) { hasPermission, events ->
-        if (!hasPermission) null
-        else events.firstOrNull { it.endTime >= System.currentTimeMillis() }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    init {
+        viewModelScope.launch {
+            while (isActive) {
+                currentTime.value = System.currentTimeMillis()
+                kotlinx.coroutines.delay(30_000)
+            }
+        }
+    }
+
+    val nextEvents = combine(
+        hasCalendarPermission,
+        calendarRepository.findMany(),
+        searchUiSettings.focusUpcomingEventsCalendarIds,
+        availableCalendars,
+    ) { hasPermission, events, selectedCalendarIds, calendars ->
+        if (!hasPermission) emptyList()
+        else {
+            val filteredEvents = if (selectedCalendarIds.isEmpty()) {
+                events
+            } else {
+                val excludedIds = calendars.filterNot { it.id in selectedCalendarIds }.map { it.id }.toSet()
+                events.filterNot { event ->
+                    val calendarId = calendars.firstOrNull { it.name == event.calendarName }?.id
+                    calendarId != null && calendarId in excludedIds
+                }
+            }
+            filteredEvents
+            .asSequence()
+            .filter { it.endTime >= System.currentTimeMillis() }
+            .sortedBy { it.startTime ?: it.endTime }
+            .take(3)
+            .toList()
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val focusSessionEndsAt = searchUiSettings.focusSessionEndsAt
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0L)
+
+    val defaultSessionMinutes = searchUiSettings.focusDefaultSessionMinutes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 15)
 
     val minutesRemaining = searchUiSettings.focusSessionEndsAt
         .map { endsAt ->
@@ -291,31 +505,15 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
 
-    val emergencyBypassActive = searchUiSettings.focusEmergencyBypassEndsAt
-        .map { it > System.currentTimeMillis() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
-
-    val commuteModeEnabled = searchUiSettings.focusCommuteModeEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
-
-    val atAGlanceEnabled = searchUiSettings.focusAtAGlanceEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
-
-    val atAGlance = combine(
-        searchUiSettings.focusAtAGlanceEnabled,
-        weatherRepository.getForecasts(limit = 1),
-    ) { enabled, forecasts ->
-        if (!enabled) {
-            FocusAtAGlance()
-        } else {
+    val nextAlarm = searchUiSettings.focusSessionEndsAt
+        .map {
             val alarmManager = context.getSystemService<AlarmManager>()
-            FocusAtAGlance(
-                nextAlarm = alarmManager?.nextAlarmClock?.triggerTime?.let { java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(it)) },
-                weatherSummary = forecasts.firstOrNull()?.temperature?.let { "${it.toInt()}°" },
-            )
+            alarmManager?.nextAlarmClock?.triggerTime?.let { triggerTime ->
+                java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT)
+                    .format(java.util.Date(triggerTime))
+            }
         }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), FocusAtAGlance())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     val sessionSummary = combine(
         sessionRepository.getLatestSession(),
@@ -341,8 +539,117 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), FocusSessionUiSummary())
 
+    private val currentDay = currentTime
+        .map { it.toLocalDate() }
+        .distinctUntilChanged()
+
+    private val selectedDailyScheduleCalendar = combine(
+        searchUiSettings.focusDailyScheduleCalendarId,
+        availableCalendars,
+    ) { calendarId, calendars ->
+        if (calendarId == null) {
+            null
+        } else {
+            calendars.firstOrNull { it.id == calendarId }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    private val dailyScheduleEvents = combine(
+        searchUiSettings.focusDailyScheduleEnabled,
+        currentDay,
+        selectedDailyScheduleCalendar,
+        availableCalendars,
+    ) { enabled, day, selectedCalendar, calendars ->
+        DailyScheduleRequest(enabled, day, selectedCalendar, calendars)
+    }.flatMapLatest { request ->
+        if (!request.enabled || request.selectedCalendar == null) {
+            flowOf(emptyList())
+        } else {
+            val zone = ZoneId.systemDefault()
+            val dayStart = request.day.atStartOfDay(zone).toInstant().toEpochMilli()
+            val dayEnd = request.day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+            val excludedCalendars = request.calendars
+                .filterNot { it.id == request.selectedCalendar.id }
+                .map { it.id }
+            calendarRepository.findMany(
+                from = dayStart,
+                to = dayEnd,
+                excludeCalendars = excludedCalendars,
+                excludeAllDayEvents = true,
+            ).map { events ->
+                events.map { it.toDailyScheduleBlock() }
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    val dailyScheduleState = combine(
+        searchUiSettings.focusDailyScheduleEnabled,
+        selectedDailyScheduleCalendar,
+        dailyScheduleEvents,
+        currentTime,
+    ) { enabled, selectedCalendar, events, nowMillis ->
+        DailySchedulePanelState(
+            enabled = enabled,
+            calendarSelected = selectedCalendar != null,
+            snapshot = resolveDailyScheduleSnapshot(events, nowMillis),
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), DailySchedulePanelState())
+
+    val transitionWarningState = combine(
+        searchUiSettings.focusTransitionWarningsEnabled,
+        searchUiSettings.focusTransitionWarningLeadMinutes,
+        dailyScheduleState,
+    ) { enabled, leadMinutes, dailySchedule ->
+        if (!enabled) {
+            TransitionWarningState(show = false)
+        } else {
+            resolveTransitionWarning(
+                minutesUntilBlockEnd = dailySchedule.snapshot.minutesUntilCurrentBlockEnds,
+                nextBlockLabel = dailySchedule.snapshot.nextBlock?.label,
+                leadMinutes = leadMinutes,
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TransitionWarningState(show = false))
+
+    val habitState = combine(
+        searchUiSettings.focusHabitsEnabled,
+        searchUiSettings.focusHabits,
+        currentTime,
+    ) { enabled, habits, nowMillis ->
+        val now = java.time.Instant.ofEpochMilli(nowMillis).atZone(java.time.ZoneId.systemDefault())
+        HabitPanelState(
+            enabled = enabled,
+            habits = if (!enabled) emptyList() else resolveHabitStatuses(
+                habits = habits,
+                today = now.toLocalDate(),
+                now = now.toLocalDateTime(),
+            ),
+            gate = if (!enabled) HabitGateState(blocked = false, overdueCount = 0) else resolveHabitGate(
+                habits = habits,
+                today = now.toLocalDate(),
+                now = now.toLocalDateTime(),
+            ),
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), HabitPanelState())
+
+    val activeDockApps = combine(
+        dailyScheduleState,
+        searchUiSettings.focusScheduleDockMappings,
+        appRepository.findMany(),
+    ) { scheduleState, mappings, apps ->
+        resolveActiveDockApps(
+            currentBlock = scheduleState.snapshot.currentBlock,
+            mappings = mappings,
+            apps = apps,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    val showResetButton = searchUiSettings.focusResetButtonEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
+
     fun startFocusSession(minutes: Int) {
         viewModelScope.launch {
+            searchUiSettings.setFocusLastResumeContext(null)
             focusPolicyService.beginFocusSession(context, minutes)
         }
     }
@@ -353,18 +660,82 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
         }
     }
 
-    fun launchQuickAction(intent: Intent) {
-        context.tryStartActivity(intent)
+    fun setHabitCompleted(id: String, completed: Boolean) {
+        val today = java.time.Instant.ofEpochMilli(currentTime.value)
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate()
+            .toString()
+        searchUiSettings.setFocusHabitCompleted(id, today, completed)
+    }
+
+    fun clearResumeContext() {
+        searchUiSettings.setFocusLastResumeContext(null)
+    }
+
+    fun resetFocusHome() {
+        searchUiSettings.setFocusLastResumeContext(null)
+    }
+
+    fun acceptResumeContext() {
+        viewModelScope.launch {
+            val context = searchUiSettings.focusLastResumeContext.first() ?: return@launch
+            historyRepository.logEvent(
+                FocusLogEvent(
+                    appKey = context.appKey ?: return@launch,
+                    appLabel = context.taskLabel,
+                    reason = "",
+                    eventKind = FocusEventKind.ResumeAccepted.value,
+                    scheduleBlockLabel = context.scheduleBlockLabel,
+                    microStep = context.microStep,
+                    unlockDurationMinutes = 0,
+                    usedEmergencyBypass = false,
+                    duringFocusSession = false,
+                    budgetBlocked = false,
+                    scheduleBlocked = false,
+                    effectiveDelaySeconds = 0,
+                )
+            )
+            searchUiSettings.setFocusLastResumeContext(null)
+        }
+    }
+
+    fun dismissResumeContext() {
+        viewModelScope.launch {
+            val context = searchUiSettings.focusLastResumeContext.first() ?: return@launch
+            historyRepository.logEvent(
+                FocusLogEvent(
+                    appKey = context.appKey ?: return@launch,
+                    appLabel = context.taskLabel,
+                    reason = "",
+                    eventKind = FocusEventKind.ResumeDismissed.value,
+                    scheduleBlockLabel = context.scheduleBlockLabel,
+                    microStep = context.microStep,
+                    unlockDurationMinutes = 0,
+                    usedEmergencyBypass = false,
+                    duringFocusSession = false,
+                    budgetBlocked = false,
+                    scheduleBlocked = false,
+                    effectiveDelaySeconds = 0,
+                )
+            )
+            searchUiSettings.setFocusLastResumeContext(null)
+        }
+    }
+
+    fun saveBlockPlan(plan: FocusBlockPlan) {
+        searchUiSettings.upsertFocusBlockPlan(plan)
     }
 }
-
-data class FocusAtAGlance(
-    val nextAlarm: String? = null,
-    val weatherSummary: String? = null,
-)
 
 data class FocusSessionUiSummary(
     val currentSessionUnlocks: Int = 0,
     val lastSessionDurationMinutes: Int? = null,
     val lastSessionUnlocks: Int = 0,
+)
+
+private data class DailyScheduleRequest(
+    val enabled: Boolean,
+    val day: LocalDate,
+    val selectedCalendar: de.mm20.launcher2.calendar.providers.CalendarList?,
+    val calendars: List<de.mm20.launcher2.calendar.providers.CalendarList>,
 )

@@ -170,7 +170,7 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
             ActivityOptionsCompat.makeBasic()
         }
         val bundle = options.toBundle()
-        if (focusLaunchCoordinator.launch(searchable, context, bundle)) {
+        if (focusLaunchCoordinator.launch(searchable, context, bundle, bounds)) {
             return true
         }
         return false

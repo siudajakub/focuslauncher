@@ -39,6 +39,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import de.mm20.launcher2.ui.ktx.toPixels
 import de.mm20.launcher2.ui.overlays.Overlay
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 
 @Composable
 fun DismissableBottomSheet(
@@ -105,6 +107,16 @@ fun <T> DismissableBottomSheet(
             val focusManager = LocalFocusManager.current
             LaunchedEffect(Unit) {
                 focusManager.clearFocus(true)
+            }
+            var scrimDismissEnabled by remember { mutableStateOf(false) }
+            LaunchedEffect(expandedTarget) {
+                if (expandedTarget) {
+                    scrimDismissEnabled = false
+                    delay(250)
+                    scrimDismissEnabled = true
+                } else {
+                    scrimDismissEnabled = false
+                }
             }
 
             val backProgress = remember { Animatable(0f) }
@@ -154,7 +166,9 @@ fun <T> DismissableBottomSheet(
                         .fillMaxSize()
                         .pointerInput(Unit) {
                             detectTapGestures {
-                                onDismissRequest()
+                                if (scrimDismissEnabled) {
+                                    onDismissRequest()
+                                }
                             }
                         }
                 )

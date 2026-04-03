@@ -15,6 +15,7 @@ import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.searchable.SavableSearchableRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -34,7 +35,10 @@ class GestureSettingsScreenVM : ViewModel(), KoinComponent {
     val hasPermission = permissionsManager.hasPermission(PermissionGroup.Accessibility)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
-    val allowWidgetGesture = uiSettings.homeScreenWidgets.map { it == false }
+    val allowWidgetGesture = uiSettings.homeScreenWidgets
+        .combine(uiSettings.widgetPagesEnabled) { widgetsOnHome, widgetPagesEnabled ->
+            widgetsOnHome == false && widgetPagesEnabled
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     val widgetScreenCount = uiSettings.widgetScreenCount

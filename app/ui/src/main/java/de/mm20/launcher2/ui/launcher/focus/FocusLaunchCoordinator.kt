@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.compose.ui.unit.IntRect
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.search.AppShortcut
 import de.mm20.launcher2.search.Application
@@ -19,7 +20,12 @@ class FocusLaunchCoordinator : KoinComponent {
     private val searchUiSettings: SearchUiSettings by inject()
     private val focusPolicyService = FocusPolicyService()
 
-    fun launch(searchable: SavableSearchable, context: Context, options: Bundle? = null): Boolean {
+    fun launch(
+        searchable: SavableSearchable,
+        context: Context,
+        options: Bundle? = null,
+        launchBounds: IntRect? = null,
+    ): Boolean {
         if (searchable !is Application) {
             return launchDirect(searchable, context, options)
         }
@@ -37,7 +43,7 @@ class FocusLaunchCoordinator : KoinComponent {
         }
         favoritesService.upsert(searchable)
 
-        val intent = FocusGateActivity.intent(context, searchable)
+        val intent = FocusGateActivity.intent(context, searchable, launchBounds)
         if (context !is Activity) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }

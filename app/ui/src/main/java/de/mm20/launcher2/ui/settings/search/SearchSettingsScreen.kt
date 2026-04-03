@@ -1,10 +1,22 @@
 package de.mm20.launcher2.ui.settings.search
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimeInput
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -21,23 +33,65 @@ import de.mm20.launcher2.ui.component.preferences.SwitchPreference
 import de.mm20.launcher2.ui.locals.LocalBackStack
 import de.mm20.launcher2.ui.settings.focusreport.FocusReportSettingsRoute
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsRoute
+import de.mm20.launcher2.ui.settings.focussupport.FocusSupportSettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
 data object SearchSettingsRoute : NavKey
 
-private fun focusTimeOptions(): List<Pair<String, Int>> {
-    return buildList {
-        for (minutes in 0 until 24 * 60 step 30) {
-            add(formatFocusTime(minutes) to minutes)
-        }
-    }
-}
-
 private fun formatFocusTime(totalMinutes: Int): String {
     val hours = totalMinutes / 60
     val minutes = totalMinutes % 60
     return "%02d:%02d".format(hours, minutes)
+}
+
+private enum class ProductivityWindowField {
+    Start,
+    End,
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProductivityTimePickerDialog(
+    title: String,
+    initialMinutes: Int,
+    onDismiss: () -> Unit,
+    onTimeSelected: (Int) -> Unit,
+) {
+    val state = rememberTimePickerState(
+        initialHour = initialMinutes / 60,
+        initialMinute = initialMinutes % 60,
+        is24Hour = true,
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.focus_settings_productivity_window_dialog_summary),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TimeInput(state = state)
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onTimeSelected(state.hour * 60 + state.minute)
+                }
+            ) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -59,22 +113,13 @@ fun SearchSettingsScreen() {
     val focusDefaultSessionMinutes by viewModel.focusDefaultSessionMinutes.collectAsStateWithLifecycle(null)
     val focusEnableDnd by viewModel.focusEnableDnd.collectAsStateWithLifecycle(null)
     val focusProductivityTimeEnabled by viewModel.focusProductivityTimeEnabled.collectAsStateWithLifecycle(null)
-    val focusProductivityWindow1StartMinutes by viewModel.focusProductivityWindow1StartMinutes.collectAsStateWithLifecycle(null)
-    val focusProductivityWindow1EndMinutes by viewModel.focusProductivityWindow1EndMinutes.collectAsStateWithLifecycle(null)
-    val focusProductivityWindow2StartMinutes by viewModel.focusProductivityWindow2StartMinutes.collectAsStateWithLifecycle(null)
-    val focusProductivityWindow2EndMinutes by viewModel.focusProductivityWindow2EndMinutes.collectAsStateWithLifecycle(null)
-    val productivityTimeOptions = focusTimeOptions()
+    val focusProductivityWindows by viewModel.focusProductivityWindows.collectAsStateWithLifecycle(initialValue = emptyList())
+    var editingWindowIndex by remember { mutableIntStateOf(-1) }
+    var editingWindowField by remember { mutableStateOf<ProductivityWindowField?>(null) }
 
     PreferenceScreen(title = stringResource(R.string.focus_settings_section_title)) {
         item {
-            PreferenceCategory(
-                title = stringResource(R.string.focus_settings_section_title)
-            ) {
-                SmallMessage(
-                    modifier = Modifier.padding(bottom = 12.dp),
-                    icon = R.drawable.apps_24px,
-                    text = stringResource(R.string.search_apps_only_message),
-                )
+            PreferenceCategory(title = stringResource(R.string.focus_settings_section_title)) {
                 SwitchPreference(
                     title = stringResource(R.string.focus_settings_mode_enabled),
                     summary = stringResource(R.string.focus_settings_mode_enabled_summary),
@@ -84,108 +129,137 @@ fun SearchSettingsScreen() {
                         viewModel.setFocusModeEnabled(it)
                     },
                 )
-                AnimatedVisibility(focusModeEnabled == true) {
-                    Column {
-                        SwitchPreference(
-                            title = stringResource(R.string.focus_settings_hide_distracting),
-                            summary = stringResource(R.string.focus_settings_hide_distracting_summary),
-                            icon = R.drawable.visibility_off_24px,
-                            value = focusHideDistractingApps == true,
-                            onValueChanged = {
-                                viewModel.setFocusHideDistractingApps(it)
-                            },
-                        )
+                SmallMessage(
+                    modifier = Modifier.padding(bottom = 12.dp),
+                    icon = R.drawable.apps_24px,
+                    text = stringResource(R.string.search_apps_only_message),
+                )
+                Preference(
+                    title = stringResource(R.string.focus_apps_title),
+                    summary = stringResource(R.string.focus_apps_summary),
+                    icon = R.drawable.apps_24px,
+                    onClick = {
+                        backStack.add(FocusAppsSettingsRoute)
+                    }
+                )
+                Preference(
+                    title = stringResource(R.string.focus_support_title),
+                    summary = stringResource(R.string.focus_support_summary),
+                    icon = R.drawable.emoji_objects_24px,
+                    onClick = {
+                        backStack.add(FocusSupportSettingsRoute)
+                    }
+                )
+                Preference(
+                    title = stringResource(R.string.focus_report_title),
+                    summary = stringResource(R.string.focus_report_summary),
+                    icon = R.drawable.query_stats_24px,
+                    onClick = {
+                        backStack.add(FocusReportSettingsRoute)
+                    }
+                )
+            }
+        }
+        item {
+            AnimatedVisibility(focusModeEnabled == true) {
+                PreferenceCategory(title = stringResource(R.string.preference_category_advanced)) {
+                    SwitchPreference(
+                        title = stringResource(R.string.focus_settings_hide_distracting),
+                        summary = stringResource(R.string.focus_settings_hide_distracting_summary),
+                        icon = R.drawable.visibility_off_24px,
+                        value = focusHideDistractingApps == true,
+                        onValueChanged = {
+                            viewModel.setFocusHideDistractingApps(it)
+                        },
+                    )
+                    ListPreference(
+                        title = stringResource(R.string.focus_settings_delay_global_title),
+                        items = (0..15).map { "${it}s" to it },
+                        value = focusDefaultDelaySeconds,
+                        onValueChanged = {
+                            if (it != null) viewModel.setFocusDefaultDelaySeconds(it)
+                        },
+                        icon = R.drawable.timer_24px,
+                    )
+                    ListPreference(
+                        title = stringResource(R.string.focus_settings_session_global_title),
+                        items = listOf(5, 10, 15, 20, 25, 30, 45, 60).map { "${it} min" to it },
+                        value = focusDefaultSessionMinutes,
+                        onValueChanged = {
+                            if (it != null) viewModel.setFocusDefaultSessionMinutes(it)
+                        },
+                        icon = R.drawable.schedule_24px,
+                    )
+                    SwitchPreference(
+                        title = stringResource(R.string.focus_settings_enable_dnd),
+                        summary = stringResource(R.string.focus_settings_enable_dnd_summary),
+                        icon = R.drawable.notifications_24px,
+                        value = focusEnableDnd == true,
+                        onValueChanged = {
+                            viewModel.setFocusEnableDnd(it)
+                        },
+                    )
+                    SwitchPreference(
+                        title = stringResource(R.string.focus_settings_productivity_time),
+                        summary = stringResource(R.string.focus_settings_productivity_time_summary),
+                        icon = R.drawable.timer_24px,
+                        value = focusProductivityTimeEnabled == true,
+                        onValueChanged = {
+                            viewModel.setFocusProductivityTimeEnabled(it)
+                        },
+                    )
+                }
+            }
+        }
+        item {
+            AnimatedVisibility(focusModeEnabled == true && focusProductivityTimeEnabled == true) {
+                PreferenceCategory(title = stringResource(R.string.focus_settings_productivity_windows_title)) {
+                    focusProductivityWindows.forEachIndexed { index, window ->
                         Preference(
-                            title = stringResource(R.string.focus_apps_title),
-                            summary = stringResource(R.string.focus_apps_summary),
-                            icon = R.drawable.apps_24px,
-                            onClick = {
-                                backStack.add(FocusAppsSettingsRoute)
-                            }
-                        )
-                        ListPreference(
-                            title = stringResource(R.string.focus_settings_delay_global_title),
-                            items = (0..15).map { "${it}s" to it },
-                            value = focusDefaultDelaySeconds,
-                            onValueChanged = {
-                                if (it != null) viewModel.setFocusDefaultDelaySeconds(it)
-                            },
-                            icon = R.drawable.timer_24px,
-                        )
-                        ListPreference(
-                            title = stringResource(R.string.focus_settings_session_global_title),
-                            items = listOf(5, 10, 15, 20, 25, 30, 45, 60).map { "${it} min" to it },
-                            value = focusDefaultSessionMinutes,
-                            onValueChanged = {
-                                if (it != null) viewModel.setFocusDefaultSessionMinutes(it)
-                            },
+                            title = stringResource(
+                                R.string.focus_settings_productivity_window_title,
+                                index + 1,
+                            ),
+                            summary = "${formatFocusTime(window.startMinutes)} - ${formatFocusTime(window.endMinutes)}",
                             icon = R.drawable.schedule_24px,
-                        )
-                        SwitchPreference(
-                            title = stringResource(R.string.focus_settings_enable_dnd),
-                            summary = stringResource(R.string.focus_settings_enable_dnd_summary),
-                            icon = R.drawable.notifications_24px,
-                            value = focusEnableDnd == true,
-                            onValueChanged = {
-                                viewModel.setFocusEnableDnd(it)
-                            },
-                        )
-                        SwitchPreference(
-                            title = stringResource(R.string.focus_settings_productivity_time),
-                            summary = stringResource(R.string.focus_settings_productivity_time_summary),
-                            icon = R.drawable.timer_24px,
-                            value = focusProductivityTimeEnabled == true,
-                            onValueChanged = {
-                                viewModel.setFocusProductivityTimeEnabled(it)
-                            },
-                        )
-                        AnimatedVisibility(focusProductivityTimeEnabled == true) {
-                            Column {
-                                ListPreference(
-                                    title = stringResource(R.string.focus_settings_productivity_window_1_start),
-                                    items = productivityTimeOptions,
-                                    value = focusProductivityWindow1StartMinutes,
-                                    onValueChanged = {
-                                        if (it != null) viewModel.setFocusProductivityWindow1StartMinutes(it)
-                                    },
-                                    icon = R.drawable.schedule_24px,
-                                )
-                                ListPreference(
-                                    title = stringResource(R.string.focus_settings_productivity_window_1_end),
-                                    items = productivityTimeOptions,
-                                    value = focusProductivityWindow1EndMinutes,
-                                    onValueChanged = {
-                                        if (it != null) viewModel.setFocusProductivityWindow1EndMinutes(it)
-                                    },
-                                    icon = R.drawable.schedule_24px,
-                                )
-                                ListPreference(
-                                    title = stringResource(R.string.focus_settings_productivity_window_2_start),
-                                    items = productivityTimeOptions,
-                                    value = focusProductivityWindow2StartMinutes,
-                                    onValueChanged = {
-                                        if (it != null) viewModel.setFocusProductivityWindow2StartMinutes(it)
-                                    },
-                                    icon = R.drawable.schedule_24px,
-                                )
-                                ListPreference(
-                                    title = stringResource(R.string.focus_settings_productivity_window_2_end),
-                                    items = productivityTimeOptions,
-                                    value = focusProductivityWindow2EndMinutes,
-                                    onValueChanged = {
-                                        if (it != null) viewModel.setFocusProductivityWindow2EndMinutes(it)
-                                    },
-                                    icon = R.drawable.schedule_24px,
-                                )
-                            }
-                        }
-                        Preference(
-                            title = stringResource(R.string.focus_report_title),
-                            summary = stringResource(R.string.focus_report_summary),
-                            icon = R.drawable.query_stats_24px,
                             onClick = {
-                                backStack.add(FocusReportSettingsRoute)
-                            }
+                                editingWindowIndex = index
+                                editingWindowField = ProductivityWindowField.Start
+                            },
+                        )
+                        Preference(
+                            title = stringResource(R.string.focus_settings_productivity_window_start),
+                            summary = formatFocusTime(window.startMinutes),
+                            icon = R.drawable.schedule_24px,
+                            onClick = {
+                                editingWindowIndex = index
+                                editingWindowField = ProductivityWindowField.Start
+                            },
+                        )
+                        Preference(
+                            title = stringResource(R.string.focus_settings_productivity_window_end),
+                            summary = formatFocusTime(window.endMinutes),
+                            icon = R.drawable.schedule_24px,
+                            onClick = {
+                                editingWindowIndex = index
+                                editingWindowField = ProductivityWindowField.End
+                            },
+                        )
+                        if (focusProductivityWindows.size > 1) {
+                            Preference(
+                                title = stringResource(R.string.focus_settings_productivity_remove_window),
+                                icon = R.drawable.delete_24px,
+                                onClick = { viewModel.removeFocusProductivityWindow(index) },
+                            )
+                        }
+                    }
+
+                    if (focusProductivityWindows.size < 3) {
+                        Preference(
+                            title = stringResource(R.string.focus_settings_productivity_add_window),
+                            summary = stringResource(R.string.focus_settings_productivity_add_window_summary),
+                            icon = R.drawable.add_24px,
+                            onClick = { viewModel.addFocusProductivityWindow() },
                         )
                     }
                 }
@@ -243,6 +317,36 @@ fun SearchSettingsScreen() {
                 )
             }
         }
+    }
+
+    val activeWindow = focusProductivityWindows.getOrNull(editingWindowIndex)
+    val initialMinutes = when (editingWindowField) {
+        ProductivityWindowField.Start -> activeWindow?.startMinutes
+        ProductivityWindowField.End -> activeWindow?.endMinutes
+        null -> null
+    }
+    if (initialMinutes != null && editingWindowField != null && editingWindowIndex >= 0) {
+        ProductivityTimePickerDialog(
+            title = when (editingWindowField) {
+                ProductivityWindowField.Start -> stringResource(R.string.focus_settings_productivity_window_start)
+                ProductivityWindowField.End -> stringResource(R.string.focus_settings_productivity_window_end)
+                null -> ""
+            },
+            initialMinutes = initialMinutes,
+            onDismiss = {
+                editingWindowIndex = -1
+                editingWindowField = null
+            },
+            onTimeSelected = { minutes ->
+                when (editingWindowField) {
+                    ProductivityWindowField.Start -> viewModel.updateFocusProductivityWindowStart(editingWindowIndex, minutes)
+                    ProductivityWindowField.End -> viewModel.updateFocusProductivityWindowEnd(editingWindowIndex, minutes)
+                    null -> Unit
+                }
+                editingWindowIndex = -1
+                editingWindowField = null
+            },
+        )
     }
 
 }

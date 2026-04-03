@@ -4,6 +4,8 @@ import android.app.Activity
 import android.app.ActivityOptions
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -882,7 +884,8 @@ fun ColumnScope.ConfigureCalendarWidget(
             }
         }
     }
-    val context = LocalLifecycleOwner.current as AppCompatActivity
+    val context = LocalContext.current
+    val activity = remember(context) { context.findAppCompatActivity() }
     val excludedCalendars = remember(widget.config) {
         widget.config.excludedCalendarIds
             ?: widget.config.legacyExcludedCalendarIds?.map { "local:$it" } ?: emptyList()
@@ -950,7 +953,11 @@ fun ColumnScope.ConfigureCalendarWidget(
         MissingPermissionBanner(
             modifier = Modifier.padding(8.dp),
             text = stringResource(R.string.missing_permission_calendar_widget_settings),
-            onClick = { permissionsManager.requestPermission(context, PermissionGroup.Calendar) },
+            onClick = {
+                activity?.let {
+                    permissionsManager.requestPermission(it, PermissionGroup.Calendar)
+                }
+            },
         )
     } else if (calendars != null) {
         Text(
@@ -989,6 +996,15 @@ fun ColumnScope.ConfigureCalendarWidget(
             Text(stringResource(R.string.widget_config_calendar_missing_calendars_hint))
         }
     }
+}
+
+private fun Context.findAppCompatActivity(): AppCompatActivity? {
+    var current = this
+    while (current is ContextWrapper) {
+        if (current is AppCompatActivity) return current
+        current = current.baseContext
+    }
+    return null
 }
 
 @Composable
