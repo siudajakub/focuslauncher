@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
+import de.mm20.launcher2.applications.AppRepository
 import de.mm20.launcher2.calendar.CalendarRepository
 import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
 import de.mm20.launcher2.data.customattrs.FocusProfile
@@ -235,12 +237,16 @@ private fun FocusGateScreen(
     val focusPolicyService = remember { FocusPolicyService() }
     val historyRepository = remember { FocusHistoryRepository() }
     val calendarRepository: CalendarRepository = koinInject()
+    val appRepository: AppRepository = koinInject()
     val iconService: IconService = koinInject()
     val searchUiSettings: SearchUiSettings = koinInject()
     val iconSizePx = 64.dp.toPixels().toInt()
     val icon by remember(app.key, iconSizePx) {
         iconService.getIcon(app, iconSizePx)
     }.collectAsState(initial = null)
+    val allApps by remember {
+        appRepository.findMany()
+    }.collectAsState(initial = emptyList())
     val focusSessionEndsAt by searchUiSettings.focusSessionEndsAt.collectAsState(initial = 0L)
     val defaultSessionMinutes by searchUiSettings.focusDefaultSessionMinutes.collectAsState(initial = 15)
     val capMinutes by searchUiSettings.focusDistractingSessionCapMinutes.collectAsState(initial = 15)
@@ -316,6 +322,16 @@ private fun FocusGateScreen(
     val currentBlockPlan = blockPlanTarget?.let {
         findBlockPlan(focusBlockPlans, LocalDate.now(ZoneId.systemDefault()), it.label)
     }
+    val actionableBlockPlan = currentBlockPlan?.takeUnless { it.doneForBlock }
+    val blockPlanSuggestedApps by remember(blockPlanTarget, focusScheduleDockMappings, allApps) {
+        derivedStateOf {
+            resolveActiveDockApps(
+                currentBlock = blockPlanTarget,
+                mappings = focusScheduleDockMappings,
+                apps = allApps,
+            )
+        }
+    }
     val prepState = resolvePrepCard(
         currentBlock = currentScheduleSnapshot.currentBlock,
         nextBlock = currentScheduleSnapshot.nextBlock,
@@ -334,13 +350,19 @@ private fun FocusGateScreen(
             contextBlockLabel != null &&
             normalizeScheduleEventName(contextBlockLabel) == normalizeScheduleEventName(currentScheduleBlockLabel)
     }?.microStep
+    val resolvedReasonPrefill = actionableBlockPlan?.intention
+        ?.takeIf { it.isNotBlank() }
+        .orEmpty()
+    val resolvedMicroStepPrefill = actionableBlockPlan?.tinyStep
+        ?.takeIf { it.isNotBlank() }
+        ?: relatedRecoveryMicroStep.orEmpty()
 
-    LaunchedEffect(currentBlockPlan?.tinyStep, currentBlockPlan?.intention) {
+    LaunchedEffect(currentBlockPlan?.tinyStep, currentBlockPlan?.intention, relatedRecoveryMicroStep) {
         if (microStep.isBlank()) {
-            microStep = currentBlockPlan?.tinyStep.orEmpty()
+            microStep = resolvedMicroStepPrefill
         }
         if (reason.isBlank()) {
-            reason = currentBlockPlan?.intention.orEmpty()
+            reason = resolvedReasonPrefill
         }
     }
     val panelGradient = remember(
@@ -395,8 +417,8 @@ private fun FocusGateScreen(
         }
 
         stage = FocusGateStage.Animation
-        reason = ""
-        microStep = ""
+        reason = resolvedReasonPrefill
+        microStep = resolvedMicroStepPrefill
         countdownSeconds = policy.effectiveDelaySeconds
         fillProgress.snapTo(0f)
 
@@ -654,6 +676,11 @@ private fun FocusGateScreen(
                                                             R.string.focus_gate_reason_placeholder_block,
                                                             currentScheduleBlockLabel,
                                                         )
+                                                    } else if (blockPlanTarget != null) {
+                                                        stringResource(
+                                                            R.string.focus_gate_reason_placeholder_block,
+                                                            blockPlanTarget.label,
+                                                        )
                                                     } else {
                                                         stringResource(R.string.focus_gate_reason_placeholder)
                                                     }
@@ -793,9 +820,13 @@ private fun FocusGateScreen(
             block = blockPlanTarget,
             date = LocalDate.now(ZoneId.systemDefault()),
             existingPlan = currentBlockPlan,
-            suggestedApps = emptyList(),
+            suggestedApps = blockPlanSuggestedApps,
             onDismissRequest = { showBlockSetupSheet = false },
-            onSave = { searchUiSettings.upsertFocusBlockPlan(it) },
+            onSave = {
+                reason = it.intention
+                microStep = it.tinyStep.takeIf { step -> step.isNotBlank() } ?: relatedRecoveryMicroStep.orEmpty()
+                searchUiSettings.upsertFocusBlockPlan(it)
+            },
         )
     }
 }

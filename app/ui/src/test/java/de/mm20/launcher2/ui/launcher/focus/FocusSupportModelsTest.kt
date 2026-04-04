@@ -134,6 +134,20 @@ class FocusSupportModelsTest {
     }
 
     @Test
+    fun `prep prompt stays hidden outside the lead window`() {
+        val prep = resolvePrepCard(
+            currentBlock = scheduleEvent("Writing", dateTime(2026, 4, 2, 10, 0), dateTime(2026, 4, 2, 11, 0)),
+            nextBlock = scheduleEvent("Admin", dateTime(2026, 4, 2, 11, 0), dateTime(2026, 4, 2, 12, 0)),
+            minutesUntilCurrentBlockEnds = 12,
+            leadMinutes = 5,
+        )
+
+        assertFalse(prep.show)
+        assertEquals("Admin", prep.nextBlockLabel)
+        assertNull(prep.minutesUntilNextBlock)
+    }
+
+    @Test
     fun `stale recovery disappears when block changes`() {
         val state = resolveScheduleAwareResumeCard(
             lastContext = FocusResumeContext(
@@ -152,6 +166,41 @@ class FocusSupportModelsTest {
     }
 
     @Test
+    fun `recovery stays visible when matching block is resumed and expires after timeout`() {
+        val matching = resolveScheduleAwareResumeCard(
+            lastContext = FocusResumeContext(
+                taskLabel = "Gmail",
+                scheduleBlockLabel = "Writing",
+                microStep = "Reply",
+                interruptedAtMillis = 100_000L,
+            ),
+            currentBlockLabel = " writing ",
+            nowMillis = 120_000L,
+            expiryMillis = 60_000L,
+            followsCurrentBlock = true,
+        )
+
+        assertTrue(matching.show)
+        assertEquals(" writing ", matching.taskLabel)
+        assertEquals("Reply", matching.microStep)
+
+        val expired = resolveScheduleAwareResumeCard(
+            lastContext = FocusResumeContext(
+                taskLabel = "Gmail",
+                scheduleBlockLabel = "Writing",
+                microStep = "Reply",
+                interruptedAtMillis = 100_000L,
+            ),
+            currentBlockLabel = "Writing",
+            nowMillis = 200_001L,
+            expiryMillis = 100_000L,
+            followsCurrentBlock = true,
+        )
+
+        assertFalse(expired.show)
+    }
+
+    @Test
     fun `current block guidance prioritizes recovery over prep and now`() {
         val guidance = resolveFocusGuidance(
             currentBlock = scheduleEvent("Writing", dateTime(2026, 4, 2, 10, 0), dateTime(2026, 4, 2, 11, 0)),
@@ -161,6 +210,25 @@ class FocusSupportModelsTest {
 
         assertEquals(FocusGuidanceType.Recover, guidance.type)
         assertEquals("Writing", guidance.blockLabel)
+    }
+
+    @Test
+    fun `prep guidance outranks ready and now`() {
+        val guidance = resolveFocusGuidance(
+            currentBlock = scheduleEvent("Writing", dateTime(2026, 4, 2, 10, 0), dateTime(2026, 4, 2, 11, 0)),
+            prepState = PrepCardState(show = true, nextBlockLabel = "Admin", minutesUntilNextBlock = 4),
+            resumeState = ResumeCardState(show = false),
+            blockPlan = FocusBlockPlan(
+                date = "2026-04-02",
+                normalizedBlockLabel = "writing",
+                blockLabel = "Writing",
+                tinyStep = "Open the draft",
+            ),
+            blockReadiness = FocusBlockReadiness.Ready,
+        )
+
+        assertEquals(FocusGuidanceType.Prep, guidance.type)
+        assertEquals("Admin", guidance.nextBlockLabel)
     }
 
     @Test
@@ -183,6 +251,29 @@ class FocusSupportModelsTest {
     }
 
     @Test
+    fun `now guidance appears when no stronger guidance exists`() {
+        val guidance = resolveFocusGuidance(
+            currentBlock = scheduleEvent("Writing", dateTime(2026, 4, 2, 10, 0), dateTime(2026, 4, 2, 11, 0)),
+            prepState = PrepCardState(show = false),
+            resumeState = ResumeCardState(show = false),
+        )
+
+        assertEquals(FocusGuidanceType.Now, guidance.type)
+        assertEquals("Writing", guidance.blockLabel)
+    }
+
+    @Test
+    fun `empty state resolves to none`() {
+        val guidance = resolveFocusGuidance(
+            currentBlock = null,
+            prepState = PrepCardState(show = false),
+            resumeState = ResumeCardState(show = false),
+        )
+
+        assertEquals(FocusGuidanceType.None, guidance.type)
+    }
+
+    @Test
     fun `block aware session length is capped by remaining block time and configured max`() {
         val minutes = resolveBlockAwareSessionMinutes(
             defaultMinutes = 30,
@@ -192,6 +283,30 @@ class FocusSupportModelsTest {
         )
 
         assertEquals(12, minutes)
+    }
+
+    @Test
+    fun `block aware session length respects configured max when block remains longer`() {
+        val minutes = resolveBlockAwareSessionMinutes(
+            defaultMinutes = 30,
+            capMinutes = 15,
+            minutesUntilCurrentBlockEnds = 40,
+            enabled = true,
+        )
+
+        assertEquals(15, minutes)
+    }
+
+    @Test
+    fun `block aware session length falls back to capped default when disabled`() {
+        val minutes = resolveBlockAwareSessionMinutes(
+            defaultMinutes = 30,
+            capMinutes = 15,
+            minutesUntilCurrentBlockEnds = 2,
+            enabled = false,
+        )
+
+        assertEquals(15, minutes)
     }
 
     private fun dateTime(year: Int, month: Int, day: Int, hour: Int, minute: Int): LocalDateTime {

@@ -128,6 +128,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
             initialValue = HabitPanelState(),
         )
         val activeDockApps by viewModel.activeDockApps.collectAsStateWithLifecycle(initialValue = emptyList())
+        val blockPlanTargetApps by viewModel.blockPlanTargetApps.collectAsStateWithLifecycle(initialValue = emptyList())
         val searchUiSettings: SearchUiSettings = koinInject()
         val focusRecoveryEnabled by searchUiSettings.focusRecoveryEnabled.collectAsStateWithLifecycle(initialValue = true)
         val focusLastResumeContext by searchUiSettings.focusLastResumeContext.collectAsStateWithLifecycle(initialValue = null)
@@ -434,7 +435,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                     block = targetBlock,
                     date = today,
                     existingPlan = currentBlockPlan,
-                    suggestedApps = activeDockApps,
+                    suggestedApps = blockPlanTargetApps,
                     onDismissRequest = { showBlockSetupSheet = false },
                     onSave = viewModel::saveBlockPlan,
                 )
@@ -639,6 +640,18 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
     ) { scheduleState, mappings, apps ->
         resolveActiveDockApps(
             currentBlock = scheduleState.snapshot.currentBlock,
+            mappings = mappings,
+            apps = apps,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    val blockPlanTargetApps = combine(
+        dailyScheduleState,
+        searchUiSettings.focusScheduleDockMappings,
+        appRepository.findMany(),
+    ) { scheduleState, mappings, apps ->
+        resolveActiveDockApps(
+            currentBlock = scheduleState.snapshot.currentBlock ?: scheduleState.snapshot.upcomingBlock,
             mappings = mappings,
             apps = apps,
         )

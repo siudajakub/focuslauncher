@@ -63,7 +63,7 @@ internal fun FocusGuidanceCard(
     }
 
     val supportingText = when (state.type) {
-        FocusGuidanceType.Recover -> state.blockLabel
+        FocusGuidanceType.Recover -> null
         FocusGuidanceType.Prep -> state.nextBlockLabel?.let {
             stringResource(
                 R.string.focus_home_guidance_prep_body,
@@ -87,50 +87,56 @@ internal fun FocusGuidanceCard(
     FocusSection(
         title = title,
         supportingText = supportingText,
+        emphasis = true,
     ) {
-        state.intention?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        state.suggestedMicroStep?.let {
-            Text(
-                text = stringResource(R.string.focus_home_guidance_micro_step, it),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        FocusGuidanceDetails(state = state)
         when (state.type) {
             FocusGuidanceType.Recover -> {
-                OutlinedButton(
-                    onClick = onRecoverAccepted,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.focus_home_resume_action))
-                }
-                TextButton(
-                    onClick = onRecoverDismissed,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.focus_home_resume_dismiss))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = onRecoverAccepted,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.focus_home_resume_action))
+                    }
+                    TextButton(
+                        onClick = onRecoverDismissed,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.focus_home_resume_dismiss))
+                    }
                 }
             }
             FocusGuidanceType.Prep -> {
-                OutlinedButton(
-                    onClick = onOpenBlockSetup,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.focus_home_guidance_prep_action))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = onOpenBlockSetup,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.focus_home_guidance_prep_action))
+                    }
+                    TextButton(
+                        onClick = onOpenBlockSetup,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.focus_home_daily_schedule_setup))
+                    }
                 }
             }
             FocusGuidanceType.Ready -> {
-                OutlinedButton(
-                    onClick = onOpenBlockSetup,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.focus_home_guidance_ready_action))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = onOpenBlockSetup,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.focus_home_guidance_ready_action))
+                    }
+                    TextButton(
+                        onClick = onOpenBlockSetup,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.focus_home_daily_schedule_setup))
+                    }
                 }
             }
             FocusGuidanceType.Now,
@@ -146,13 +152,18 @@ internal fun FocusSection(
     modifier: Modifier = Modifier,
     eyebrow: String? = null,
     supportingText: String? = null,
+    emphasis: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = 2.dp,
+        color = if (emphasis) {
+            MaterialTheme.colorScheme.surfaceContainerHighest
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+        tonalElevation = if (emphasis) 4.dp else 2.dp,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
@@ -305,6 +316,36 @@ internal fun FocusTransitionWarningCard(
             state.nextBlockLabel,
         ),
     ) {}
+}
+
+@Composable
+private fun FocusGuidanceDetails(
+    state: FocusGuidanceState,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        val showBlockLabel = state.type == FocusGuidanceType.Recover
+        state.blockLabel?.takeIf { showBlockLabel && it.isNotBlank() }?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        state.intention?.takeIf { it.isNotBlank() }?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        state.suggestedMicroStep?.takeIf { it.isNotBlank() }?.let {
+            Text(
+                text = stringResource(R.string.focus_home_guidance_micro_step, it),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 @Composable

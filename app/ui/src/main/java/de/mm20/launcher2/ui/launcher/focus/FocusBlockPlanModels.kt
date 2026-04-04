@@ -21,15 +21,24 @@ fun resolveBlockPlanKey(
     return "${date}::${normalizeScheduleEventName(blockLabel)}"
 }
 
+private fun FocusBlockPlan.matches(date: LocalDate, normalizedBlockLabel: String): Boolean {
+    return this.date == date.toString() && this.normalizedBlockLabel == normalizedBlockLabel
+}
+
+private fun FocusBlockPlan.matches(date: String, normalizedBlockLabel: String): Boolean {
+    return this.date == date && this.normalizedBlockLabel == normalizedBlockLabel
+}
+
 fun findBlockPlan(
     plans: List<FocusBlockPlan>,
     date: LocalDate,
     blockLabel: String,
 ): FocusBlockPlan? {
     val normalizedLabel = normalizeScheduleEventName(blockLabel)
-    return plans.lastOrNull {
-        it.date == date.toString() && it.normalizedBlockLabel == normalizedLabel
-    }
+    return plans
+        .asSequence()
+        .filter { it.matches(date, normalizedLabel) }
+        .maxByOrNull { it.lastUpdatedAtMillis }
 }
 
 fun isBlockPlanStale(
@@ -37,7 +46,7 @@ fun isBlockPlanStale(
     date: LocalDate,
     blockLabel: String,
 ): Boolean {
-    return plan.date != date.toString() || plan.normalizedBlockLabel != normalizeScheduleEventName(blockLabel)
+    return !plan.matches(date, normalizeScheduleEventName(blockLabel))
 }
 
 fun resolveBlockReadiness(
@@ -56,7 +65,5 @@ fun upsertBlockPlan(
     plans: List<FocusBlockPlan>,
     plan: FocusBlockPlan,
 ): List<FocusBlockPlan> {
-    return plans.filterNot {
-        it.date == plan.date && it.normalizedBlockLabel == plan.normalizedBlockLabel
-    } + plan
+    return plans.filterNot { it.matches(plan.date, plan.normalizedBlockLabel) } + plan
 }

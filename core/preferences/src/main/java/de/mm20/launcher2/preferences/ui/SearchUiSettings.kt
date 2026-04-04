@@ -13,6 +13,45 @@ import kotlinx.coroutines.flow.map
 class SearchUiSettings internal constructor(
     private val launcherDataStore: LauncherDataStore,
 ) {
+    private fun focusBlockPlanKey(date: String, normalizedBlockLabel: String): String {
+        return "$date::$normalizedBlockLabel"
+    }
+
+    private fun compareFocusBlockPlans(first: FocusBlockPlan, second: FocusBlockPlan): Int {
+        return compareValuesBy(
+            first,
+            second,
+            FocusBlockPlan::lastUpdatedAtMillis,
+            FocusBlockPlan::doneForBlock,
+            FocusBlockPlan::blockLabel,
+            FocusBlockPlan::intention,
+            FocusBlockPlan::tinyStep,
+            { it.note.orEmpty() },
+        )
+    }
+
+    private fun canonicalizeFocusBlockPlans(plans: List<FocusBlockPlan>): List<FocusBlockPlan> {
+        if (plans.size <= 1) {
+            return plans
+        }
+
+        val latestByKey = linkedMapOf<String, FocusBlockPlan>()
+        plans.forEach { plan ->
+            val key = focusBlockPlanKey(plan.date, plan.normalizedBlockLabel)
+            val current = latestByKey[key]
+            if (current == null || compareFocusBlockPlans(plan, current) > 0) {
+                latestByKey[key] = plan
+            }
+        }
+
+        return latestByKey.values.sortedWith(
+            compareByDescending<FocusBlockPlan> { it.date }
+                .thenBy { it.normalizedBlockLabel }
+                .thenByDescending { it.lastUpdatedAtMillis }
+                .thenBy { it.blockLabel.lowercase() }
+        )
+    }
+
     private fun resolvedProductivityWindows(data: de.mm20.launcher2.preferences.LauncherSettingsData): List<de.mm20.launcher2.preferences.FocusProductivityWindow> {
         val windows = data.focusProductivityWindows
         if (windows.isNotEmpty()) return windows
@@ -536,29 +575,51 @@ class SearchUiSettings internal constructor(
     }
 
     val focusBlockPlans
-        get() = launcherDataStore.data.map { it.focusBlockPlans }.distinctUntilChanged()
+        get() = launcherDataStore.data.map { canonicalizeFocusBlockPlans(it.focusBlockPlans) }.distinctUntilChanged()
 
     fun setFocusBlockPlans(plans: List<FocusBlockPlan>) {
-        launcherDataStore.update { it.copy(focusBlockPlans = plans) }
+        launcherDataStore.update { it.copy(focusBlockPlans = canonicalizeFocusBlockPlans(plans)) }
     }
 
     fun upsertFocusBlockPlan(plan: FocusBlockPlan) {
         launcherDataStore.update { data ->
-            data.copy(
-                focusBlockPlans = data.focusBlockPlans
-                    .filterNot { it.date == plan.date && it.normalizedBlockLabel == plan.normalizedBlockLabel } +
-                    plan
-            )
+            val updatedPlans = data.focusBlockPlans
+                .filterNot { it.date == plan.date && it.normalizedBlockLabel == plan.normalizedBlockLabel } +
+                plan
+            data.copy(focusBlockPlans = canonicalizeFocusBlockPlans(updatedPlans))
         }
     }
 
     fun removeFocusBlockPlan(date: String, normalizedBlockLabel: String) {
         launcherDataStore.update { data ->
             data.copy(
-                focusBlockPlans = data.focusBlockPlans.filterNot {
-                    it.date == date && it.normalizedBlockLabel == normalizedBlockLabel
-                }
+                focusBlockPlans = canonicalizeFocusBlockPlans(
+                    data.focusBlockPlans.filterNot {
+                        it.date == date && it.normalizedBlockLabel == normalizedBlockLabel
+                    }
+                )
             )
+        }
+    }
+
+    fun setFocusBlockPlanDone(
+        date: String,
+        normalizedBlockLabel: String,
+        doneForBlock: Boolean,
+        updatedAtMillis: Long = System.currentTimeMillis(),
+    ) {
+        launcherDataStore.update { data ->
+            val updatedPlans = data.focusBlockPlans.map { plan ->
+                if (plan.date != date || plan.normalizedBlockLabel != normalizedBlockLabel) {
+                    plan
+                } else {
+                    plan.copy(
+                        doneForBlock = doneForBlock,
+                        lastUpdatedAtMillis = updatedAtMillis,
+                    )
+                }
+            }
+            data.copy(focusBlockPlans = canonicalizeFocusBlockPlans(updatedPlans))
         }
     }
 
