@@ -24,7 +24,6 @@
     <string name="wind_west">Δυτικός</string>
     <string name="wind_west_north_west">Δυτικός βορειοδυτικός</string>
     <string name="wind_north_west">Βορειοδυτικός</string>
-    <string name="preference_wikipedia_customurl">Wikipedia URL</string>
     <string name="file_meta_title">Τίτλος: %1$s</string>
     <string name="file_meta_artist">Καλλιτέχνης: %1$s</string>
     <string name="file_meta_duration">Διάρκεια: %1$s</string>
@@ -215,18 +214,7 @@
     <string name="preference_screen_search">Αναζήτηση</string>
     <string name="preference_search_favorites">Αγαπημένα</string>
     <string name="preference_crash_reporter_summary">Σφάλματα και αποστολή σφαλμάτων</string>
-    <string name="preference_search_calendar">Ημερολόγιο</string>
-    <string name="preference_search_calendar_summary">Αναζητήστε επερχόμενων ραντεβού και εκδηλώσεων</string>
     <string name="preference_search_appshortcuts">Συντομεύσεις εφαρμογών</string>
-    <string name="preference_search_calculator_summary">Αξιολόγηση μαθηματικών όρων</string>
-    <string name="preference_search_unitconverter">Μετατροπέας μονάδων</string>
-    <string name="preference_search_currencyconverter">Μετατροπέας νομίσματος</string>
-    <string name="preference_search_wikipedia">Wikipedia</string>
-    <string name="preference_search_websites">Ιστοσελίδες</string>
-    <string name="preference_search_nextcloud">Nextcloud</string>
-    <string name="preference_search_cloud_summary">Αναζήτηση στα αρχεία του %1$s</string>
-    <string name="preference_search_owncloud">Owncloud</string>
-    <string name="preference_calendar_calendars">Ημερολόγια</string>
     <string name="preference_search_bar_style">Στυλ</string>
     <string name="preference_screen_buildinfo">Πληροφορίες έκδοσης</string>
     <string name="preference_screen_buildinfo_summary">Περισσότερες πληροφορίες σχετικά με αυτή την έκδοση</string>
@@ -277,8 +265,6 @@
     <string name="wind_south_south_west">Νότιος νοτιοδυτικός</string>
     <string name="wind_west_south_west">Δυτικός νοτιοδυτικός</string>
     <string name="wind_north_north_west">Βόρειος βορειοδυτικός</string>
-    <string name="wikipedia_url">https://el.wikipedia.org</string>
-    <string name="wikipedia_source">Από τη Wikipedia</string>
     <string name="disclaimer_currency_converter">Συναλλαγματικές ισοτιμίες όπως δημοσιεύονται μία φορά την ημέρα από την Ευρωπαϊκή Κεντρική Τράπεζα. Όλες οι πληροφορίες παρέχονται «ως έχουν» χωρίς κανενός είδους εγγύηση. Δεν αναλαμβάνεται καμία ευθύνη για αυτές τις πληροφορίες.
 \n
 \nΤελευταία ενημέρωση: %1$s</string>
@@ -362,19 +348,15 @@
     <string name="preference_search_favorites_summary">Εμφάνιση καρφιτσωμένων και συχνά χρησιμοποιούμενων στοιχείων πάνω από το πλέγμα εφαρμογών</string>
     <string name="restore_meta">Δημιουργήθηκε %1$s στις %2$s με το %3$s.</string>
     <string name="preference_signin_user">Συνδεδεμένος ως %1$s</string>
-    <string name="preference_search_files">Αρχεία</string>
     <string name="backup_complete">Το αντίγραφο ασφαλείας έχει ολοκληρωθεί.</string>
     <string name="preference_summary_not_logged_in">Αυτή την στιγμή δεν έχετε συνδεθεί</string>
     <string name="preference_clockwidget_date_part_summary">Εμφάνιση τωρινής ημερομηνίας</string>
-    <string name="preference_search_files_summary">Αναζήτηση τοπικών αρχείων και αρχείων cloud</string>
     <string name="preference_blur_wallpaper_summary">Χρήση εφέ θαμπώματος στην ταπετσαρία</string>
     <string name="preference_clockwidget_music_part_summary">Εμφάνιση ελέγχου πολυμέσων όταν υπάρχει ενεργή περίοδος λειτουργίας</string>
-    <string name="preference_search_contacts">Επαφές</string>
     <string name="restore_complete">Έγινε επαναφορά του αντιγράφου ασφαλείας.</string>
     <string name="websearch_dialog_query_encoding_form">application/x-www-form-urlencoded</string>
     <string name="preference_wallpaper_summary">Επιλογή ταπετσαρίας</string>
     <string name="preference_clockwidget_alarm_part_summary">Εμφάνιση ξυπνητηριών που θα χτυπήσουν μέσα στα επόμενα 15 λεπτά</string>
-    <string name="preference_search_contacts_summary">Αναζήτηση επαφών σε αυτή τη συσκευή</string>
     <string name="icon_picker_search_icon">Αναζήτηση σε πακέτα εικονιδίων</string>
     <string name="shortcut_summary">Από %1$s</string>
     <string name="preference_notification_badges_summary">Εμφάνιση σήματος για εφαρμογές με μη αναγνωσμένες ειδοποιήσεις</string>
@@ -383,15 +365,9 @@
     <string name="favorites_empty">Τα καρφιτσωμένα και συχνά χρησιμοποιούμενα στοιχεία θα εμφανίζονται εδώ</string>
     <string name="missing_permission_appshortcuts_search_settings">Το %1$s πρέπει να οριστεί ως προεπιλεγμένη εφαρμογή αρχικής οθόνης για αναζήτηση συντομεύσεων εφαρμογών</string>
     <string name="preference_suspended_badges_summary">Εμφάνιση σήματος για εφαρμογές σε αναστολή</string>
-    <string name="preference_search_calculator">Αριθμομηχανή</string>
     <string name="preference_cloud_badges">Σήματα αρχείων στο cloud</string>
-    <string name="preference_search_currencyconverter_summary">Λήψη περιοδικών συναλλαγματικών ισοτιμιών για μετατροπή νομισμάτων</string>
     <string name="restore_invalid_file">Το επιλεγμένο αρχείο δεν φαίνεται να αποτελεί αντίγραφο ασφαλείας. Είστε σίγουροι ότι επιλέξατε το σωστό αρχείο;</string>
-    <string name="preference_search_wikipedia_summary">Αναζήτηση στην ελεύθερη εγκυκλοπαίδεια</string>
     <string name="restore_incompatible_file">Αυτό το αντίγραφο ασφαλείας έχει δημιουργηθεί με διαφορετική έκδοση του %1$s και δεν μπορεί να επαναφερθεί με αυτήν την έκδοση.</string>
-    <string name="preference_search_websites_summary">Εμφάνιση προεπισκόπησης του ιστότοπου εάν το ερώτημα αναζήτησης είναι διεύθυνση URL</string>
-    <string name="preference_search_localfiles">Τοπικά αρχεία</string>
-    <string name="preference_search_localfiles_summary">Αναζήτηση εγγράφων, φωτογραφιών και άλλων αρχείων που είναι αποθηκευμένα σε αυτήν τη συσκευή</string>
     <string name="preference_search_bar_style_summary">Παραμετροποίηση εμφάνισης γραμμής αναζήτησης</string>
     <string name="action_next">Επόμενο</string>
     <string name="duplicate">Διπλότυπο</string>
@@ -406,26 +382,17 @@
     <string name="preference_clock_widget_alignment_bottom">Κάτω</string>
     <string name="preference_clock_widget_alignment">Ευθυγράμμιση</string>
     <string name="widget_name_notes">Ένα γραφικό στοιχείο που αποθηκεύει μία μόνο σημείωση</string>
-    <string name="search_action_message">Μήνυμα</string>
-    <string name="search_action_email">Email</string>
     <string name="more_information">Περισσότερες πληροφορίες</string>
     <string name="notes_widget_placeholder">Γράψε μια σημείωση…</string>
     <string name="notes_widget_action_new">Νέα σημείωση</string>
     <string name="notes_widget_export_filename">Σημείωση_%1$s</string>
     <string name="notes_widget_action_dismiss">Απόρριψη</string>
     <string name="notes_widget_action_save">Αποθήκευση</string>
-    <string name="preference_search_unitconverter_summary">Χρήση: 1,5 kg ή 4 cm &gt;&gt; σε</string>
     <string name="preference_category_media_apps">Εφαρμογές πολυμέσων</string>
     <string name="preference_screen_icons_summary">Πλέγμα, μέγεθος εικονιδίου, πακέτα εικονιδίων, σήματα</string>
-    <string name="preference_screen_search_actions">Γρήγορες ενέργειες</string>
     <string name="preference_screen_clockwidget_summary">Διαμορφώστε το στυλ και τα στοιχεία του ρολογιού</string>
     <string name="preference_debug_reinstall_iconpacks_summary">Εκκαθαρίστε και δημιουργήστε ξανά την προσωρινή μνήμη του πακέτου εικονιδίων</string>
     <string name="preference_hidden_items_reveal_button_summary">Εμφάνιση ενός κουμπιού για την αποκάλυψη κρυφών αποτελεσμάτων αναζήτησης</string>
-    <string name="preference_search_search_actions_summary">Διαμορφώστε τις γρήγορες ενέργειες και τις συντομεύσεις αναζήτησης</string>
-    <string name="create_search_action_website_invalid_url">Ο συγκεκριμένος ιστότοπος δεν μπορεί να εισαχθεί αυτόματα ως αναζήτηση ιστού. Μπορείτε να δοκιμάσετε έναν διαφορετικό ιστότοπο ή να εισαγάγετε τα απαιτούμενα δεδομένα με μη αυτόματο τρόπο στο επόμενο βήμα.</string>
-    <string name="search_action_app">Εφαρμογή</string>
-    <string name="create_search_action_website_url">Εισαγάγετε τη διεύθυνση του ιστότοπου:</string>
-    <string name="search_action_websearch_url_hint">Το πρότυπο URL που χρησιμοποιείται για τη δημιουργία της διεύθυνσης URL αναζήτησης ιστού. Χρησιμοποιήστε το \"${1}\" ως σύμβολο κράτησης θέσης για τον πραγματικό όρο αναζήτησης, π.χ. https://google.com/search?q=${1}.</string>
     <string name="preference_plugin_badges">Σήματα προσθηκών</string>
     <string name="preference_plugin_badges_summary">Υποδείξτε με ποια προσθήκη δημιουργήθηκε ένα αποτέλεσμα αναζήτησης</string>
     <string name="preference_screen_tags_summary">Διαχείριση ετικετών και στοιχείων με ετικέτα</string>
@@ -439,9 +406,6 @@
     <string name="preference_clockwidget_dynamic_zone">Μέρος του γραφικού στοιχείου ρολογιού που εμφανίζει δυναμικές πληροφορίες (ημερομηνία, αναπαραγωγήςμουσικής, μπαταρία,…)</string>
     <string name="preference_screen_integrations">Ενσωματώσεις</string>
     <string name="icon_picker_filter_all_packs">Όλα τα πακέτα εικονιδίων</string>
-    <string name="search_action_event">Προγραμματισμός εκδήλωσης</string>
-    <string name="create_search_action_type">Τι είδους δράση θέλετε να δημιουργήσετε;</string>
-    <string name="search_action_call">Κλήση</string>
     <string name="preference_debug_dump_heap">Στιγμιότυπο μνήμης</string>
     <string name="preference_debug_dump_heap_in_progress">Λήψη στιγμιότυπου…</string>
     <string name="action_import">Εισαγωγή</string>
@@ -457,15 +421,5 @@
     <string name="preference_screen_homescreen_summary">Ρολόι, γραμμή αναζήτησης, ταπετσαρία, γραμμές συστήματος</string>
     <string name="preference_screen_icons">Πλέγμα και εικονίδια</string>
     <string name="preference_media_integration">Έλεγχος πολυμέσων</string>
-    <string name="search_action_alarm">Βάζω ξυπνητήρι</string>
-    <string name="search_action_websearch">Διαδικτυακή αναζήτηση</string>
-    <string name="search_action_contact">Δημιουργία επαφής</string>
-    <string name="search_action_open_url">Προβολή ιστότοπου</string>
-    <string name="create_search_action_type_web">Αναζήτηση σε έναν ιστότοπο</string>
-    <string name="create_search_action_type_app">Αναζήτηση σε μία εφαρμογή</string>
-    <string name="create_search_action_type_intent">Προσαρμοσμένη πρόθεση</string>
-    <string name="create_search_action_pick_app">Επιλέξτε μια εφαρμογή για αναζήτηση:</string>
-    <string name="search_action_label">Όνομα</string>
-    <string name="search_action_websearch_url">Πρότυπο URL</string>
     <string name="experimental_feature">Πειραματικό</string>
 </resources>

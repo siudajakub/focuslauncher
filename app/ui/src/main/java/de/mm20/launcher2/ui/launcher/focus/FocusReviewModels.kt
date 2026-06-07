@@ -4,8 +4,6 @@ typealias FocusExperiment = de.mm20.launcher2.preferences.FocusExperiment
 typealias FocusExperimentKind = de.mm20.launcher2.preferences.FocusExperimentKind
 
 enum class FocusRecommendationKind {
-    IncreaseFriction,
-    ShorterUnlockCap,
     EnablePrepPrompts,
     AdjustPrepLeadTime,
     MoveHabitEarlier,
@@ -46,31 +44,7 @@ fun resolveRecommendations(
                 )
             )
         }
-        inputs.topBreakingAppKey?.let { appKey ->
-            if (inputs.repeatedMismatchCount >= 4) {
-                add(
-                    FocusRecommendation(
-                        key = "increase-friction:$appKey",
-                        kind = FocusRecommendationKind.IncreaseFriction,
-                        title = "Increase friction for ${inputs.topBreakingAppLabel ?: "this app"}",
-                        summary = "This app breaks focus often during mismatched launches.",
-                        priority = 90,
-                    )
-                )
-            }
-            if (inputs.repeatedMismatchCount >= 6) {
-                add(
-                    FocusRecommendation(
-                        key = "shorter-unlock-cap:$appKey",
-                        kind = FocusRecommendationKind.ShorterUnlockCap,
-                        title = "Shorten unlock cap for ${inputs.topBreakingAppLabel ?: "this app"}",
-                        summary = "A smaller default unlock can make detours less sticky.",
-                        priority = 70,
-                    )
-                )
-            }
-        }
-        if (inputs.prepPromptEnabled && inputs.prepLeadMinutes < 10 && inputs.repeatedMismatchCount >= 5) {
+        if (inputs.prepPromptEnabled && inputs.prepLeadMinutes < 30 && inputs.repeatedMismatchCount >= 5) {
             add(
                 FocusRecommendation(
                     key = "adjust-prep-lead:${inputs.prepLeadMinutes}",
@@ -82,21 +56,21 @@ fun resolveRecommendations(
             )
         }
         inputs.overdueHabitTitle?.let { title ->
-            if (inputs.overdueHabitCount > 0) {
+            if (inputs.overdueHabitCount >= 3) {
                 add(
                     FocusRecommendation(
                         key = "move-habit-earlier:$title",
                         kind = FocusRecommendationKind.MoveHabitEarlier,
                         title = "Move $title earlier",
-                        summary = "This habit is often late before focus blocks begin.",
-                        priority = 75,
+                        summary = "Earlier habit deadlines can reduce late-night drift.",
+                        priority = 90,
                     )
                 )
             }
         }
     }
     return recommendations
-        .filterNot { it.key in dismissedKeys }
+        .filter { it.key !in dismissedKeys }
         .sortedByDescending { it.priority }
-        .take(limit.coerceAtLeast(0))
+        .take(limit)
 }

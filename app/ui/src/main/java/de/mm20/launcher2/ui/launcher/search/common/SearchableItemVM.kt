@@ -95,8 +95,8 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
         if (s == null || size == 0) emptyFlow() else iconService.getIcon(s, size)
     }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-    val focusProfile = searchable.flatMapLatest {
-        if (it == null) emptyFlow() else customAttributesRepository.getFocusProfile(it)
+    val focusTemporaryUnlock = searchable.flatMapLatest {
+        if (it == null) emptyFlow() else customAttributesRepository.getFocusTemporaryUnlock(it)
     }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val appType = searchable.flatMapLatest {
@@ -114,12 +114,12 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
 
     val hideFromBrowse = combine(
         appType,
-        focusProfile,
+        focusTemporaryUnlock,
         searchUiSettings.focusHideDistractingApps,
-    ) { appType, profile, hideDistractingApps ->
+    ) { appType, unlock, hideDistractingApps ->
         appType == FocusAppType.Distracting &&
             hideDistractingApps &&
-            profile?.hasTemporaryUnlock() != true
+            unlock?.hasTemporaryUnlock() != true
     }.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val notifications = searchable.flatMapLatest { searchable ->

@@ -73,6 +73,17 @@
 - Prefer small, behavior-preserving diffs.
 - Respect the existing module split. If logic belongs in `data` or `services`, do not bury it in `app/ui`.
 - Reuse existing repositories, settings wrappers and Koin modules instead of adding parallel state flows.
+- Default to aggressive execution once implementation starts:
+  - prefer long implementation waves over narrow staged checkpoints
+  - complete the whole feature slice, not just the first visible subtask
+  - if you uncover a bug, inconsistency, incomplete edge state, or unfinished adjacent behavior in the same flow, fix it in the same wave
+  - do not stop to ask for confirmation between related implementation steps unless a decision has major product, architectural, or destructive consequences
+  - if something is partially implemented, biased toward finishing it instead of reporting it as future work
+  - after completing the requested change, continue into immediately adjacent integration, polish, copy cleanup, tests, and verification when they materially improve the same feature area
+- During planning, do the opposite:
+  - ask more questions, not fewer
+  - use planning turns to align tightly with the user's intent, constraints, and product taste before execution starts
+  - once execution begins, make reasonable product and implementation decisions locally unless the risk is high
 - When editing localized copy, update canonical English strings in:
   - `core/i18n/src/main/res/values/strings.xml`
 - When changing preferences:
@@ -192,3 +203,5 @@ adb shell dumpsys dropbox --print YYYY-MM-DD HH:MM:SS data_app_crash
   - reuses existing settings and repositories
   - preserves search/launch consistency
   - updates strings and docs when behavior changes
+  - leaves the surrounding feature more finished than it was found
+  - resolves nearby UX and state-management rough edges in the same implementation wave when safe

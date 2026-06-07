@@ -70,7 +70,6 @@
     <string name="location_closed">Bağlı</string>
     <string name="menu_calendar_open_externally">Təqvim tətbiqində aç</string>
     <string name="wind_west_south_west">Qərb cənub-qərb</string>
-    <string name="wikipedia_url">https://az.wikipedia.org</string>
     <string name="file_meta_duration">Müddət: %1$s</string>
     <string name="file_meta_owner">Sahibi: %1$s</string>
     <string name="file_type_form">Forma</string>
@@ -80,7 +79,6 @@
     <string name="websearch_dialog_query_encoding">Sorğunun kodlaşdırılması</string>
     <string name="location_closes">bağlanır %1$s</string>
     <string name="wind_east_south_east">Şərq cənub-şərq</string>
-    <string name="wikipedia_source">Vikipediyadan</string>
     <string name="file_meta_album">Albom: %1$s</string>
     <string name="file_meta_app_min_sdk">Min SDK versiyası: %1$s</string>
     <string name="file_type_none">Fayl</string>

@@ -34,9 +34,9 @@ interface CustomAttributesRepository: Backupable {
     fun setTags(searchable: SavableSearchable, tags: List<String>)
     fun getTags(searchable: SavableSearchable): Flow<List<String>>
 
-    fun getFocusProfile(searchable: SavableSearchable): Flow<FocusProfile>
-    fun getFocusProfiles(searchables: List<SavableSearchable>): Flow<Map<String, FocusProfile>>
-    fun setFocusProfile(searchable: SavableSearchable, profile: FocusProfile)
+    fun getFocusTemporaryUnlock(searchable: SavableSearchable): Flow<FocusTemporaryUnlock>
+    fun getFocusTemporaryUnlocks(searchables: List<SavableSearchable>): Flow<Map<String, FocusTemporaryUnlock>>
+    fun setFocusTemporaryUnlock(searchable: SavableSearchable, profile: FocusTemporaryUnlock)
 
     fun getAllTags(startsWith: String? = null): Flow<List<String>>
     fun getItemsForTag(tag: String): Flow<List<SavableSearchable>>
@@ -131,15 +131,15 @@ internal class CustomAttributesRepositoryImpl(
         }
     }
 
-    override fun getFocusProfile(searchable: SavableSearchable): Flow<FocusProfile> {
+    override fun getFocusTemporaryUnlock(searchable: SavableSearchable): Flow<FocusTemporaryUnlock> {
         val dao = appDatabase.customAttrsDao()
         return dao.getCustomAttribute(searchable.key, CustomAttributeType.Focus.value)
             .map {
-                (CustomAttribute.fromDatabaseEntity(it) as? FocusProfile) ?: FocusProfile()
+                (CustomAttribute.fromDatabaseEntity(it) as? FocusTemporaryUnlock) ?: FocusTemporaryUnlock()
             }
     }
 
-    override fun getFocusProfiles(searchables: List<SavableSearchable>): Flow<Map<String, FocusProfile>> {
+    override fun getFocusTemporaryUnlocks(searchables: List<SavableSearchable>): Flow<Map<String, FocusTemporaryUnlock>> {
         if (searchables.isEmpty()) {
             return flow { emit(emptyMap()) }
         }
@@ -150,7 +150,7 @@ internal class CustomAttributesRepositoryImpl(
                 CustomAttributeType.Focus.value,
             ).map { attrs ->
                 attrs.associate { attr ->
-                    attr.key to ((CustomAttribute.fromDatabaseEntity(attr) as? FocusProfile) ?: FocusProfile())
+                    attr.key to ((CustomAttribute.fromDatabaseEntity(attr) as? FocusTemporaryUnlock) ?: FocusTemporaryUnlock())
                 }
             }
         }
@@ -161,12 +161,12 @@ internal class CustomAttributesRepositoryImpl(
             )
         }) { chunks ->
             chunks.asList().flatten().associate { attr ->
-                attr.key to ((CustomAttribute.fromDatabaseEntity(attr) as? FocusProfile) ?: FocusProfile())
+                attr.key to ((CustomAttribute.fromDatabaseEntity(attr) as? FocusTemporaryUnlock) ?: FocusTemporaryUnlock())
             }
         }
     }
 
-    override fun setFocusProfile(searchable: SavableSearchable, profile: FocusProfile) {
+    override fun setFocusTemporaryUnlock(searchable: SavableSearchable, profile: FocusTemporaryUnlock) {
         val dao = appDatabase.customAttrsDao()
         scope.launch {
             searchableRepository.insert(searchable)

@@ -21,7 +21,6 @@
     <string name="settings">設定</string>
     <string name="wind_south_east">南東</string>
     <string name="wind_north_north_west">北北西</string>
-    <string name="wikipedia_url">https://ja.wikipedia.org</string>
     <string name="menu_favorites_pin">お気に入りにピン留め</string>
     <string name="menu_share_apk_file">APK ファイル</string>
     <string name="menu_share_store_link">%1$s リンク</string>
@@ -53,7 +52,6 @@
     <string name="preference_grid_labels">ラベルの表示</string>
     <string name="preference_grid_icon_size">アイコンのサイズ</string>
     <string name="battery_part_charging">充電中</string>
-    <string name="search_action_email">メール</string>
     <string name="search_bar_placeholder">検索</string>
     <string name="default_websearch_3_url">https://play.google.com/store/search\?q=${1}</string>
     <string name="default_websearch_3_name">Play ストア</string>
@@ -74,7 +72,6 @@
     <string name="preference_icon_shape_rounded_square">角丸</string>
     <string name="preference_icon_shape_square">スクエア</string>
     <string name="preference_clockwidget_alarm_part">アラーム</string>
-    <string name="wikipedia_source">Wikipedia から</string>
     <string name="file_meta_title">タイトル: %1$s</string>
     <string name="file_meta_artist">アーティスト: %1$s</string>
     <string name="file_meta_size">サイズ: %1$s</string>
@@ -236,7 +233,6 @@
     <string name="preference_about_license">このアプリはフリーソフトウェアです。</string>
     <string name="preference_about_license_summary">GNU 一般公衆ライセンス 3.0 のもとでライセンスされています</string>
     <string name="backup_complete">バックアップが完了しました。</string>
-    <string name="preference_screen_search_actions">クイックアクション</string>
     <string name="preference_restore_default">デフォルトに復元</string>
     <string name="preference_screen_about">このアプリについて</string>
     <string name="preference_version">バージョン</string>

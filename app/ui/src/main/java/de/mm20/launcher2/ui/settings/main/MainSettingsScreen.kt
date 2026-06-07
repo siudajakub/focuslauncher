@@ -10,9 +10,9 @@ import de.mm20.launcher2.ui.component.preferences.PreferenceScreen
 import de.mm20.launcher2.ui.locals.LocalBackStack
 import de.mm20.launcher2.ui.settings.advanced.AdvancedSettingsRoute
 import de.mm20.launcher2.ui.settings.appearance.AppearanceSettingsRoute
+import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsRoute
 import de.mm20.launcher2.ui.settings.homescreen.HomescreenSettingsRoute
 import de.mm20.launcher2.ui.settings.locale.LocaleSettingsRoute
-import de.mm20.launcher2.ui.settings.search.SearchSettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -44,10 +44,10 @@ fun MainSettingsScreen() {
                 )
                 Preference(
                     icon = R.drawable.search_24px,
-                    title = stringResource(id = R.string.focus_settings_section_title),
-                    summary = stringResource(id = R.string.focus_settings_entry_summary),
+                    title = stringResource(id = R.string.focus_system_title),
+                    summary = stringResource(id = R.string.focus_system_entry_summary),
                     onClick = {
-                        backStack.add(SearchSettingsRoute)
+                        backStack.add(FocusSystemSettingsRoute)
                     }
                 )
                 Preference(

@@ -1,6 +1,7 @@
 package de.mm20.launcher2.ui.launcher.search
 
 import android.content.Context
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -8,7 +9,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
-import de.mm20.launcher2.data.customattrs.FocusProfile
+import de.mm20.launcher2.data.customattrs.FocusTemporaryUnlock
 import de.mm20.launcher2.devicepose.DevicePoseProvider
 import de.mm20.launcher2.ktx.isAtLeastApiLevel
 import de.mm20.launcher2.permissions.PermissionGroup
@@ -44,7 +45,12 @@ import de.mm20.launcher2.searchactions.actions.SearchAction
 import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
 import de.mm20.launcher2.ui.launcher.focus.FocusAppClassifier
 import de.mm20.launcher2.ui.launcher.focus.FocusAppType
+import de.mm20.launcher2.ui.launcher.focus.FocusHomeCommandCenter
+import de.mm20.launcher2.ui.launcher.focus.FocusHomeCommandType
 import de.mm20.launcher2.services.favorites.FavoritesService
+import de.mm20.launcher2.searchactions.actions.SearchActionIcon
+import de.mm20.launcher2.ui.settings.SettingsActivity
+import de.mm20.launcher2.ui.launcher.LauncherActivity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
@@ -195,7 +201,7 @@ class SearchVM : ViewModel(), KoinComponent {
                             context.results.workProfileApps +
                             context.results.privateSpaceApps
                         combine(
-                            customAttributesRepository.getFocusProfiles(searchables),
+                            customAttributesRepository.getFocusTemporaryUnlocks(searchables),
                             focusAppClassifier.classify(searchables.map { it.key }),
                         ) { focusProfiles, appTypes ->
                             AllAppsWithFocusContext(
@@ -268,7 +274,7 @@ class SearchVM : ViewModel(), KoinComponent {
                     }
                     .flatMapLatest { context ->
                         combine(
-                            customAttributesRepository.getFocusProfiles(context.results.collectSavableSearchables()),
+                            customAttributesRepository.getFocusTemporaryUnlocks(context.results.collectSavableSearchables()),
                             focusAppClassifier.classify((context.results.apps ?: emptyList()).map { it.key }),
                         ) { focusProfiles, appTypes ->
                             SearchWithFocusContext(
@@ -300,6 +306,9 @@ class SearchVM : ViewModel(), KoinComponent {
                         unitConverterResults.clear()
                         searchActionResults.clear()
 
+                        val focusCommands = buildFocusCommandActions(query)
+                        searchActionResults.updateItems(focusCommands)
+
                         appResults.updateItems(
                             results.apps
                             ?.filterNot { hiddenKeys.contains(it.key) }
@@ -308,6 +317,7 @@ class SearchVM : ViewModel(), KoinComponent {
 
                         if (launchOnEnter.value) {
                             bestMatch.value = when {
+                                hasExactFocusCommandMatch(query) && focusCommands.isNotEmpty() -> focusCommands.first()
                                 appResults.isNotEmpty() -> appResults.first()
                                 else -> null
                             }
@@ -472,6 +482,116 @@ class SearchVM : ViewModel(), KoinComponent {
         clear()
         addAll(newItems ?: emptyList())
     }
+
+    private fun buildFocusCommandActions(query: String): List<SearchAction> {
+        val normalized = normalizeFocusCommandQuery(query)
+        if (normalized.isBlank()) return emptyList()
+
+        val specs = listOf(
+            FocusCommandSpec(
+                label = "Open Focus System",
+                aliases = listOf("focus", "focus system", "open focus", "open focus system"),
+                icon = SearchActionIcon.Search,
+            ) { context ->
+                context.startActivity(
+                    Intent(context, SettingsActivity::class.java).apply {
+                        putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SYSTEM)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                )
+            },
+            FocusCommandSpec(
+                label = "Open Focus Apps",
+                aliases = listOf("focus apps", "focus app", "open focus apps"),
+                icon = SearchActionIcon.SearchList,
+            ) { context ->
+                context.startActivity(
+                    Intent(context, SettingsActivity::class.java).apply {
+                        putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_APPS)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                )
+            },
+            FocusCommandSpec(
+                label = "Open Focus Report",
+                aliases = listOf("focus report", "report focus", "open focus report"),
+                icon = SearchActionIcon.StatsSearch,
+            ) { context ->
+                context.startActivity(
+                    Intent(context, SettingsActivity::class.java).apply {
+                        putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_REPORT)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                )
+            },
+            FocusCommandSpec(
+                label = "Start Focus Session",
+                aliases = listOf("start focus", "focus start", "focus session", "start focus session"),
+                icon = SearchActionIcon.Timer,
+            ) { context ->
+                FocusHomeCommandCenter.dispatch(FocusHomeCommandType.StartSession)
+                context.startActivity(
+                    Intent(context, LauncherActivity::class.java).apply {
+                        putExtra(
+                            de.mm20.launcher2.ui.launcher.SharedLauncherActivity.EXTRA_FOCUS_HOME_COMMAND,
+                            de.mm20.launcher2.ui.launcher.SharedLauncherActivity.FOCUS_HOME_COMMAND_START_SESSION,
+                        )
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                )
+            },
+            FocusCommandSpec(
+                label = "Resume Focus",
+                aliases = listOf("resume focus", "focus resume", "continue focus", "return to focus"),
+                icon = SearchActionIcon.SearchPage,
+            ) { context ->
+                FocusHomeCommandCenter.dispatch(FocusHomeCommandType.ResumeFocus)
+                context.startActivity(
+                    Intent(context, LauncherActivity::class.java).apply {
+                        putExtra(
+                            de.mm20.launcher2.ui.launcher.SharedLauncherActivity.EXTRA_FOCUS_HOME_COMMAND,
+                            de.mm20.launcher2.ui.launcher.SharedLauncherActivity.FOCUS_HOME_COMMAND_RESUME_FOCUS,
+                        )
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                )
+            },
+            FocusCommandSpec(
+                label = "Open Today Plan",
+                aliases = listOf("today plan", "focus plan", "open today plan"),
+                icon = SearchActionIcon.Calendar,
+            ) { context ->
+                FocusHomeCommandCenter.dispatch(FocusHomeCommandType.OpenTodayPlan)
+                context.startActivity(
+                    Intent(context, LauncherActivity::class.java).apply {
+                        putExtra(
+                            de.mm20.launcher2.ui.launcher.SharedLauncherActivity.EXTRA_FOCUS_HOME_COMMAND,
+                            de.mm20.launcher2.ui.launcher.SharedLauncherActivity.FOCUS_HOME_COMMAND_OPEN_TODAY_PLAN,
+                        )
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                )
+            },
+        )
+
+        return specs
+            .mapNotNull { spec ->
+                val rank = scoreFocusCommandMatch(normalized, spec.aliases) ?: return@mapNotNull null
+                FocusCommandAction(
+                    label = spec.label,
+                    icon = spec.icon,
+                    score = ResultScore(
+                        isPrefix = true,
+                        isSubstring = true,
+                        isPrimary = true,
+                        similarity = 1f,
+                    ),
+                    rank = rank,
+                    onStart = spec.onStart,
+                )
+            }
+            .sortedByDescending { it.rank }
+    }
 }
 
 
@@ -493,13 +613,6 @@ private data class AllAppsContext(
     val hiddenKeys: List<String>,
 )
 
-private data class AllAppsWithFocusContext(
-    val results: de.mm20.launcher2.search.AllAppsResults,
-    val hiddenKeys: List<String>,
-    val focusProfiles: Map<String, FocusProfile>,
-    val appTypes: Map<String, FocusAppType>,
-)
-
 private data class SearchContext(
     val results: SearchResults,
     val hiddenKeys: List<String>,
@@ -508,6 +621,80 @@ private data class SearchContext(
 private data class SearchWithFocusContext(
     val results: SearchResults,
     val hiddenKeys: List<String>,
-    val focusProfiles: Map<String, FocusProfile>,
+    val focusProfiles: Map<String, FocusTemporaryUnlock>,
     val appTypes: Map<String, FocusAppType>,
 )
+
+@Immutable
+data class AllAppsWithFocusContext(
+    val results: SearchResults, // wait, it was AllAppsResults?
+    val hiddenKeys: List<String>,
+    val focusProfiles: Map<String, FocusTemporaryUnlock>,
+    val appTypes: Map<String, FocusAppType>,
+)
+
+private data class FocusCommandSpec(
+    val label: String,
+    val aliases: List<String>,
+    val icon: SearchActionIcon,
+    val onStart: (Context) -> Unit,
+)
+
+private class FocusCommandAction(
+    override val label: String,
+    override val icon: SearchActionIcon,
+    override val score: ResultScore,
+    val rank: Float,
+    private val onStart: (Context) -> Unit,
+) : SearchAction {
+    override val iconColor: Int = 0
+    override val customIcon: String? = null
+
+    override fun start(context: Context) {
+        onStart(context)
+    }
+}
+
+internal fun normalizeFocusCommandQuery(query: String): String {
+    return query.trim().lowercase().replace(Regex("\\s+"), " ")
+}
+
+internal fun scoreFocusCommandMatch(
+    query: String,
+    aliases: List<String>,
+): Float? {
+    val normalizedAliases = aliases.map(::normalizeFocusCommandQuery)
+    if (query in normalizedAliases) return 1.25f
+    if (normalizedAliases.any { it.startsWith(query) && query.length >= 3 }) return 1.05f
+    if (normalizedAliases.any { query.startsWith(it) && it.length >= 5 }) return 0.9f
+    return null
+}
+
+private fun hasExactFocusCommandMatch(query: String): Boolean {
+    val normalized = normalizeFocusCommandQuery(query)
+    if (normalized.isBlank()) return false
+    val aliases = listOf(
+        "focus",
+        "focus system",
+        "open focus",
+        "open focus system",
+        "focus apps",
+        "focus app",
+        "open focus apps",
+        "focus report",
+        "report focus",
+        "open focus report",
+        "start focus",
+        "focus start",
+        "focus session",
+        "start focus session",
+        "resume focus",
+        "focus resume",
+        "continue focus",
+        "return to focus",
+        "today plan",
+        "focus plan",
+        "open today plan",
+    )
+    return normalized in aliases.map(::normalizeFocusCommandQuery)
+}

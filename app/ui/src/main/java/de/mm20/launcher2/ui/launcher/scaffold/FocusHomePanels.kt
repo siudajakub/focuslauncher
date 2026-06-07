@@ -46,6 +46,7 @@ data class HabitPanelState(
 @Composable
 internal fun FocusGuidanceCard(
     state: FocusGuidanceState,
+    hasBlockPlan: Boolean = false,
     onRecoverAccepted: () -> Unit = {},
     onRecoverDismissed: () -> Unit = {},
     onOpenBlockSetup: () -> Unit = {},
@@ -63,7 +64,18 @@ internal fun FocusGuidanceCard(
     }
 
     val supportingText = when (state.type) {
-        FocusGuidanceType.Recover -> null
+        FocusGuidanceType.Recover -> when {
+            !state.taskLabel.isNullOrBlank() && !state.blockLabel.isNullOrBlank() -> stringResource(
+                R.string.focus_home_guidance_recover_body_block,
+                state.taskLabel,
+                state.blockLabel,
+            )
+            !state.taskLabel.isNullOrBlank() -> stringResource(
+                R.string.focus_home_guidance_recover_body_task,
+                state.taskLabel,
+            )
+            else -> null
+        }
         FocusGuidanceType.Prep -> state.nextBlockLabel?.let {
             stringResource(
                 R.string.focus_home_guidance_prep_body,
@@ -75,11 +87,15 @@ internal fun FocusGuidanceCard(
             stringResource(R.string.focus_home_guidance_ready_body, it)
         }
         FocusGuidanceType.Now -> state.blockLabel?.let {
-            stringResource(
-                R.string.focus_home_guidance_now_body,
-                it,
-                state.minutesRemaining ?: 0,
-            )
+            if (state.completedForBlock) {
+                stringResource(R.string.focus_home_guidance_complete_body, it)
+            } else {
+                stringResource(
+                    R.string.focus_home_guidance_now_body,
+                    it,
+                    state.minutesRemaining ?: 0,
+                )
+            }
         }
         FocusGuidanceType.None -> null
     }
@@ -97,7 +113,15 @@ internal fun FocusGuidanceCard(
                         onClick = onRecoverAccepted,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.focus_home_resume_action))
+                        Text(
+                            stringResource(
+                                if (state.resumeMatchesCurrentBlock) {
+                                    R.string.focus_home_resume_current_block_action
+                                } else {
+                                    R.string.focus_home_resume_action
+                                }
+                            )
+                        )
                     }
                     TextButton(
                         onClick = onRecoverDismissed,
@@ -113,13 +137,29 @@ internal fun FocusGuidanceCard(
                         onClick = onOpenBlockSetup,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.focus_home_guidance_prep_action))
+                        Text(
+                            stringResource(
+                                if (hasBlockPlan) {
+                                    R.string.focus_home_guidance_edit_action
+                                } else {
+                                    R.string.focus_home_guidance_prep_action
+                                }
+                            )
+                        )
                     }
                     TextButton(
                         onClick = onOpenBlockSetup,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.focus_home_daily_schedule_setup))
+                        Text(
+                            stringResource(
+                                if (hasBlockPlan) {
+                                    R.string.focus_home_daily_schedule_edit
+                                } else {
+                                    R.string.focus_home_daily_schedule_setup
+                                }
+                            )
+                        )
                     }
                 }
             }
@@ -129,19 +169,64 @@ internal fun FocusGuidanceCard(
                         onClick = onOpenBlockSetup,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.focus_home_guidance_ready_action))
+                        Text(
+                            stringResource(
+                                if (hasBlockPlan) {
+                                    R.string.focus_home_guidance_edit_action
+                                } else {
+                                    R.string.focus_home_guidance_ready_action
+                                }
+                            )
+                        )
                     }
                     TextButton(
                         onClick = onOpenBlockSetup,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.focus_home_daily_schedule_setup))
+                        Text(
+                            stringResource(
+                                if (hasBlockPlan) {
+                                    R.string.focus_home_daily_schedule_edit
+                                } else {
+                                    R.string.focus_home_daily_schedule_setup
+                                }
+                            )
+                        )
                     }
                 }
             }
             FocusGuidanceType.Now,
-            FocusGuidanceType.None,
-            -> Unit
+            -> {
+                when {
+                    state.requiresSetup -> {
+                        OutlinedButton(
+                            onClick = onOpenBlockSetup,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.focus_home_guidance_setup_action))
+                        }
+                    }
+
+                    state.completedForBlock -> {
+                        OutlinedButton(
+                            onClick = onOpenBlockSetup,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.focus_home_guidance_continue_action))
+                        }
+                    }
+
+                    hasBlockPlan -> {
+                        TextButton(
+                            onClick = onOpenBlockSetup,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.focus_home_guidance_edit_action))
+                        }
+                    }
+                }
+            }
+            FocusGuidanceType.None -> Unit
         }
     }
 }
@@ -198,25 +283,27 @@ internal fun FocusSection(
 @Composable
 internal fun FocusDailyScheduleCard(
     state: DailySchedulePanelState,
+    hasBlockPlan: Boolean = false,
     onOpenBlockSetup: () -> Unit = {},
+    onOpenConfiguration: () -> Unit = {},
 ) {
     FocusSection(
         title = stringResource(R.string.focus_home_daily_schedule_title),
     ) {
         when {
             !state.enabled -> {
-                Text(
+                EmptyStateWithAction(
                     text = stringResource(R.string.focus_home_daily_schedule_disabled),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    actionLabel = stringResource(R.string.focus_home_quick_start_schedule_action),
+                    onAction = onOpenConfiguration,
                 )
             }
 
             !state.calendarSelected -> {
-                Text(
+                EmptyStateWithAction(
                     text = stringResource(R.string.focus_home_daily_schedule_no_calendar),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    actionLabel = stringResource(R.string.focus_home_quick_start_schedule_action),
+                    onAction = onOpenConfiguration,
                 )
             }
 
@@ -229,6 +316,7 @@ internal fun FocusDailyScheduleCard(
                         state.snapshot.minutesUntilCurrentBlockEnds,
                     ),
                     nextBlock = state.snapshot.nextBlock,
+                    hasBlockPlan = hasBlockPlan,
                     onOpenBlockSetup = onOpenBlockSetup,
                 )
             }
@@ -241,16 +329,54 @@ internal fun FocusDailyScheduleCard(
                         R.string.focus_home_daily_schedule_starts_in,
                         state.snapshot.minutesUntilUpcomingBlockStarts,
                     ),
+                    hasBlockPlan = hasBlockPlan,
                     onOpenBlockSetup = onOpenBlockSetup,
                 )
             }
 
             else -> {
                 Text(
-                    text = stringResource(R.string.focus_home_daily_schedule_empty),
+                    text = stringResource(R.string.focus_home_daily_schedule_between_blocks),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun FocusQuickStartDayCard(
+    show: Boolean,
+    onOpenFocusApps: () -> Unit,
+    onOpenSchedule: () -> Unit,
+    onOpenHabits: () -> Unit,
+) {
+    if (!show) return
+
+    FocusSection(
+        title = stringResource(R.string.focus_home_quick_start_title),
+        supportingText = stringResource(R.string.focus_home_quick_start_summary),
+        emphasis = true,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(
+                onClick = onOpenFocusApps,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.focus_home_quick_start_apps_action))
+            }
+            OutlinedButton(
+                onClick = onOpenSchedule,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.focus_home_quick_start_schedule_action))
+            }
+            TextButton(
+                onClick = onOpenHabits,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.focus_home_quick_start_habits_action))
             }
         }
     }
@@ -262,6 +388,7 @@ private fun ScheduleStateBlock(
     block: DailyScheduleBlock,
     countdownText: String,
     nextBlock: DailyScheduleBlock? = null,
+    hasBlockPlan: Boolean = false,
     onOpenBlockSetup: () -> Unit = {},
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -284,7 +411,15 @@ private fun ScheduleStateBlock(
             onClick = onOpenBlockSetup,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.focus_home_daily_schedule_setup))
+            Text(
+                stringResource(
+                    if (hasBlockPlan) {
+                        R.string.focus_home_daily_schedule_edit
+                    } else {
+                        R.string.focus_home_daily_schedule_setup
+                    }
+                )
+            )
         }
         nextBlock?.let {
             Spacer(modifier = Modifier.height(4.dp))
@@ -324,10 +459,17 @@ private fun FocusGuidanceDetails(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         val showBlockLabel = state.type == FocusGuidanceType.Recover
-        state.blockLabel?.takeIf { showBlockLabel && it.isNotBlank() }?.let {
+        state.taskLabel?.takeIf { state.type == FocusGuidanceType.Recover && it.isNotBlank() }?.let {
             Text(
                 text = it,
                 style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        state.blockLabel?.takeIf { showBlockLabel && it.isNotBlank() }?.let {
+            Text(
+                text = stringResource(R.string.focus_home_guidance_recover_block, it),
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -479,6 +621,45 @@ internal fun FocusScheduleDockCard(
                 showLabels = false,
                 columns = dockApps.size.coerceAtMost(4).coerceAtLeast(1),
             )
+        }
+    }
+}
+
+@Composable
+internal fun FocusEssentialAppsCard(
+    apps: List<Application>,
+) {
+    if (apps.isEmpty()) return
+
+    FocusSection(
+        title = stringResource(R.string.focus_home_essentials_title),
+        supportingText = stringResource(R.string.focus_home_essentials_summary),
+    ) {
+        SearchResultGrid(
+            items = apps,
+            showLabels = false,
+            columns = apps.size.coerceAtMost(4).coerceAtLeast(1),
+        )
+    }
+}
+
+@Composable
+private fun EmptyStateWithAction(
+    text: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(
+            onClick = onAction,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(actionLabel)
         }
     }
 }

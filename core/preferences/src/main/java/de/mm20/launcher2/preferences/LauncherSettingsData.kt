@@ -226,7 +226,6 @@ data class LauncherSettingsData internal constructor(
     val gesturesSwipeLeft: GestureAction = GestureAction.NoAction,
     val gesturesSwipeRight: GestureAction = GestureAction.NoAction,
     val gesturesSwipeUp: GestureAction = GestureAction.Widgets(),
-    val gesturesDoubleTap: GestureAction = GestureAction.NoAction,
     val gesturesLongPress: GestureAction = GestureAction.NoAction,
     val gesturesHomeButton: GestureAction = GestureAction.NoAction,
 
@@ -533,10 +532,6 @@ sealed interface GestureAction {
     @Serializable
     @SerialName("quick_settings")
     data object QuickSettings : GestureAction
-
-    @Serializable
-    @SerialName("screen_lock")
-    data object ScreenLock : GestureAction
 
     @Serializable
     @SerialName("search")

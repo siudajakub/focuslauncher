@@ -113,6 +113,14 @@ data class WeeklyFocusReport(
     val topInterruptedBlocks: List<Pair<String, Int>> = emptyList(),
     val recoveryAcceptedCount: Int = 0,
     val recoveryDismissedCount: Int = 0,
+    val delta: WeeklyFocusDelta = WeeklyFocusDelta(),
+)
+
+data class WeeklyFocusDelta(
+    val unlocksDelta: Int = 0,
+    val sessionMinutesDelta: Int = 0,
+    val topBreakerLabel: String? = null,
+    val topBreakerDelta: Int = 0,
 )
 
 class FocusHistoryRepository : KoinComponent {
@@ -247,20 +255,27 @@ class FocusHistoryRepository : KoinComponent {
     }
 
     fun getWeeklyReport(): Flow<WeeklyFocusReport> {
-        val since = System.currentTimeMillis() - ChronoUnit.DAYS.duration.multipliedBy(7).toMillis()
+        val now = System.currentTimeMillis()
+        val weekMillis = ChronoUnit.DAYS.duration.multipliedBy(7).toMillis()
+        val previousSince = now - weekMillis * 2
+        val currentSince = now - weekMillis
         return combine(
-            database.focusEventDao().getEventsSince(since),
-            database.focusSessionDao().getSessionsSince(since),
+            database.focusEventDao().getEventsSince(previousSince),
+            database.focusSessionDao().getSessionsSince(previousSince),
         ) { events, sessions ->
             val zone = ZoneId.systemDefault()
-            val groupedByDay = events.groupBy {
+            val currentEvents = events.filter { it.timestamp >= currentSince }
+            val previousEvents = events.filter { it.timestamp in previousSince until currentSince }
+            val currentSessions = sessions.filter { it.startedAt >= currentSince }
+            val previousSessions = sessions.filter { it.startedAt in previousSince until currentSince }
+            val groupedByDay = currentEvents.groupBy {
                 Instant.ofEpochMilli(it.timestamp).atZone(zone).toLocalDate()
             }.toSortedMap(compareByDescending { it })
-            val breakers = events.groupingBy { it.appLabel }.eachCount()
+            val breakers = currentEvents.groupingBy { it.appLabel }.eachCount()
                 .entries.sortedByDescending { it.value }
                 .take(5)
                 .map { it.key to it.value }
-            val reasons = events
+            val reasons = currentEvents
                 .mapNotNull { it.reason.trim().takeIf(String::isNotBlank) }
                 .groupingBy { it }
                 .eachCount()
@@ -268,18 +283,22 @@ class FocusHistoryRepository : KoinComponent {
                 .sortedByDescending { it.value }
                 .take(5)
                 .map { it.key to it.value }
-            val totalUnlockMinutes = events.sumOf { it.unlockDurationMinutes }
-            val averageDelaySeconds = events
+            val totalUnlockMinutes = currentEvents.sumOf { it.unlockDurationMinutes }
+            val averageDelaySeconds = currentEvents
                 .map { it.effectiveDelaySeconds }
                 .takeIf { it.isNotEmpty() }
                 ?.average()
                 ?.toInt()
                 ?: 0
-            val normalizedSessions = sessions.map { session ->
+            val normalizedCurrentSessions = currentSessions.map { session ->
                 val effectiveEnd = session.endedAt ?: minOf(System.currentTimeMillis(), session.plannedEndsAt)
                 session to ((effectiveEnd - session.startedAt).coerceAtLeast(0L) / 60_000L).toInt()
             }
-            val scheduledUnlocks = events.filter {
+            val normalizedPreviousSessions = previousSessions.map { session ->
+                val effectiveEnd = session.endedAt ?: minOf(System.currentTimeMillis(), session.plannedEndsAt)
+                session to ((effectiveEnd - session.startedAt).coerceAtLeast(0L) / 60_000L).toInt()
+            }
+            val scheduledUnlocks = currentEvents.filter {
                 it.eventKind == FocusEventKind.Unlock.value && !it.scheduleBlockLabel.isNullOrBlank()
             }
             val interruptedBlocks = scheduledUnlocks
@@ -290,26 +309,33 @@ class FocusHistoryRepository : KoinComponent {
                 .sortedByDescending { it.value }
                 .take(5)
                 .map { it.key to it.value }
+            val delta = computeWeeklyDelta(
+                currentEvents = currentEvents,
+                previousEvents = previousEvents,
+                currentSessionMinutes = normalizedCurrentSessions.sumOf { it.second },
+                previousSessionMinutes = normalizedPreviousSessions.sumOf { it.second },
+            )
             WeeklyFocusReport(
-                totalUnlocks = events.size,
+                totalUnlocks = currentEvents.size,
                 totalUnlockMinutes = totalUnlockMinutes,
                 averageDelaySeconds = averageDelaySeconds,
-                streakDays = calculateStreak(events, zone),
+                streakDays = calculateStreak(currentEvents, zone),
                 topFocusBreakers = breakers,
                 topUnlockReasons = reasons,
-                inSessionUnlocks = events.count { it.duringFocusSession },
+                inSessionUnlocks = currentEvents.count { it.duringFocusSession },
                 unlocksPerDay = groupedByDay.map { it.key to it.value.size },
-                recentEvents = events.take(20),
-                totalSessions = sessions.size,
-                totalSessionMinutes = normalizedSessions.sumOf { it.second },
-                sessionDays = sessions.map {
+                recentEvents = currentEvents.take(20),
+                totalSessions = currentSessions.size,
+                totalSessionMinutes = normalizedCurrentSessions.sumOf { it.second },
+                sessionDays = currentSessions.map {
                     Instant.ofEpochMilli(it.startedAt).atZone(zone).toLocalDate()
                 }.distinct().size,
-                recentSessions = sessions.take(10),
+                recentSessions = currentSessions.take(10),
                 scheduledBlockUnlocks = scheduledUnlocks.size,
                 topInterruptedBlocks = interruptedBlocks,
-                recoveryAcceptedCount = events.count { it.eventKind == FocusEventKind.ResumeAccepted.value },
-                recoveryDismissedCount = events.count { it.eventKind == FocusEventKind.ResumeDismissed.value },
+                recoveryAcceptedCount = currentEvents.count { it.eventKind == FocusEventKind.ResumeAccepted.value },
+                recoveryDismissedCount = currentEvents.count { it.eventKind == FocusEventKind.ResumeDismissed.value },
+                delta = delta,
             )
         }
     }
@@ -326,4 +352,25 @@ class FocusHistoryRepository : KoinComponent {
         }
         return streak
     }
+}
+
+internal fun computeWeeklyDelta(
+    currentEvents: List<FocusEventEntity>,
+    previousEvents: List<FocusEventEntity>,
+    currentSessionMinutes: Int,
+    previousSessionMinutes: Int,
+): WeeklyFocusDelta {
+    val currentBreakers = currentEvents.groupingBy { it.appLabel }.eachCount()
+    val previousBreakers = previousEvents.groupingBy { it.appLabel }.eachCount()
+    val topBreakerLabel = currentBreakers.maxByOrNull { it.value }?.key
+    val topBreakerDelta = topBreakerLabel?.let { label ->
+        (currentBreakers[label] ?: 0) - (previousBreakers[label] ?: 0)
+    } ?: 0
+
+    return WeeklyFocusDelta(
+        unlocksDelta = currentEvents.size - previousEvents.size,
+        sessionMinutesDelta = currentSessionMinutes - previousSessionMinutes,
+        topBreakerLabel = topBreakerLabel,
+        topBreakerDelta = topBreakerDelta,
+    )
 }

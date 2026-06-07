@@ -38,7 +38,6 @@
     <string name="wind_west_north_west">Barat-barat laut</string>
     <string name="wind_north_west">Barat laut</string>
     <string name="wind_north_north_west">Utara barat laut</string>
-    <string name="wikipedia_source">Daripada Wikipedia</string>
     <string name="file_meta_title">Tajuk: %1$s</string>
     <string name="file_meta_artist">Artis: %1$s</string>
     <string name="file_meta_album">Album: %1$s</string>
@@ -73,7 +72,6 @@
     <string name="alert_delete_directory">Direktori %1$s dan semua kandungannya akan dipadamkan secara kekal. Teruskan?</string>
     <string name="alert_delete_shortcut">Pintasan %1$s akan dibuang secara kekal. Teruskan?</string>
     <string name="file_meta_path">Laluan: %1$s</string>
-    <string name="wikipedia_url">https://ms.wikipedia.org</string>
     <string name="file_type_video">Video</string>
     <string name="file_type_text">Fail teks</string>
     <string name="file_type_archive">Fail arkib</string>

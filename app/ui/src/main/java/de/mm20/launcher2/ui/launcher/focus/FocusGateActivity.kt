@@ -67,7 +67,7 @@ import androidx.compose.ui.unit.dp
 import de.mm20.launcher2.applications.AppRepository
 import de.mm20.launcher2.calendar.CalendarRepository
 import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
-import de.mm20.launcher2.data.customattrs.FocusProfile
+import de.mm20.launcher2.data.customattrs.FocusTemporaryUnlock
 import de.mm20.launcher2.preferences.FocusResumeContext
 import de.mm20.launcher2.icons.IconService
 import de.mm20.launcher2.search.Application
@@ -185,8 +185,8 @@ private fun FocusGateRoute(
     }
 
     val profile by remember(app.key) {
-        customAttributesRepository.getFocusProfile(app)
-    }.collectAsState(initial = FocusProfile())
+        customAttributesRepository.getFocusTemporaryUnlock(app)
+    }.collectAsState(initial = FocusTemporaryUnlock())
 
     val launchBounds = remember(activity) {
         val intent = activity?.intent
@@ -203,7 +203,7 @@ private fun FocusGateRoute(
 
     FocusGateScreen(
         app = app,
-        profile = profile,
+        temporaryUnlock = profile,
         customAttributesRepository = customAttributesRepository,
         launchBounds = launchBounds,
         onGoBack = onGoBack,
@@ -226,7 +226,7 @@ private enum class FocusGateStage {
 @Composable
 private fun FocusGateScreen(
     app: Application,
-    profile: FocusProfile,
+    temporaryUnlock: FocusTemporaryUnlock,
     customAttributesRepository: CustomAttributesRepository,
     launchBounds: IntRect?,
     onGoBack: () -> Unit,
@@ -301,7 +301,7 @@ private fun FocusGateScreen(
     var reason by remember { mutableStateOf("") }
     var microStep by remember { mutableStateOf("") }
     var showBlockSetupSheet by remember { mutableStateOf(false) }
-    var decision by remember(app.key, profile) { mutableStateOf<FocusPolicyDecision?>(null) }
+    var decision by remember(app.key, temporaryUnlock) { mutableStateOf<FocusPolicyDecision?>(null) }
     var hasLaunched by remember { mutableStateOf(false) }
     var stage by remember { mutableStateOf(if (launchBounds != null) FocusGateStage.Entry else FocusGateStage.Animation) }
     var countdownSeconds by remember { mutableIntStateOf(0) }
@@ -323,6 +323,7 @@ private fun FocusGateScreen(
         findBlockPlan(focusBlockPlans, LocalDate.now(ZoneId.systemDefault()), it.label)
     }
     val actionableBlockPlan = currentBlockPlan?.takeUnless { it.doneForBlock }
+    val completedBlockPlan = currentBlockPlan?.takeIf { it.doneForBlock }
     val blockPlanSuggestedApps by remember(blockPlanTarget, focusScheduleDockMappings, allApps) {
         derivedStateOf {
             resolveActiveDockApps(
@@ -379,7 +380,7 @@ private fun FocusGateScreen(
         )
     }
 
-    LaunchedEffect(app.key, profile, focusSessionActive) {
+    LaunchedEffect(app.key, temporaryUnlock, focusSessionActive) {
         decision = focusPolicyService.evaluate(app)
         sessionMinutes = resolveBlockAwareSessionMinutes(
             defaultMinutes = defaultSessionMinutes,
@@ -465,6 +466,13 @@ private fun FocusGateScreen(
             decision?.habitBlocked == false &&
             currentScheduleBlockLabel != null ->
             stringResource(R.string.focus_gate_message_block_mismatch, currentScheduleBlockLabel)
+        decision?.appType == FocusAppType.Distracting &&
+            decision?.hardBlocked == false &&
+            decision?.habitBlocked == false &&
+            currentScheduleBlockLabel == null &&
+            actionableBlockPlan != null &&
+            blockPlanTarget != null ->
+            stringResource(R.string.focus_gate_message_upcoming_prep, blockPlanTarget.label)
         decision?.blockReason == FocusBlockReason.HabitDeadline ->
             decision?.blockingHabitTitle?.let {
                 context.getString(R.string.focus_gate_message_habit_deadline_named, it)
@@ -492,6 +500,11 @@ private fun FocusGateScreen(
         )
     } else {
         null
+    }
+    val planStatusMessage = when {
+        completedBlockPlan != null && blockPlanTarget != null ->
+            stringResource(R.string.focus_gate_message_block_complete, blockPlanTarget.label)
+        else -> null
     }
 
     BoxWithConstraints(
@@ -657,6 +670,13 @@ private fun FocusGateScreen(
                                         color = MaterialTheme.colorScheme.secondary,
                                     )
                                 }
+                                planStatusMessage?.let {
+                                    Text(
+                                        text = it,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                    )
+                                }
 
                                 if (stageValue == FocusGateStage.Intent) {
                                     if (startRitualEnabled) {
@@ -742,7 +762,15 @@ private fun FocusGateScreen(
                                             modifier = Modifier.fillMaxWidth(),
                                             onClick = { showBlockSetupSheet = true },
                                         ) {
-                                            Text(stringResource(R.string.focus_home_daily_schedule_setup))
+                                            Text(
+                                                stringResource(
+                                                    if (currentBlockPlan != null) {
+                                                        R.string.focus_home_daily_schedule_edit
+                                                    } else {
+                                                        R.string.focus_home_daily_schedule_setup
+                                                    }
+                                                )
+                                            )
                                         }
                                     }
                                 }
@@ -759,10 +787,10 @@ private fun FocusGateScreen(
                                                     (!microStepPromptEnabled || microStep.isNotBlank())
                                                 ),
                                             onClick = {
-                                                customAttributesRepository.setFocusProfile(
+                                                customAttributesRepository.setFocusTemporaryUnlock(
                                                     app,
-                                                    profile.withTemporaryUnlockUntil(
-                                                        System.currentTimeMillis() + sessionMinutes * 60_000L
+                                                    FocusTemporaryUnlock(
+                                                        untilMillis = System.currentTimeMillis() + sessionMinutes * 60_000L
                                                     ),
                                                 )
                                                 searchUiSettings.setFocusLastResumeContext(

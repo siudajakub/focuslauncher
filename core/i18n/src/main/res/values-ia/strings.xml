@@ -31,8 +31,6 @@
     <string name="file_type_launcherbackup">Copia de securitate %1$s</string>
     <string name="file_type_launchertheme">Thema de %1$s</string>
     <string name="file_type_generic">File %1$s</string>
-    <string name="search_action_message">Message</string>
-    <string name="search_action_websearch">Recerca web</string>
     <string name="import_theme_apply">Applicar le thema</string>
     <string name="menu_launch">Lancear</string>
     <string name="file_meta_album">Album: %1$s</string>
@@ -51,10 +49,7 @@
     <string name="app_info_version">Version %1$s</string>
     <string name="wallpaper">Fundo de schermo</string>
     <string name="file_meta_artist">Artista: %1$s</string>
-    <string name="search_action_contact">Adder al contactos</string>
-    <string name="search_action_call">Telephonar</string>
     <string name="shortcut_label_unavailable">Non disponibile</string>
-    <string name="search_action_email">Email</string>
     <string name="calendar_widget_no_events">Necun eventos hodie</string>
     <string name="preference_screen_about">A proposito de</string>
     <string name="preference_about_fdroid">Repositorio de Telegram</string>

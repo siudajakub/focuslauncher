@@ -1,6 +1,7 @@
 package de.mm20.launcher2.ui.launcher.focus
 
 import de.mm20.launcher2.preferences.FocusHabit
+import de.mm20.launcher2.preferences.FocusBlockPlan
 import de.mm20.launcher2.preferences.FocusResumeContext
 import de.mm20.launcher2.preferences.ScheduleDockMapping
 import de.mm20.launcher2.search.Application
@@ -56,6 +57,10 @@ data class FocusGuidanceState(
     val minutesRemaining: Int? = null,
     val suggestedMicroStep: String? = null,
     val intention: String? = null,
+    val taskLabel: String? = null,
+    val completedForBlock: Boolean = false,
+    val resumeMatchesCurrentBlock: Boolean = false,
+    val requiresSetup: Boolean = false,
 )
 
 fun normalizeScheduleEventName(name: String): String {
@@ -131,6 +136,18 @@ fun resolveActiveDockApps(
     return mapping.appKeys.mapNotNull(appMap::get)
 }
 
+fun resolvePreferredDockApps(
+    currentBlock: DailyScheduleBlock?,
+    blockPlan: FocusBlockPlan?,
+    mappings: List<ScheduleDockMapping>,
+    apps: List<Application>,
+): List<Application> {
+    val appMap = apps.associateBy { it.key }
+    val planApps = blockPlan?.recommendedAppKeys?.mapNotNull(appMap::get).orEmpty()
+    if (planApps.isNotEmpty()) return planApps
+    return resolveActiveDockApps(currentBlock, mappings, apps)
+}
+
 fun Long.toLocalDate(zoneId: ZoneId = ZoneId.systemDefault()): LocalDate {
     return java.time.Instant.ofEpochMilli(this).atZone(zoneId).toLocalDate()
 }
@@ -181,7 +198,11 @@ fun resolveScheduleAwareResumeCard(
             currentBlockLabel ?: lastContext.scheduleBlockLabel ?: lastContext.taskLabel
         } else {
             lastContext.taskLabel
-        }
+        },
+        matchesCurrentBlock = followsCurrentBlock &&
+            lastBlockLabel != null &&
+            currentBlockLabel != null &&
+            normalizeScheduleEventName(lastBlockLabel) == normalizeScheduleEventName(currentBlockLabel),
     )
 }
 
@@ -196,14 +217,23 @@ fun resolveFocusGuidance(
     return when {
         resumeState.show -> FocusGuidanceState(
             type = FocusGuidanceType.Recover,
-            blockLabel = resumeState.taskLabel,
+            blockLabel = resumeState.relatedBlockLabel,
+            taskLabel = resumeState.taskLabel,
             suggestedMicroStep = resumeState.microStep,
+            resumeMatchesCurrentBlock = resumeState.matchesCurrentBlock,
         )
 
         prepState.show -> FocusGuidanceState(
             type = FocusGuidanceType.Prep,
             nextBlockLabel = prepState.nextBlockLabel,
             minutesRemaining = prepState.minutesUntilNextBlock,
+        )
+
+        blockPlan != null && blockReadiness == FocusBlockReadiness.DoneForBlock -> FocusGuidanceState(
+            type = FocusGuidanceType.Now,
+            blockLabel = guidanceBlock?.label ?: blockPlan.blockLabel,
+            intention = blockPlan.intention.takeIf { it.isNotBlank() },
+            completedForBlock = true,
         )
 
         blockPlan != null && blockReadiness == FocusBlockReadiness.Ready -> FocusGuidanceState(
@@ -216,6 +246,7 @@ fun resolveFocusGuidance(
         currentBlock != null -> FocusGuidanceState(
             type = FocusGuidanceType.Now,
             blockLabel = currentBlock.label,
+            requiresSetup = blockPlan == null,
         )
 
         else -> FocusGuidanceState(type = FocusGuidanceType.None)

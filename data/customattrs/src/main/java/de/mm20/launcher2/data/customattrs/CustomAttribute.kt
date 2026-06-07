@@ -21,7 +21,7 @@ sealed interface CustomAttribute {
                     tagName = entity.value
                 )
                 CustomAttributeType.Icon.value -> CustomIcon.fromDatabaseEntity(entity)
-                CustomAttributeType.Focus.value -> FocusProfile.fromDatabaseEntity(entity)
+                CustomAttributeType.Focus.value -> FocusTemporaryUnlock.fromDatabaseEntity(entity)
                 else -> {
                     Log.e("MM20", "Invalid custom attribute type: ${entity.type}")
                     null
@@ -56,6 +56,34 @@ class CustomTag(
             type = CustomAttributeType.Tag.value,
             value = tagName,
         )
+    }
+}
+
+
+data class FocusTemporaryUnlock(
+    val untilMillis: Long = 0L,
+) : CustomAttribute {
+    override fun toDatabaseEntity(key: String): CustomAttributeEntity {
+        return CustomAttributeEntity(
+            key = key,
+            type = CustomAttributeType.Focus.value,
+            value = jsonObjectOf(
+                "temporary_unlock_until_millis" to untilMillis,
+            ).toString(),
+        )
+    }
+
+    fun hasTemporaryUnlock(nowMillis: Long = System.currentTimeMillis()): Boolean {
+        return untilMillis > nowMillis
+    }
+
+    companion object {
+        fun fromDatabaseEntity(entity: CustomAttributeEntity): FocusTemporaryUnlock {
+            val payload = JSONObject(entity.value)
+            return FocusTemporaryUnlock(
+                untilMillis = payload.optLong("temporary_unlock_until_millis", 0L),
+            )
+        }
     }
 }
 

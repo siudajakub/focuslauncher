@@ -58,4 +58,22 @@ class FocusAssistantModelsTest {
 
         assertFalse(card.show)
     }
+
+    @Test
+    fun `schedule aware resume marks current block match`() {
+        val matching = resolveScheduleAwareResumeCard(
+            lastContext = FocusResumeContext(
+                taskLabel = "Writing",
+                scheduleBlockLabel = "Deep work",
+                interruptedAtMillis = 100_000L,
+            ),
+            currentBlockLabel = "deep work",
+            nowMillis = 120_000L,
+            expiryMillis = 60_000L,
+            followsCurrentBlock = true,
+        )
+
+        assertTrue(matching.show)
+        assertTrue(matching.matchesCurrentBlock)
+    }
 }

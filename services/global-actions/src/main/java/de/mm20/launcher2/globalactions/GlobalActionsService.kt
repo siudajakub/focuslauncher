@@ -12,10 +12,6 @@ class GlobalActionsService(private val context: Context) {
         }
     }
 
-    fun lockScreen() {
-        LauncherAccessibilityService.getInstance()?.performGlobalAction(AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN)
-    }
-
     fun openQuickSettings() {
         try {
             expandQuickSettings()

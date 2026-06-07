@@ -183,6 +183,7 @@ class FocusSupportModelsTest {
         assertTrue(matching.show)
         assertEquals(" writing ", matching.taskLabel)
         assertEquals("Reply", matching.microStep)
+        assertEquals("Writing", matching.relatedBlockLabel)
 
         val expired = resolveScheduleAwareResumeCard(
             lastContext = FocusResumeContext(
@@ -209,7 +210,7 @@ class FocusSupportModelsTest {
         )
 
         assertEquals(FocusGuidanceType.Recover, guidance.type)
-        assertEquals("Writing", guidance.blockLabel)
+        assertEquals("Writing", guidance.taskLabel)
     }
 
     @Test
@@ -248,6 +249,25 @@ class FocusSupportModelsTest {
 
         assertEquals(FocusGuidanceType.Ready, guidance.type)
         assertEquals("Open the draft", guidance.suggestedMicroStep)
+    }
+
+    @Test
+    fun `done block guidance never resolves to ready`() {
+        val guidance = resolveFocusGuidance(
+            currentBlock = scheduleEvent("Writing", dateTime(2026, 4, 2, 10, 0), dateTime(2026, 4, 2, 11, 0)),
+            prepState = PrepCardState(show = false),
+            resumeState = ResumeCardState(show = false),
+            blockPlan = FocusBlockPlan(
+                date = "2026-04-02",
+                normalizedBlockLabel = "writing",
+                blockLabel = "Writing",
+                doneForBlock = true,
+            ),
+            blockReadiness = FocusBlockReadiness.DoneForBlock,
+        )
+
+        assertEquals(FocusGuidanceType.Now, guidance.type)
+        assertTrue(guidance.completedForBlock)
     }
 
     @Test

@@ -40,7 +40,6 @@ fun FailedGestureSheet(
         val actionName = stringResource(when(it.action) {
             is GestureAction.Search -> R.string.gesture_action_open_search
             is GestureAction.Notifications -> R.string.gesture_action_notifications
-            is GestureAction.ScreenLock -> R.string.gesture_action_lock_screen
             is GestureAction.QuickSettings -> R.string.gesture_action_quick_settings
             is GestureAction.Recents -> R.string.gesture_action_recents
             is GestureAction.PowerMenu -> R.string.gesture_action_power_menu

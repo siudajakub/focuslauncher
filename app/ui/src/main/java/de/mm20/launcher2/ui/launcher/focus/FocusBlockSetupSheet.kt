@@ -95,6 +95,12 @@ fun FocusBlockSetupSheet(
         selectedRecommendedAppKeys = sameDayExistingPlan.recommendedAppKeys.toSet()
     }
 
+    LaunchedEffect(doneForBlock) {
+        if (doneForBlock) {
+            tinyStep = ""
+        }
+    }
+
     val modeLabel = stringResource(
         if (sameDayExistingPlan != null) {
             R.string.focus_block_setup_mode_edit
@@ -112,7 +118,9 @@ fun FocusBlockSetupSheet(
     val habitsReadinessLabel = stringResource(R.string.focus_block_setup_require_habits)
     val prepReadinessLabel = stringResource(R.string.focus_block_setup_require_prep)
     val saveLabel = stringResource(
-        if (sameDayExistingPlan != null) {
+        if (doneForBlock) {
+            R.string.focus_block_setup_complete
+        } else if (sameDayExistingPlan != null) {
             R.string.focus_block_setup_update
         } else {
             R.string.focus_block_setup_save
@@ -151,11 +159,29 @@ fun FocusBlockSetupSheet(
                 modifier = Modifier.fillMaxWidth(),
                 value = tinyStep,
                 onValueChange = { tinyStep = it },
+                enabled = !doneForBlock,
                 label = { Text(stringResource(R.string.focus_block_setup_tiny_step_label)) },
-                placeholder = { Text(stringResource(R.string.focus_block_setup_tiny_step_placeholder)) },
+                placeholder = {
+                    Text(
+                        stringResource(
+                            if (doneForBlock) {
+                                R.string.focus_block_setup_tiny_step_disabled
+                            } else {
+                                R.string.focus_block_setup_tiny_step_placeholder
+                            }
+                        )
+                    )
+                },
                 minLines = 1,
                 maxLines = 2,
             )
+            if (doneForBlock) {
+                Text(
+                    text = stringResource(R.string.focus_block_setup_complete_summary),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = note,
@@ -167,8 +193,8 @@ fun FocusBlockSetupSheet(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = stringResource(R.string.focus_block_setup_recommended_apps_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 when {
                     sameDayExistingPlan?.recommendedAppKeys?.isNotEmpty() == true && suggestedApps.isEmpty() -> {
@@ -217,8 +243,8 @@ fun FocusBlockSetupSheet(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = stringResource(R.string.focus_block_setup_readiness_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 FocusBlockSetupCheckboxRow(
                     checked = requireHabits,

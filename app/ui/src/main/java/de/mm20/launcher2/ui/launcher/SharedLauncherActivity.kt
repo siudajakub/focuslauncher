@@ -65,6 +65,8 @@ import de.mm20.launcher2.ui.launcher.scaffold.SearchBarPosition
 import de.mm20.launcher2.ui.launcher.scaffold.SearchComponent
 import de.mm20.launcher2.ui.launcher.scaffold.SecretComponent
 import de.mm20.launcher2.ui.launcher.scaffold.WidgetsComponent
+import de.mm20.launcher2.ui.launcher.focus.FocusHomeCommandCenter
+import de.mm20.launcher2.ui.launcher.focus.FocusHomeCommandType
 import de.mm20.launcher2.ui.launcher.sheets.LauncherBottomSheetManager
 import de.mm20.launcher2.ui.launcher.sheets.LauncherBottomSheets
 import de.mm20.launcher2.ui.launcher.sheets.LocalBottomSheetManager
@@ -96,6 +98,7 @@ abstract class SharedLauncherActivity(
             window.isStatusBarContrastEnforced = false
         }
         super.onCreate(savedInstanceState)
+        handleFocusCommandIntent(intent)
 
         if (savedInstanceState != null) {
             pauseOnHome = savedInstanceState.getBoolean("pauseOnHome")
@@ -318,11 +321,6 @@ abstract class SharedLauncherActivity(
                                                 animation = if (gesture.orientation == null) ScaffoldAnimation.ZoomIn else ScaffoldAnimation.Push,
                                             )
 
-                                            is GestureAction.ScreenLock -> ScaffoldGesture(
-                                                component = ScreenOffComponent,
-                                                animation = if (gesture.orientation == null) ScaffoldAnimation.ZoomIn else ScaffoldAnimation.Push,
-                                            )
-
                                             is GestureAction.Feed -> null
 
                                             is GestureAction.Launch if (searchable != null) -> ScaffoldGesture(
@@ -456,6 +454,7 @@ abstract class SharedLauncherActivity(
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         isNewIntent = true
+        handleFocusCommandIntent(intent)
     }
 
     override fun onPause() {
@@ -480,5 +479,23 @@ abstract class SharedLauncherActivity(
     enum class LauncherActivityMode {
         Launcher,
         Assistant
+    }
+
+    private fun handleFocusCommandIntent(intent: Intent?) {
+        val commandName = intent?.getStringExtra(EXTRA_FOCUS_HOME_COMMAND) ?: return
+        val commandType = when (commandName) {
+            FOCUS_HOME_COMMAND_START_SESSION -> FocusHomeCommandType.StartSession
+            FOCUS_HOME_COMMAND_RESUME_FOCUS -> FocusHomeCommandType.ResumeFocus
+            FOCUS_HOME_COMMAND_OPEN_TODAY_PLAN -> FocusHomeCommandType.OpenTodayPlan
+            else -> null
+        } ?: return
+        FocusHomeCommandCenter.dispatch(commandType)
+    }
+
+    companion object {
+        const val EXTRA_FOCUS_HOME_COMMAND = "de.mm20.launcher2.focus.HOME_COMMAND"
+        const val FOCUS_HOME_COMMAND_START_SESSION = "start_session"
+        const val FOCUS_HOME_COMMAND_RESUME_FOCUS = "resume_focus"
+        const val FOCUS_HOME_COMMAND_OPEN_TODAY_PLAN = "open_today_plan"
     }
 }

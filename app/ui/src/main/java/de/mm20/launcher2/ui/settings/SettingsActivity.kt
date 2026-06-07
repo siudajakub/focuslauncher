@@ -80,6 +80,8 @@ import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsRoute
 import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsScreen
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsRoute
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsScreen
+import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsRoute
+import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsScreen
 import de.mm20.launcher2.ui.settings.focusschedule.ScheduleDockSettingsRoute
 import de.mm20.launcher2.ui.settings.focusschedule.ScheduleDockSettingsScreen
 import de.mm20.launcher2.ui.settings.focusreport.FocusReportSettingsRoute
@@ -202,6 +204,9 @@ class SettingsActivity : BaseActivity() {
             }
             entry<SearchSettingsRoute> {
                 SearchSettingsScreen()
+            }
+            entry<FocusSystemSettingsRoute> {
+                FocusSystemSettingsScreen()
             }
             entry<FocusAppsSettingsRoute> {
                 FocusAppsSettingsScreen()
@@ -373,6 +378,9 @@ class SettingsActivity : BaseActivity() {
             intent.getStringExtra(EXTRA_ROUTE) ?: return null
         }
         return when(routeName) {
+            ROUTE_FOCUS_SYSTEM -> FocusSystemSettingsRoute
+            ROUTE_FOCUS_APPS -> FocusAppsSettingsRoute
+            ROUTE_FOCUS_REPORT -> FocusReportSettingsRoute
             ROUTE_WEATHER_INTEGRATION -> WeatherIntegrationSettingsRoute
             ROUTE_MEDIA_INTEGRATION -> MediaIntegrationSettingsRoute
             ROUTE_HIDDEN_ITEMS -> HiddenItemsSettingsRoute
@@ -385,6 +393,9 @@ class SettingsActivity : BaseActivity() {
 
     companion object {
         const val EXTRA_ROUTE = "de.mm20.launcher2.settings.ROUTE"
+        const val ROUTE_FOCUS_SYSTEM = "settings/focus/system"
+        const val ROUTE_FOCUS_APPS = "settings/focus/apps"
+        const val ROUTE_FOCUS_REPORT = "settings/focus/report"
         const val ROUTE_WEATHER_INTEGRATION = "settings/integrations/weather"
         const val ROUTE_MEDIA_INTEGRATION = "settings/integrations/media"
         const val ROUTE_HIDDEN_ITEMS = "settings/search/hiddenitems"

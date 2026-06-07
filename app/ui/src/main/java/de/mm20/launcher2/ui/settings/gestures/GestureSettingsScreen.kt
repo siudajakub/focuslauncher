@@ -218,7 +218,6 @@ fun GestureSettingsScreen() {
 
 fun requiresAccessibilityService(action: GestureAction?): Boolean {
     return when (action) {
-        is GestureAction.ScreenLock,
         is GestureAction.Recents,
         is GestureAction.PowerMenu,
             -> true

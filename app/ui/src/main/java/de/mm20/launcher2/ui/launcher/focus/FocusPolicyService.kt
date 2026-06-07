@@ -4,7 +4,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.provider.Settings
 import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
-import de.mm20.launcher2.data.customattrs.FocusProfile
+import de.mm20.launcher2.data.customattrs.FocusTemporaryUnlock
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.profiles.Profile
 import de.mm20.launcher2.profiles.ProfileManager
@@ -39,7 +39,7 @@ data class FocusFrictionResolution(
 
 data class FocusPolicyDecision(
     val appType: FocusAppType,
-    val profile: FocusProfile,
+    val temporaryUnlock: FocusTemporaryUnlock,
     val requiresGate: Boolean,
     val hiddenFromBrowse: Boolean,
     val hardBlocked: Boolean,
@@ -62,17 +62,17 @@ class FocusPolicyService : KoinComponent {
     private val sessionRepository = FocusSessionRepository()
     private val focusAppClassifier = FocusAppClassifier()
 
-    suspend fun getProfile(app: Application): FocusProfile {
-        return customAttributesRepository.getFocusProfile(app).first()
+    suspend fun getProfile(app: Application): FocusTemporaryUnlock {
+        return customAttributesRepository.getFocusTemporaryUnlock(app).first()
     }
 
     suspend fun evaluate(app: Application): FocusPolicyDecision {
-        val profile = getProfile(app)
+        val temporaryUnlock = getProfile(app)
         val appType = focusAppClassifier.classifyNow(app.key)
         val nowMillis = System.currentTimeMillis()
         val sessionActive = searchUiSettings.focusSessionEndsAt.first() > nowMillis
         val productivityTimeActive = isProductivityTimeActive()
-        val temporaryUnlockActive = profile.hasTemporaryUnlock()
+        val temporaryUnlockActive = temporaryUnlock.hasTemporaryUnlock()
         val defaultDelaySeconds = searchUiSettings.focusDefaultDelaySeconds.first()
         val escalatingFrictionEnabled = searchUiSettings.focusEscalatingFrictionEnabled.first()
         val escalationWindowMinutes = searchUiSettings.focusEscalationWindowMinutes.first()
@@ -115,7 +115,7 @@ class FocusPolicyService : KoinComponent {
         if (!shouldApplyToProfile(app)) {
             return FocusPolicyDecision(
                 appType = appType,
-                profile = profile,
+                temporaryUnlock = temporaryUnlock,
                 requiresGate = false,
                 hiddenFromBrowse = false,
                 hardBlocked = false,
@@ -133,7 +133,7 @@ class FocusPolicyService : KoinComponent {
         if (productivityTimeActive && appType == FocusAppType.Distracting) {
             return FocusPolicyDecision(
                 appType = appType,
-                profile = profile,
+                temporaryUnlock = temporaryUnlock,
                 requiresGate = true,
                 hiddenFromBrowse = searchUiSettings.focusHideDistractingApps.first(),
                 hardBlocked = true,
@@ -160,7 +160,7 @@ class FocusPolicyService : KoinComponent {
         if (habitGate.blocked) {
             return FocusPolicyDecision(
                 appType = appType,
-                profile = profile,
+                temporaryUnlock = temporaryUnlock,
                 requiresGate = true,
                 hiddenFromBrowse = searchUiSettings.focusHideDistractingApps.first(),
                 hardBlocked = true,
@@ -178,7 +178,7 @@ class FocusPolicyService : KoinComponent {
         if (temporaryUnlockActive) {
             return FocusPolicyDecision(
                 appType = appType,
-                profile = profile,
+                temporaryUnlock = temporaryUnlock,
                 requiresGate = false,
                 hiddenFromBrowse = false,
                 hardBlocked = false,
@@ -221,7 +221,7 @@ class FocusPolicyService : KoinComponent {
 
         return FocusPolicyDecision(
             appType = appType,
-            profile = profile,
+            temporaryUnlock = temporaryUnlock,
             requiresGate = requiresGate,
             hiddenFromBrowse = hiddenFromBrowse,
             hardBlocked = hardBlocked,

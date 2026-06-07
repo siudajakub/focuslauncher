@@ -27,7 +27,6 @@
     <string name="wind_west_north_west">Barat-barat laut</string>
     <string name="wind_north_west">Barat laut</string>
     <string name="wind_north_north_west">Utara-barat laut</string>
-    <string name="wikipedia_source">Dari Wikipedia</string>
     <string name="file_meta_title">Judul: %1$s</string>
     <string name="file_meta_artist">Artis: %1$s</string>
     <string name="file_meta_album">Album: %1$s</string>
@@ -69,7 +68,6 @@
     <string name="widget_action_replace">Ganti</string>
     <string name="wind_east_north_east">Timur-timur laut</string>
     <string name="date_today">Hari ini</string>
-    <string name="wikipedia_url">https://id.wikipedia.org</string>
     <string name="file_meta_owner">Pemilik: %1$s</string>
     <string name="alert_delete_directory">Direktori %1$s dan seluruh isinya akan dihapus secara permanen. Lanjut\?</string>
     <string name="default_websearch_2_url">https://www.youtube.com/results\?search_query=${1}</string>
@@ -138,9 +136,7 @@
     <string name="file_type_form">Formulir</string>
     <string name="file_type_generic">Berkas %1$s</string>
     <string name="alert_delete_shortcut">Pintasan %1$s akan dihapus secara permanen. Lanjut\?</string>
-    <string name="preference_search_unitconverter_summary">Penggunaan: 1,5 kg atau 4 cm &gt;&gt; in</string>
     <string name="preference_themed_icons_summary">Warnai ikon dengan skema warna dari aplikasi</string>
-    <string name="preference_search_currencyconverter_summary">Secara berkala mengunduh nilai tukar untuk mengkonversi mata uang</string>
     <string name="websearch_dialog_custom_icon">Ikon kustom</string>
     <string name="websearch_dialog_advanced">Lanjutan</string>
     <string name="websearch_dialog_query_encoding_none">Tidak ada</string>
@@ -183,7 +179,6 @@
     <plurals name="debug_cleanup_database_result">
         <item quantity="other">Entri %1$d telah dibersihkan.</item>
     </plurals>
-    <string name="preference_search_localfiles_summary">Cari dokumen, foto, dan berkas lain yang tersimpan di dalam perangkat ini</string>
     <string name="missing_permission_calendar_widget">Berikan izin kalender untuk menampilkan janji temu dan acara mendatang di sini.</string>
     <string name="missing_permission_calendar_search">Berikan izin kalender untuk mencari kalender kamu.</string>
     <string name="missing_permission_files_search">Setujui izin penyimpanan untuk mencari foto, media, dan dokumen di perangkat ini.</string>
@@ -289,26 +284,8 @@
     <string name="preference_clockwidget_alarm_part_summary">Tampilkan alarm yang akan berdering sekitar 15 menit mendatang</string>
     <string name="preference_screen_search">Pencarian</string>
     <string name="preference_search_favorites">Favorit</string>
-    <string name="preference_search_files">Berkas</string>
-    <string name="preference_search_contacts">Kontak</string>
-    <string name="preference_search_contacts_summary">Cari kontak di perangkat ini</string>
-    <string name="preference_search_calendar">Kalender</string>
-    <string name="preference_search_calendar_summary">Cari acara dan pertemuan yang akan datang</string>
     <string name="preference_search_appshortcuts">Pintasan aplikasi</string>
     <string name="preference_search_appshortcuts_summary">Cari pintasan dari aplikasi</string>
-    <string name="preference_search_calculator">Kalkulator</string>
-    <string name="preference_search_calculator_summary">Menaksir ketentuan matematika</string>
-    <string name="preference_search_unitconverter">Konversi unit</string>
-    <string name="preference_search_currencyconverter">Kurs mata uang</string>
-    <string name="preference_search_websites">Laman web</string>
-    <string name="preference_search_wikipedia_summary">Cari ensiklopedia bebas</string>
-    <string name="preference_search_wikipedia">Wikipedia</string>
-    <string name="preference_search_websites_summary">Tampilkan pratinjau sebuah laman web jika kueri pencarian adalah URL</string>
-    <string name="preference_search_localfiles">Berkas lokal</string>
-    <string name="preference_search_cloud_summary">Mencari berkas %1$s</string>
-    <string name="preference_search_nextcloud">Nextcloud</string>
-    <string name="preference_search_owncloud">Owncloud</string>
-    <string name="preference_calendar_calendars">Kalender</string>
     <string name="preference_screen_buildinfo">Informasi build</string>
     <string name="preference_search_bar_style">Gaya</string>
     <string name="preference_search_bar_style_summary">Atur</string>
@@ -318,8 +295,6 @@
     <string name="preference_search_bar_launch_on_enter">Enter untuk membuka</string>
     <string name="preference_hidden_items">Sembunyikan hasil pencarian</string>
     <string name="tag_exists_error">Label dengan nama ini sudah ada.</string>
-    <string name="search_action_label">Nama</string>
-    <string name="search_action_app">Aplikasi</string>
     <string name="more_information">Informasi lebih</string>
     <string name="open_search_pull_down">Geser ke bawah</string>
     <string name="open_search_swipe_left">Geser ke kiri</string>
@@ -355,7 +330,6 @@
     <string name="preference_screen_search_summary">Cari, label, item tersembunyi</string>
     <string name="preference_blur_wallpaper_summary">Gunakan efek buram pada wallpaper</string>
     <string name="preference_search_favorites_summary">Tampilkan item tersemat dan yang paling sering digunakan di atas daftar aplikasi</string>
-    <string name="preference_search_files_summary">Cari berkas-berkas lokal dan cloud</string>
     <string name="file_type_launchertheme">%1$s tema</string>
     <string name="file_type_source_code">Dokumen kode sumber</string>
     <string name="file_type_spreadsheet">Lembar kerja</string>

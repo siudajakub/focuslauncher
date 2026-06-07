@@ -417,8 +417,7 @@ class UiSettings internal constructor(
                 gesturesSwipeUp = resetGesture(data.gesturesSwipeUp),
                 gesturesSwipeDown = resetGesture(data.gesturesSwipeDown),
                 gesturesSwipeLeft = resetGesture(data.gesturesSwipeLeft),
-                gesturesSwipeRight = resetGesture(data.gesturesSwipeRight),
-                gesturesDoubleTap = resetGesture(data.gesturesDoubleTap),
+                gesturesSwipeUp = resetGesture(data.gesturesSwipeUp),
                 gesturesLongPress = resetGesture(data.gesturesLongPress),
                 gesturesHomeButton = resetGesture(data.gesturesHomeButton),
             )
@@ -466,8 +465,7 @@ class UiSettings internal constructor(
                 gesturesSwipeUp = resetGesture(updatedData.gesturesSwipeUp),
                 gesturesSwipeDown = resetGesture(updatedData.gesturesSwipeDown),
                 gesturesSwipeLeft = resetGesture(updatedData.gesturesSwipeLeft),
-                gesturesSwipeRight = resetGesture(updatedData.gesturesSwipeRight),
-                gesturesDoubleTap = resetGesture(updatedData.gesturesDoubleTap),
+                gesturesSwipeUp = resetGesture(updatedData.gesturesSwipeUp),
                 gesturesLongPress = resetGesture(updatedData.gesturesLongPress),
                 gesturesHomeButton = resetGesture(updatedData.gesturesHomeButton),
             )

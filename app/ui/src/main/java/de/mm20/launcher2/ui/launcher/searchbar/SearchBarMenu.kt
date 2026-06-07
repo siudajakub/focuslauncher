@@ -90,6 +90,57 @@ fun RowScope.SearchBarMenu(
                 DropdownMenuItem(
                     shape = MenuDefaults.middleItemShape,
                     onClick = {
+                        context.startActivity(
+                            Intent(context, SettingsActivity::class.java).apply {
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SYSTEM)
+                            }
+                        )
+                        showOverflowMenu = false
+                    },
+                    text = {
+                        Text(stringResource(R.string.focus_system_title))
+                    },
+                    leadingIcon = {
+                        Icon(painterResource(R.drawable.timer_24px), contentDescription = null)
+                    }
+                )
+                DropdownMenuItem(
+                    shape = MenuDefaults.middleItemShape,
+                    onClick = {
+                        context.startActivity(
+                            Intent(context, SettingsActivity::class.java).apply {
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_APPS)
+                            }
+                        )
+                        showOverflowMenu = false
+                    },
+                    text = {
+                        Text(stringResource(R.string.focus_apps_title))
+                    },
+                    leadingIcon = {
+                        Icon(painterResource(R.drawable.apps_24px), contentDescription = null)
+                    }
+                )
+                DropdownMenuItem(
+                    shape = MenuDefaults.middleItemShape,
+                    onClick = {
+                        context.startActivity(
+                            Intent(context, SettingsActivity::class.java).apply {
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_REPORT)
+                            }
+                        )
+                        showOverflowMenu = false
+                    },
+                    text = {
+                        Text(stringResource(R.string.focus_report_title))
+                    },
+                    leadingIcon = {
+                        Icon(painterResource(R.drawable.query_stats_24px), contentDescription = null)
+                    }
+                )
+                DropdownMenuItem(
+                    shape = MenuDefaults.middleItemShape,
+                    onClick = {
                         context.startActivity(Intent(context, SettingsActivity::class.java))
                         showOverflowMenu = false
                     },

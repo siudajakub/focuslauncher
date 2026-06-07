@@ -47,7 +47,6 @@
     <string name="wind_west">পশ্চিম</string>
     <string name="wind_west_north_west">পশ্চিম উত্তর-পশ্চিম</string>
     <string name="wind_north_west">উত্তর পশ্চিম</string>
-    <string name="wikipedia_source">উইকিপিডিয়া থেকে</string>
     <string name="file_meta_title">নাম: %1$s</string>
     <string name="file_meta_artist">শিল্পী: %1$s</string>
     <string name="file_meta_album">অ্যালবাম: %1$s</string>
@@ -167,7 +166,6 @@
     <string name="weather_condition_rainshowers">বৃষ্টি</string>
     <string name="weather_condition_lightsleetandthunder">হালকা তুষার বৃষ্টি এবং বজ্রপাত</string>
     <string name="action_undo">আগের অবস্থায় ফিরুন</string>
-    <string name="wikipedia_url">https://bn.wikipedia.org</string>
     <string name="file_type_android">অ্যান্ড্রয়েড এপিকে ফাইল</string>
     <string name="file_type_none">ফাইল</string>
     <string name="file_type_drawing">আঁকাবুকি ফাইল</string>

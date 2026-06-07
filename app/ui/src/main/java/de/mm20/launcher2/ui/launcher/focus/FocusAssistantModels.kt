@@ -16,6 +16,8 @@ data class ResumeCardState(
     val show: Boolean,
     val taskLabel: String? = null,
     val microStep: String? = null,
+    val relatedBlockLabel: String? = null,
+    val matchesCurrentBlock: Boolean = false,
 )
 
 fun resolveTransitionWarning(
@@ -61,5 +63,6 @@ fun resolveResumeCard(
         show = true,
         taskLabel = lastContext.taskLabel,
         microStep = lastContext.microStep,
+        relatedBlockLabel = lastContext.scheduleBlockLabel,
     )
 }
