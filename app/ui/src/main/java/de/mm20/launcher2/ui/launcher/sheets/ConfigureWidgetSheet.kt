@@ -181,36 +181,6 @@ fun ColumnScope.ConfigureWeatherWidget(
             )
         }
     }
-    TextButton(
-        modifier = Modifier
-            .padding(top = 8.dp)
-            .align(Alignment.End),
-        contentPadding = PaddingValues(
-            end = 16.dp,
-            top = 8.dp,
-            start = 24.dp,
-            bottom = 8.dp,
-        ),
-        onClick = {
-            context.startActivity(
-                Intent(
-                    context,
-                    SettingsActivity::class.java
-                ).apply {
-                    putExtra(
-                        SettingsActivity.EXTRA_ROUTE,
-                        SettingsActivity.ROUTE_WEATHER_INTEGRATION
-                    )
-                })
-        }) {
-        Text(stringResource(R.string.widget_config_weather_integration_settings))
-        Icon(
-            modifier = Modifier
-                .padding(start = ButtonDefaults.IconSpacing)
-                .requiredSize(ButtonDefaults.IconSize),
-            painter = painterResource(R.drawable.open_in_new_20px), contentDescription = null
-        )
-    }
 }
 
 @Composable
@@ -578,35 +548,6 @@ fun ColumnScope.ConfigureMusicWidget(
         }
     }
 
-    TextButton(
-        modifier = Modifier
-            .align(Alignment.CenterHorizontally),
-        contentPadding = PaddingValues(
-            end = 16.dp,
-            top = 8.dp,
-            start = 24.dp,
-            bottom = 8.dp,
-        ),
-        onClick = {
-            context.startActivity(
-                Intent(
-                    context,
-                    SettingsActivity::class.java
-                ).apply {
-                    putExtra(
-                        SettingsActivity.EXTRA_ROUTE,
-                        SettingsActivity.ROUTE_MEDIA_INTEGRATION,
-                    )
-                })
-        }) {
-        Text(stringResource(R.string.widget_config_music_integration_settings))
-        Icon(
-            modifier = Modifier
-                .padding(start = ButtonDefaults.IconSpacing)
-                .requiredSize(ButtonDefaults.IconSize),
-            painter = painterResource(R.drawable.open_in_new_20px), contentDescription = null
-        )
-    }
 }
 
 @Composable
@@ -874,7 +815,7 @@ fun ColumnScope.ConfigureCalendarWidget(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 SwitchPreference(
-                    title = stringResource(R.string.preference_calendar_hide_completed),
+                    title = "Hide completed tasks",
                     iconPadding = false,
                     value = !widget.config.completedTasks,
                     onValueChanged = {
@@ -898,8 +839,8 @@ fun ColumnScope.ConfigureCalendarWidget(
     if (groups?.isNotEmpty() == true) {
         for (group in groups) {
             val pluginName = remember(plugins, group.key) {
-                if (group.key == "local") context.getString(R.string.preference_calendar_calendars)
-                else if (group.key == "tasks.org") context.getString(R.string.preference_search_tasks)
+                if (group.key == "local") "Calendars"
+                else if (group.key == "tasks.org") "Tasks"
                 else plugins.find { it.authority == group.key }?.label
             }
             if (pluginName != null) {

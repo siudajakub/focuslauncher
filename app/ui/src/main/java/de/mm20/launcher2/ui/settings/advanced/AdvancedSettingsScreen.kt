@@ -13,8 +13,6 @@ import de.mm20.launcher2.ui.settings.backup.BackupSettingsRoute
 import de.mm20.launcher2.ui.settings.debug.DebugSettingsRoute
 import de.mm20.launcher2.ui.settings.gestures.GesturesSettingsRoute
 import de.mm20.launcher2.ui.settings.icons.IconsSettingsRoute
-import de.mm20.launcher2.ui.settings.integrations.IntegrationsSettingsRoute
-import de.mm20.launcher2.ui.settings.plugins.PluginsSettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -38,18 +36,6 @@ fun AdvancedSettingsScreen() {
                     title = stringResource(R.string.preference_screen_gestures),
                     summary = stringResource(R.string.preference_screen_gestures_summary),
                     onClick = { backStack.add(GesturesSettingsRoute) }
-                )
-                Preference(
-                    icon = R.drawable.power_24px,
-                    title = stringResource(R.string.preference_screen_integrations),
-                    summary = stringResource(R.string.preference_screen_integrations_summary),
-                    onClick = { backStack.add(IntegrationsSettingsRoute) }
-                )
-                Preference(
-                    icon = R.drawable.extension_24px,
-                    title = stringResource(R.string.preference_screen_plugins),
-                    summary = stringResource(R.string.preference_screen_plugins_summary),
-                    onClick = { backStack.add(PluginsSettingsRoute) }
                 )
             }
         }

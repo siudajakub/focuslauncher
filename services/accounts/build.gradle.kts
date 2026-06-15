@@ -42,7 +42,4 @@ dependencies {
 
     implementation(libs.koin.android)
 
-    implementation(project(":libs:owncloud"))
-    implementation(project(":libs:nextcloud"))
-
 }

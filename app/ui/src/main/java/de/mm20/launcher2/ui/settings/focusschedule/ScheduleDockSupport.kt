@@ -1,12 +1,20 @@
 package de.mm20.launcher2.ui.settings.focusschedule
 
+import de.mm20.launcher2.ktx.normalize
 import de.mm20.launcher2.preferences.ScheduleDockMapping
 
 fun findScheduleDockMapping(
     eventName: String,
     mappings: List<ScheduleDockMapping>,
 ): ScheduleDockMapping? {
-    return mappings.firstOrNull { it.eventName == eventName }
+    val normalizedEventName = eventName.normalizeScheduleDockEventName()
+    return mappings.firstOrNull {
+        it.eventName.normalizeScheduleDockEventName() == normalizedEventName
+    }
+}
+
+private fun String.normalizeScheduleDockEventName(): String {
+    return normalize().trim().replace(Regex("\\s+"), " ")
 }
 
 fun formatScheduleDockAppsSummary(appLabels: List<String>): String {

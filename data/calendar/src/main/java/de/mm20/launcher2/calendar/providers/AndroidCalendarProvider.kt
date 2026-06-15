@@ -216,5 +216,28 @@ class AndroidCalendarProvider(
         }
     }
 
+    override suspend fun insertEvent(
+        title: String,
+        startTime: Long,
+        endTime: Long,
+        calendarId: Long
+    ): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val values = android.content.ContentValues().apply {
+                    put(CalendarContract.Events.DTSTART, startTime)
+                    put(CalendarContract.Events.DTEND, endTime)
+                    put(CalendarContract.Events.TITLE, title)
+                    put(CalendarContract.Events.CALENDAR_ID, calendarId)
+                    put(CalendarContract.Events.EVENT_TIMEZONE, java.util.TimeZone.getDefault().id)
+                }
+                val uri = context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                uri != null
+            } catch (e: SecurityException) {
+                false
+            }
+        }
+    }
+
     override val namespace: String = "local"
 }

@@ -14,6 +14,9 @@ interface FocusEventDao {
     @Query("SELECT * FROM FocusEvent WHERE timestamp >= :since ORDER BY timestamp DESC")
     fun getEventsSince(since: Long): Flow<List<FocusEventEntity>>
 
+    @Query("SELECT * FROM FocusEvent WHERE timestamp >= :since ORDER BY timestamp DESC")
+    suspend fun getEventsSinceSuspend(since: Long): List<FocusEventEntity>
+
     @Query("SELECT * FROM FocusEvent WHERE appKey = :appKey AND timestamp >= :since ORDER BY timestamp DESC")
     suspend fun getEventsForAppSince(appKey: String, since: Long): List<FocusEventEntity>
 

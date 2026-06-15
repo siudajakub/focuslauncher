@@ -54,8 +54,6 @@ import de.mm20.launcher2.ui.settings.appearance.ImportThemeSettingsRoute
 import de.mm20.launcher2.ui.settings.appearance.ImportThemeSettingsScreen
 import de.mm20.launcher2.ui.settings.backup.BackupSettingsRoute
 import de.mm20.launcher2.ui.settings.backup.BackupSettingsScreen
-import de.mm20.launcher2.ui.settings.breezyweather.BreezyWeatherSettingsRoute
-import de.mm20.launcher2.ui.settings.breezyweather.BreezyWeatherSettingsScreen
 import de.mm20.launcher2.ui.settings.buildinfo.BuildInfoSettingsRoute
 import de.mm20.launcher2.ui.settings.buildinfo.BuildInfoSettingsScreen
 import de.mm20.launcher2.ui.settings.colorscheme.ColorSchemeSettingsRoute
@@ -78,28 +76,24 @@ import de.mm20.launcher2.ui.settings.focushabits.DailyHabitsSettingsRoute
 import de.mm20.launcher2.ui.settings.focushabits.DailyHabitsSettingsScreen
 import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsRoute
 import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsScreen
-import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsRoute
-import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsScreen
+import de.mm20.launcher2.ui.settings.focussystem.FocusQuickStartRoute
+import de.mm20.launcher2.ui.settings.focussystem.FocusSystemQuickStartScreen
 import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsRoute
 import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsScreen
+import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsRoute
+import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsScreen
 import de.mm20.launcher2.ui.settings.focusschedule.ScheduleDockSettingsRoute
 import de.mm20.launcher2.ui.settings.focusschedule.ScheduleDockSettingsScreen
-import de.mm20.launcher2.ui.settings.focusreport.FocusReportSettingsRoute
-import de.mm20.launcher2.ui.settings.focusreport.FocusReportSettingsScreen
 import de.mm20.launcher2.ui.settings.focussupport.FocusSupportSettingsRoute
 import de.mm20.launcher2.ui.settings.focussupport.FocusSupportSettingsScreen
 import de.mm20.launcher2.ui.settings.gestures.GestureSettingsScreen
 import de.mm20.launcher2.ui.settings.gestures.GesturesSettingsRoute
 import de.mm20.launcher2.ui.settings.hiddenitems.HiddenItemsSettingsRoute
 import de.mm20.launcher2.ui.settings.hiddenitems.HiddenItemsSettingsScreen
-import de.mm20.launcher2.ui.settings.homepanels.HomePanelsSettingsRoute
-import de.mm20.launcher2.ui.settings.homepanels.HomePanelsSettingsScreen
 import de.mm20.launcher2.ui.settings.homescreen.HomescreenSettingsRoute
 import de.mm20.launcher2.ui.settings.homescreen.HomescreenSettingsScreen
 import de.mm20.launcher2.ui.settings.icons.IconsSettingsRoute
 import de.mm20.launcher2.ui.settings.icons.IconsSettingsScreen
-import de.mm20.launcher2.ui.settings.integrations.IntegrationsSettingsRoute
-import de.mm20.launcher2.ui.settings.integrations.IntegrationsSettingsScreen
 import de.mm20.launcher2.ui.settings.license.LicenseRoute
 import de.mm20.launcher2.ui.settings.license.LicenseScreen
 import de.mm20.launcher2.ui.settings.locale.CalendarSettingsRoute
@@ -110,20 +104,12 @@ import de.mm20.launcher2.ui.settings.log.LogRoute
 import de.mm20.launcher2.ui.settings.log.LogScreen
 import de.mm20.launcher2.ui.settings.main.MainRoute
 import de.mm20.launcher2.ui.settings.main.MainSettingsScreen
-import de.mm20.launcher2.ui.settings.media.MediaIntegrationSettingsRoute
-import de.mm20.launcher2.ui.settings.media.MediaIntegrationSettingsScreen
-import de.mm20.launcher2.ui.settings.plugins.PluginSettingsRoute
-import de.mm20.launcher2.ui.settings.plugins.PluginSettingsScreen
-import de.mm20.launcher2.ui.settings.plugins.PluginsSettingsRoute
-import de.mm20.launcher2.ui.settings.plugins.PluginsSettingsScreen
 import de.mm20.launcher2.ui.settings.search.SearchSettingsRoute
 import de.mm20.launcher2.ui.settings.search.SearchSettingsScreen
 import de.mm20.launcher2.ui.settings.shapes.ShapeSchemeSettingsRoute
 import de.mm20.launcher2.ui.settings.shapes.ShapeSchemeSettingsScreen
 import de.mm20.launcher2.ui.settings.shapes.ShapeSchemesSettingsRoute
 import de.mm20.launcher2.ui.settings.shapes.ShapeSchemesSettingsScreen
-import de.mm20.launcher2.ui.settings.tasks.TasksIntegrationSettingsRoute
-import de.mm20.launcher2.ui.settings.tasks.TasksIntegrationSettingsScreen
 import de.mm20.launcher2.ui.settings.transparencies.TransparencySchemeSettingsRoute
 import de.mm20.launcher2.ui.settings.transparencies.TransparencySchemeSettingsScreen
 import de.mm20.launcher2.ui.settings.transparencies.TransparencySchemesSettingsRoute
@@ -132,14 +118,18 @@ import de.mm20.launcher2.ui.settings.typography.TypographiesSettingsRoute
 import de.mm20.launcher2.ui.settings.typography.TypographiesSettingsScreen
 import de.mm20.launcher2.ui.settings.typography.TypographySettingsRoute
 import de.mm20.launcher2.ui.settings.typography.TypographySettingsScreen
-import de.mm20.launcher2.ui.settings.unitconverter.UnitConverterHelpSettingsRoute
-import de.mm20.launcher2.ui.settings.unitconverter.UnitConverterHelpSettingsScreen
-import de.mm20.launcher2.ui.settings.unitconverter.UnitConverterSettingsRoute
-import de.mm20.launcher2.ui.settings.unitconverter.UnitConverterSettingsScreen
-import de.mm20.launcher2.ui.settings.weather.WeatherIntegrationSettingsRoute
-import de.mm20.launcher2.ui.settings.weather.WeatherIntegrationSettingsScreen
 import de.mm20.launcher2.ui.theme.LauncherTheme
 import de.mm20.launcher2.ui.theme.wallpaperColorsAsState
+import de.mm20.launcher2.ui.launcher.focus.FocusInsightsRoute
+import de.mm20.launcher2.ui.launcher.focus.FocusInsightsScreen
+import de.mm20.launcher2.ui.settings.focussettings.FocusSettingsRoute
+import de.mm20.launcher2.ui.settings.focussettings.FocusSettingsScreen
+import de.mm20.launcher2.ui.settings.integrations.IntegrationsSettingsRoute
+import de.mm20.launcher2.ui.settings.integrations.IntegrationsSettingsScreen
+import de.mm20.launcher2.ui.settings.launchersettings.LauncherSettingsRoute
+import de.mm20.launcher2.ui.settings.launchersettings.LauncherSettingsScreen
+import de.mm20.launcher2.ui.settings.tasks.TasksIntegrationSettingsRoute
+import de.mm20.launcher2.ui.settings.tasks.TasksIntegrationSettingsScreen
 
 class SettingsActivity : BaseActivity() {
 
@@ -156,6 +146,12 @@ class SettingsActivity : BaseActivity() {
             entry<MainRoute> {
                 MainSettingsScreen()
             }
+            entry<FocusSettingsRoute> {
+                FocusSettingsScreen()
+            }
+            entry<LauncherSettingsRoute> {
+                LauncherSettingsScreen()
+            }
             entry<AdvancedSettingsRoute> {
                 AdvancedSettingsScreen()
             }
@@ -170,9 +166,6 @@ class SettingsActivity : BaseActivity() {
             }
             entry<HomescreenSettingsRoute> {
                 HomescreenSettingsScreen()
-            }
-            entry<HomePanelsSettingsRoute> {
-                HomePanelsSettingsScreen()
             }
             entry<IconsSettingsRoute> {
                 IconsSettingsScreen()
@@ -202,12 +195,19 @@ class SettingsActivity : BaseActivity() {
             entry<TypographySettingsRoute> {
                 TypographySettingsScreen(it.id)
             }
+            entry<FocusInsightsRoute> {
+                FocusInsightsScreen()
+            }
             entry<SearchSettingsRoute> {
                 SearchSettingsScreen()
             }
             entry<FocusSystemSettingsRoute> {
                 FocusSystemSettingsScreen()
             }
+            entry<FocusQuickStartRoute> {
+                FocusSystemQuickStartScreen()
+            }
+
             entry<FocusAppsSettingsRoute> {
                 FocusAppsSettingsScreen()
             }
@@ -223,26 +223,11 @@ class SettingsActivity : BaseActivity() {
             entry<ScheduleDockSettingsRoute> {
                 ScheduleDockSettingsScreen()
             }
-            entry<FocusReportSettingsRoute> {
-                FocusReportSettingsScreen()
-            }
             entry<GesturesSettingsRoute> {
                 GestureSettingsScreen()
             }
-            entry<UnitConverterSettingsRoute> {
-                UnitConverterSettingsScreen()
-            }
-            entry<UnitConverterHelpSettingsRoute> {
-                UnitConverterHelpSettingsScreen()
-            }
             entry<HiddenItemsSettingsRoute> {
                 HiddenItemsSettingsScreen()
-            }
-            entry<WeatherIntegrationSettingsRoute> {
-                WeatherIntegrationSettingsScreen()
-            }
-            entry<MediaIntegrationSettingsRoute> {
-                MediaIntegrationSettingsScreen()
             }
             entry<FavoritesSettingsRoute> {
                 FavoritesSettingsScreen()
@@ -252,15 +237,6 @@ class SettingsActivity : BaseActivity() {
             }
             entry<TasksIntegrationSettingsRoute> {
                 TasksIntegrationSettingsScreen()
-            }
-            entry<BreezyWeatherSettingsRoute> {
-                BreezyWeatherSettingsScreen()
-            }
-            entry<PluginsSettingsRoute> {
-                PluginsSettingsScreen()
-            }
-            entry<PluginSettingsRoute> {
-                PluginSettingsScreen(it.pluginId)
             }
             entry<AboutSettingsRoute> {
                 AboutSettingsScreen()
@@ -378,15 +354,18 @@ class SettingsActivity : BaseActivity() {
             intent.getStringExtra(EXTRA_ROUTE) ?: return null
         }
         return when(routeName) {
-            ROUTE_FOCUS_SYSTEM -> FocusSystemSettingsRoute
+            ROUTE_FOCUS_SYSTEM -> FocusSettingsRoute
             ROUTE_FOCUS_APPS -> FocusAppsSettingsRoute
-            ROUTE_FOCUS_REPORT -> FocusReportSettingsRoute
-            ROUTE_WEATHER_INTEGRATION -> WeatherIntegrationSettingsRoute
-            ROUTE_MEDIA_INTEGRATION -> MediaIntegrationSettingsRoute
+            ROUTE_FOCUS_REPORT -> FocusInsightsRoute
+
             ROUTE_HIDDEN_ITEMS -> HiddenItemsSettingsRoute
             ROUTE_CRASH_REPORT if (intent.hasExtra(EXTRA_CRASH_REPORT_PATH)) -> {
                 CrashReportRoute(intent.getStringExtra(EXTRA_CRASH_REPORT_PATH)!!)
             }
+            ROUTE_FOCUS_SETTINGS -> FocusSettingsRoute
+            ROUTE_FOCUS_INTEGRATIONS -> IntegrationsSettingsRoute
+            ROUTE_LAUNCHER_SETTINGS -> LauncherSettingsRoute
+            FocusInsightsRoute::class.java.name -> FocusInsightsRoute
             else -> null
         }
     }
@@ -396,10 +375,13 @@ class SettingsActivity : BaseActivity() {
         const val ROUTE_FOCUS_SYSTEM = "settings/focus/system"
         const val ROUTE_FOCUS_APPS = "settings/focus/apps"
         const val ROUTE_FOCUS_REPORT = "settings/focus/report"
+        const val ROUTE_FOCUS_INTEGRATIONS = "settings/focus/integrations"
         const val ROUTE_WEATHER_INTEGRATION = "settings/integrations/weather"
         const val ROUTE_MEDIA_INTEGRATION = "settings/integrations/media"
         const val ROUTE_HIDDEN_ITEMS = "settings/search/hiddenitems"
         const val ROUTE_CRASH_REPORT = "settings/debug/crashreport"
         const val EXTRA_CRASH_REPORT_PATH = "crash_report_path"
+        const val ROUTE_FOCUS_SETTINGS = "settings/focus"
+        const val ROUTE_LAUNCHER_SETTINGS = "settings/launcher"
     }
 }

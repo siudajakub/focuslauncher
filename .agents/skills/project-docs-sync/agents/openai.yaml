@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Docs Sync"
+  short_description: "Synchronize project documentation"
+  default_prompt: "Use $project-docs-sync to reconcile FocusLauncher project documentation with code, GitHub issues, and verification evidence."

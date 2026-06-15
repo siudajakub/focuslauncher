@@ -92,88 +92,33 @@ fun RowScope.SearchBarMenu(
                     onClick = {
                         context.startActivity(
                             Intent(context, SettingsActivity::class.java).apply {
-                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SYSTEM)
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
                             }
                         )
                         showOverflowMenu = false
                     },
                     text = {
-                        Text(stringResource(R.string.focus_system_title))
+                        Text(stringResource(R.string.focus_settings_title))
                     },
                     leadingIcon = {
                         Icon(painterResource(R.drawable.timer_24px), contentDescription = null)
                     }
                 )
                 DropdownMenuItem(
-                    shape = MenuDefaults.middleItemShape,
+                    shape = MenuDefaults.trailingItemShape,
                     onClick = {
                         context.startActivity(
                             Intent(context, SettingsActivity::class.java).apply {
-                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_APPS)
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_LAUNCHER_SETTINGS)
                             }
                         )
                         showOverflowMenu = false
                     },
                     text = {
-                        Text(stringResource(R.string.focus_apps_title))
-                    },
-                    leadingIcon = {
-                        Icon(painterResource(R.drawable.apps_24px), contentDescription = null)
-                    }
-                )
-                DropdownMenuItem(
-                    shape = MenuDefaults.middleItemShape,
-                    onClick = {
-                        context.startActivity(
-                            Intent(context, SettingsActivity::class.java).apply {
-                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_REPORT)
-                            }
-                        )
-                        showOverflowMenu = false
-                    },
-                    text = {
-                        Text(stringResource(R.string.focus_report_title))
-                    },
-                    leadingIcon = {
-                        Icon(painterResource(R.drawable.query_stats_24px), contentDescription = null)
-                    }
-                )
-                DropdownMenuItem(
-                    shape = MenuDefaults.middleItemShape,
-                    onClick = {
-                        context.startActivity(Intent(context, SettingsActivity::class.java))
-                        showOverflowMenu = false
-                    },
-                    text = {
-                        Text(stringResource(R.string.settings))
+                        Text(stringResource(R.string.launcher_settings_title))
                     },
                     leadingIcon = {
                         Icon(painterResource(R.drawable.settings_24px), contentDescription = null)
-                    }
-                )
-                val colorScheme = MaterialTheme.colorScheme
-                DropdownMenuItem(
-                    shape = MenuDefaults.trailingItemShape,
-                    onClick = {
-                        CustomTabsIntent.Builder()
-                            .setDefaultColorSchemeParams(
-                                CustomTabColorSchemeParams.Builder()
-                                    .setToolbarColor(colorScheme.primaryContainer.toArgb())
-                                    .setSecondaryToolbarColor(colorScheme.secondaryContainer.toArgb())
-                                    .build()
-                            )
-                            .build()
-                            .launchUrl(
-                                context,
-                                Uri.parse("https://kvaesitso.mm20.de/docs/user-guide")
-                            )
-                        showOverflowMenu = false
-                    },
-                    text = {
-                        Text(stringResource(R.string.help))
-                    },
-                    leadingIcon = {
-                        Icon(painterResource(R.drawable.help_24px), contentDescription = null)
                     }
                 )
             }

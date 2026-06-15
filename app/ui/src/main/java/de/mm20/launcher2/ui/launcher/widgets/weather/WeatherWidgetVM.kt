@@ -144,14 +144,6 @@ class WeatherWidgetVM : ViewModel(), KoinComponent {
         selectForecast(forecastIndex)
     }
 
-    fun openSettings(context: Context) {
-        context.startActivity(
-            Intent(context, SettingsActivity::class.java).apply {
-                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_WEATHER_INTEGRATION)
-            }
-        )
-    }
-
     val isProviderAvailable: Flow<Boolean> = weatherRepository.getActiveProvider().map {
         it != null
     }

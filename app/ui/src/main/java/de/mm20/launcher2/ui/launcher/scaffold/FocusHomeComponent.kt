@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
 import androidx.lifecycle.viewModelScope
 import androidx.core.content.getSystemService
 import de.mm20.launcher2.applications.AppRepository
@@ -62,6 +63,7 @@ import de.mm20.launcher2.ui.launcher.focus.resolveBlockReadiness
 import de.mm20.launcher2.ui.launcher.focus.resolveDailyScheduleSnapshot
 import de.mm20.launcher2.ui.launcher.focus.resolvePreferredDockApps
 import de.mm20.launcher2.ui.launcher.focus.resolveFocusGuidance
+import de.mm20.launcher2.ui.launcher.focus.FocusInsightsRoute
 import de.mm20.launcher2.ui.launcher.focus.HabitGateState
 import de.mm20.launcher2.ui.launcher.focus.HabitStatus
 import de.mm20.launcher2.ui.launcher.focus.DailyScheduleSnapshot
@@ -138,6 +140,9 @@ internal object FocusHomeComponent : ScaffoldComponent() {
         val habitState by viewModel.habitState.collectAsStateWithLifecycle(
             initialValue = HabitPanelState(),
         )
+        val insightsState by viewModel.insightsState.collectAsStateWithLifecycle(
+            initialValue = FocusInsightsPanelState(),
+        )
         val activeDockApps by viewModel.activeDockApps.collectAsStateWithLifecycle(initialValue = emptyList())
         val blockPlanTargetApps by viewModel.blockPlanTargetApps.collectAsStateWithLifecycle(initialValue = emptyList())
         val searchUiSettings: SearchUiSettings = koinInject()
@@ -161,6 +166,9 @@ internal object FocusHomeComponent : ScaffoldComponent() {
         val scope = rememberCoroutineScope()
         val lastSessionMinutes = sessionSummary.lastSessionDurationMinutes ?: defaultSessionMinutes
         val today = remember { LocalDate.now(ZoneId.systemDefault()) }
+
+        val dailyIntention by viewModel.dailyIntention.collectAsStateWithLifecycle()
+        val dailyIntentionDate by viewModel.dailyIntentionDate.collectAsStateWithLifecycle()
         val pendingCommand by FocusHomeCommandCenter.pendingCommand.collectAsStateWithLifecycle(initialValue = null)
         val blockPlanTarget by remember(dailyScheduleState) {
             derivedStateOf {
@@ -285,7 +293,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                     } else {
                         context.startActivity(
                             Intent(context, SettingsActivity::class.java).apply {
-                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SYSTEM)
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
                         )
@@ -298,7 +306,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                     } else {
                         context.startActivity(
                             Intent(context, SettingsActivity::class.java).apply {
-                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SYSTEM)
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
                         )
@@ -315,6 +323,15 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            val todayStr = today.toString()
+            DailyIntentionCard(
+                intention = if (dailyIntentionDate == todayStr) dailyIntention else "",
+                onSaveIntention = { intention ->
+                    viewModel.setDailyIntention(intention, todayStr)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
             ClockWidget(
                 modifier = Modifier.fillMaxWidth(),
                 fillScreenHeight = false,
@@ -331,7 +348,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                 onOpenConfiguration = {
                     context.startActivity(
                         Intent(context, SettingsActivity::class.java).apply {
-                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SYSTEM)
+                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                     )
@@ -350,7 +367,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                 onOpenSchedule = {
                     context.startActivity(
                         Intent(context, SettingsActivity::class.java).apply {
-                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SYSTEM)
+                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                     )
@@ -358,7 +375,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                 onOpenHabits = {
                     context.startActivity(
                         Intent(context, SettingsActivity::class.java).apply {
-                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SYSTEM)
+                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                     )
@@ -383,15 +400,26 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                     dockApps = activeDockApps,
                 )
             } else {
+                if (habitState.enabled || habitState.habits.isNotEmpty()) {
+                    FocusHabitCard(
+                        state = habitState,
+                        onHabitCheckedChanged = { habitId, completed ->
+                            viewModel.setHabitCompleted(habitId, completed)
+                        },
+                    )
+                }
+
+                FocusInsightsCard(
+                    state = insightsState,
+                    onOpenInsights = {
+                        context.startActivity(Intent(context, SettingsActivity::class.java).apply {
+                            putExtra(SettingsActivity.EXTRA_ROUTE, FocusInsightsRoute::class.java.name)
+                        })
+                    }
+                )
+
                 FocusEssentialAppsCard(apps = essentialApps)
             }
-
-            FocusHabitCard(
-                state = habitState,
-                onHabitCheckedChanged = { habitId, completed ->
-                    viewModel.setHabitCompleted(habitId, completed)
-                },
-            )
 
             nextAlarm?.let {
                 Text(
@@ -459,9 +487,25 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                         }
                     }
                 }
+            }
 
-                if (showResetButton) {
-                    OutlinedButton(
+            FocusSection(
+                title = stringResource(R.string.focus_home_planning_title),
+                supportingText = stringResource(R.string.focus_home_planning_subtitle)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(context, de.mm20.launcher2.ui.launcher.focus.plan.FocusPlanActivity::class.java)
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.focus_home_plan_button))
+                }
+            }
+
+            if (showResetButton) {
+                OutlinedButton(
                         onClick = {
                             searchVM.reset()
                             viewModel.resetFocusHome()
@@ -474,7 +518,8 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                         Text(stringResource(R.string.focus_home_reset))
                     }
                 }
-            }
+
+            QuickCaptureCard(modifier = Modifier.fillMaxWidth())
 
             FocusSection(
                 title = stringResource(R.string.focus_home_agenda_title),
@@ -725,6 +770,13 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), HabitPanelState())
 
+    val insightsState = historyRepository.getWeeklyReport().map { report ->
+        FocusInsightsPanelState(
+            streakDays = report.streakDays,
+            show = true,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), FocusInsightsPanelState())
+
     val activeDockApps = combine(
         dailyScheduleState,
         currentDay,
@@ -870,6 +922,16 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
 
     fun saveBlockPlan(plan: FocusBlockPlan) {
         searchUiSettings.upsertFocusBlockPlan(plan)
+    }
+
+    val dailyIntention = searchUiSettings.focusDailyIntention
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
+
+    val dailyIntentionDate = searchUiSettings.focusDailyIntentionDate
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
+
+    fun setDailyIntention(intention: String, date: String) {
+        searchUiSettings.setFocusDailyIntention(intention, date)
     }
 }
 

@@ -9,7 +9,6 @@ import de.mm20.launcher2.applications.applicationsModule
 import de.mm20.launcher2.appshortcuts.appShortcutsModule
 import de.mm20.launcher2.backup.backupModule
 import de.mm20.launcher2.badges.badgesModule
-import de.mm20.launcher2.calculator.calculatorModule
 import de.mm20.launcher2.calendar.calendarModule
 import de.mm20.launcher2.contacts.contactsModule
 import de.mm20.launcher2.data.customattrs.customAttrsModule
@@ -20,9 +19,7 @@ import de.mm20.launcher2.icons.iconsModule
 import de.mm20.launcher2.music.musicModule
 import de.mm20.launcher2.search.searchModule
 import de.mm20.launcher2.unitconverter.unitConverterModule
-import de.mm20.launcher2.websites.websitesModule
 import de.mm20.launcher2.widgets.widgetsModule
-import de.mm20.launcher2.wikipedia.wikipediaModule
 import de.mm20.launcher2.database.databaseModule
 import de.mm20.launcher2.debug.initDebugMode
 import de.mm20.launcher2.globalactions.globalActionsModule
@@ -35,11 +32,11 @@ import de.mm20.launcher2.feed.feedModule
 import de.mm20.launcher2.plugins.servicesPluginsModule
 import de.mm20.launcher2.preferences.preferencesModule
 import de.mm20.launcher2.profiles.profilesModule
-import de.mm20.launcher2.searchactions.searchActionsModule
 import de.mm20.launcher2.services.favorites.favoritesModule
 import de.mm20.launcher2.services.tags.servicesTagsModule
 import de.mm20.launcher2.services.widgets.widgetsServiceModule
 import de.mm20.launcher2.themes.themesModule
+import de.mm20.launcher2.ui.launcher.focus.FocusPolicyService
 import de.mm20.launcher2.weather.weatherModule
 import kotlinx.coroutines.*
 import org.koin.android.ext.koin.androidContext
@@ -67,7 +64,6 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     applicationsModule,
                     appShortcutsModule,
                     baseModule,
-                    calculatorModule,
                     badgesModule,
                     calendarModule,
                     contactsModule,
@@ -83,13 +79,10 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     permissionsModule,
                     preferencesModule,
                     searchModule,
-                    searchActionsModule,
                     themesModule,
                     unitConverterModule,
                     weatherModule,
-                    websitesModule,
                     widgetsModule,
-                    wikipediaModule,
                     locationsModule,
                     servicesTagsModule,
                     widgetsServiceModule,
@@ -102,6 +95,10 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     feedModule,
                 )
             )
+        }
+
+        launch {
+            FocusPolicyService().reconcileFocusSession(this@LauncherApplication)
         }
     }
 

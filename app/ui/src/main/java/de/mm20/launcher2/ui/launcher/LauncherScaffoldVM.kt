@@ -11,6 +11,7 @@ import de.mm20.launcher2.preferences.SearchBarColors
 import de.mm20.launcher2.preferences.SearchBarStyle
 import de.mm20.launcher2.preferences.ui.GestureSettings
 import de.mm20.launcher2.preferences.ui.UiSettings
+import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.search.SavableSearchable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +28,7 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
     private val uiSettings: UiSettings by inject()
     private val gestureSettings: GestureSettings by inject()
     private val searchableRepository: SavableSearchableRepository by inject()
+    private val searchUiSettings: SearchUiSettings by inject()
 
     private var isSystemInDarkMode = MutableStateFlow(false)
 
@@ -86,6 +88,9 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), SearchBarColors.Auto)
     val searchBarStyle = uiSettings.searchBarStyle
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), SearchBarStyle.Transparent)
+
+    val grayscaleMode = searchUiSettings.focusGrayscaleModeEnabled
+    val grayscaleDuringFocus = searchUiSettings.focusGrayscaleDuringFocusBlocks
 
     val gestureState: StateFlow<GestureState?> = gestureSettings.map { settings ->
             val swipeLeftAction = settings.swipeLeft

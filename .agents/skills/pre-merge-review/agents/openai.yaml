@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pre Merge Review"
+  short_description: "Run independent pre-merge review"
+  default_prompt: "Use $pre-merge-review to review a substantial FocusLauncher change in fresh context before merge."

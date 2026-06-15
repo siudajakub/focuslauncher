@@ -28,7 +28,7 @@ For now, the project is intended to be built locally from source or shared throu
 
 - Android Studio
 - Android SDK
-- JDK 17 or newer
+- JDK 21 or newer
 
 ### Build
 

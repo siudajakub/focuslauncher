@@ -8,11 +8,8 @@ import de.mm20.launcher2.ui.component.preferences.Preference
 import de.mm20.launcher2.ui.component.preferences.PreferenceCategory
 import de.mm20.launcher2.ui.component.preferences.PreferenceScreen
 import de.mm20.launcher2.ui.locals.LocalBackStack
-import de.mm20.launcher2.ui.settings.advanced.AdvancedSettingsRoute
-import de.mm20.launcher2.ui.settings.appearance.AppearanceSettingsRoute
-import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsRoute
-import de.mm20.launcher2.ui.settings.homescreen.HomescreenSettingsRoute
-import de.mm20.launcher2.ui.settings.locale.LocaleSettingsRoute
+import de.mm20.launcher2.ui.settings.focussettings.FocusSettingsRoute
+import de.mm20.launcher2.ui.settings.launchersettings.LauncherSettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -27,43 +24,19 @@ fun MainSettingsScreen() {
         item {
             PreferenceCategory {
                 Preference(
-                    icon = R.drawable.palette_24px,
-                    title = stringResource(id = R.string.preference_screen_appearance),
-                    summary = stringResource(id = R.string.preference_screen_appearance_summary),
+                    icon = R.drawable.timer_24px,
+                    title = stringResource(id = R.string.focus_settings_title),
+                    summary = stringResource(id = R.string.focus_settings_summary),
                     onClick = {
-                        backStack.add(AppearanceSettingsRoute)
+                        backStack.add(FocusSettingsRoute)
                     }
                 )
                 Preference(
-                    icon = R.drawable.home_24px,
-                    title = stringResource(id = R.string.preference_screen_homescreen),
-                    summary = stringResource(id = R.string.preference_screen_homescreen_summary),
+                    icon = R.drawable.settings_24px,
+                    title = stringResource(id = R.string.launcher_settings_title),
+                    summary = stringResource(id = R.string.launcher_settings_summary),
                     onClick = {
-                        backStack.add(HomescreenSettingsRoute)
-                    }
-                )
-                Preference(
-                    icon = R.drawable.search_24px,
-                    title = stringResource(id = R.string.focus_system_title),
-                    summary = stringResource(id = R.string.focus_system_entry_summary),
-                    onClick = {
-                        backStack.add(FocusSystemSettingsRoute)
-                    }
-                )
-                Preference(
-                    icon = R.drawable.translate_24px,
-                    title = stringResource(id = R.string.preference_screen_locale),
-                    summary = stringResource(id = R.string.preference_screen_locale_summary),
-                    onClick = {
-                        backStack.add(LocaleSettingsRoute)
-                    }
-                )
-                Preference(
-                    icon = R.drawable.more_vert_24px,
-                    title = stringResource(id = R.string.preference_screen_advanced),
-                    summary = stringResource(id = R.string.preference_screen_advanced_summary),
-                    onClick = {
-                        backStack.add(AdvancedSettingsRoute)
+                        backStack.add(LauncherSettingsRoute)
                     }
                 )
             }

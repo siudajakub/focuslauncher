@@ -31,7 +31,7 @@ import de.mm20.launcher2.ui.component.preferences.PreferenceCategory
 import de.mm20.launcher2.ui.component.preferences.PreferenceScreen
 import de.mm20.launcher2.ui.component.preferences.SwitchPreference
 import de.mm20.launcher2.ui.locals.LocalBackStack
-import de.mm20.launcher2.ui.settings.focusreport.FocusReportSettingsRoute
+import de.mm20.launcher2.ui.launcher.focus.FocusInsightsRoute
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsRoute
 import de.mm20.launcher2.ui.settings.focussupport.FocusSupportSettingsRoute
 import kotlinx.serialization.Serializable
@@ -151,11 +151,11 @@ fun SearchSettingsScreen() {
                     }
                 )
                 Preference(
-                    title = stringResource(R.string.focus_report_title),
-                    summary = stringResource(R.string.focus_report_summary),
+                    title = stringResource(R.string.focus_insights_title),
+                    summary = stringResource(R.string.focus_settings_reports_summary),
                     icon = R.drawable.query_stats_24px,
                     onClick = {
-                        backStack.add(FocusReportSettingsRoute)
+                        backStack.add(FocusInsightsRoute)
                     }
                 )
             }

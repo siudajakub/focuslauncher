@@ -56,7 +56,6 @@ import de.mm20.launcher2.ui.launcher.widgets.clock.ConfigureClockWidgetSheet
 import de.mm20.launcher2.ui.locals.LocalBackStack
 import de.mm20.launcher2.ui.locals.LocalDarkTheme
 import de.mm20.launcher2.ui.locals.LocalPreferDarkContentOverWallpaper
-import de.mm20.launcher2.ui.settings.homepanels.HomePanelsSettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -73,7 +72,6 @@ fun HomescreenSettingsScreen() {
     val dockRows by viewModel.dockRows.collectAsStateWithLifecycle(1)
     val fixedRotation by viewModel.fixedRotation.collectAsStateWithLifecycle(null)
     val widgetsOnHomeScreen by viewModel.widgetsOnHomeScreen.collectAsStateWithLifecycle(null)
-    val widgetPagesEnabled by viewModel.widgetPagesEnabled.collectAsStateWithLifecycle(true)
     val editButton by viewModel.widgetEditButton.collectAsStateWithLifecycle(null)
     val searchBarStyle by viewModel.searchBarStyle.collectAsStateWithLifecycle(null)
     val searchBarColor by viewModel.searchBarColor.collectAsStateWithLifecycle(null)
@@ -99,15 +97,6 @@ fun HomescreenSettingsScreen() {
                     onValueChanged = {
                         viewModel.setFixedRotation(it)
                     },
-                )
-            }
-        }
-        item {
-            PreferenceCategory(title = stringResource(R.string.home_panels_title)) {
-                Preference(
-                    title = stringResource(R.string.home_panels_title),
-                    summary = stringResource(R.string.home_panels_summary),
-                    onClick = { backStack.add(HomePanelsSettingsRoute) }
                 )
             }
         }
@@ -154,41 +143,6 @@ fun HomescreenSettingsScreen() {
                     onValueChanged = {
                         viewModel.setWidgetsOnHomeScreen(it)
                     })
-                AnimatedVisibility(widgetsOnHomeScreen == false) {
-                    val widgetScreenCount by viewModel.widgetScreenCount.collectAsStateWithLifecycle(1)
-
-                    Column {
-                        SwitchPreference(
-                            title = stringResource(R.string.preference_widget_pages_enabled),
-                            summary = stringResource(R.string.preference_widget_pages_enabled_summary),
-                            value = widgetPagesEnabled,
-                            onValueChanged = {
-                                viewModel.setWidgetPagesEnabled(it)
-                            }
-                        )
-
-                        AnimatedVisibility(widgetPagesEnabled) {
-                            Column {
-                                SliderPreference(
-                                    title = stringResource(R.string.preference_widget_screen_count),
-                                    value = widgetScreenCount,
-                                    min = 1,
-                                    max = 4,
-                                    onValueChanged = {
-                                        viewModel.setWidgetScreenCount(it)
-                                    }
-                                )
-
-                                Text(
-                                    text = stringResource(R.string.preference_widget_screen_count_info),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                )
-                            }
-                        }
-                    }
-                }
                 SwitchPreference(
                     title = stringResource(id = R.string.preference_edit_button),
                     summary = stringResource(id = R.string.preference_widgets_edit_button_summary),

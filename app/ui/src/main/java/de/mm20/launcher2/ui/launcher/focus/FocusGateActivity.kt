@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -218,6 +219,7 @@ private sealed interface FocusGateRouteState {
 
 private enum class FocusGateStage {
     Entry,
+    OneSec,
     Animation,
     Intent,
     Blocked,
@@ -259,6 +261,10 @@ private fun FocusGateScreen(
     val focusBlockPlans by searchUiSettings.focusBlockPlans.collectAsState(initial = emptyList())
     val focusScheduleDockMappings by searchUiSettings.focusScheduleDockMappings.collectAsState(initial = emptyList())
     val focusSessionActive = focusSessionEndsAt > System.currentTimeMillis()
+    val focusOneSecEnabled by searchUiSettings.focusOneSecEnabled.collectAsState(initial = false)
+    val focusMicroDelaysEnabled by searchUiSettings.focusMicroDelaysEnabled.collectAsState(initial = false)
+    val dailyIntention by searchUiSettings.focusDailyIntention.collectAsState(initial = "")
+    val dailyIntentionDate by searchUiSettings.focusDailyIntentionDate.collectAsState(initial = "")
     val currentScheduleSnapshot by remember {
         kotlinx.coroutines.flow.combine(
             searchUiSettings.focusDailyScheduleEnabled,
@@ -303,10 +309,10 @@ private fun FocusGateScreen(
     var showBlockSetupSheet by remember { mutableStateOf(false) }
     var decision by remember(app.key, temporaryUnlock) { mutableStateOf<FocusPolicyDecision?>(null) }
     var hasLaunched by remember { mutableStateOf(false) }
-    var stage by remember { mutableStateOf(if (launchBounds != null) FocusGateStage.Entry else FocusGateStage.Animation) }
+    var stage by remember { mutableStateOf(FocusGateStage.Entry) }
     var countdownSeconds by remember { mutableIntStateOf(0) }
     val fillProgress = remember { Animatable(0f) }
-    val entryProgress = remember { Animatable(if (launchBounds != null) 0f else 1f) }
+    val entryProgress = remember { Animatable(0f) }
 
     val backgroundColor = MaterialTheme.colorScheme.surfaceDim.copy(alpha = 0.98f)
     val primaryText = MaterialTheme.colorScheme.onPrimaryContainer
@@ -402,56 +408,74 @@ private fun FocusGateScreen(
         onGoBack()
     }
 
-    LaunchedEffect(decision?.effectiveDelaySeconds, decision?.hardBlocked) {
+    LaunchedEffect(stage, decision?.effectiveDelaySeconds, decision?.hardBlocked) {
         val policy = decision ?: return@LaunchedEffect
         if (!policy.requiresGate) return@LaunchedEffect
 
-        if (launchBounds != null) {
-            stage = FocusGateStage.Entry
-            entryProgress.snapTo(0f)
-            entryProgress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
-            )
-        } else {
-            entryProgress.snapTo(1f)
-        }
+        when (stage) {
+            FocusGateStage.Entry -> {
+                if (launchBounds != null) {
+                    entryProgress.snapTo(0f)
+                    entryProgress.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+                    )
+                } else {
+                    entryProgress.snapTo(1f)
+                }
 
-        stage = FocusGateStage.Animation
-        reason = resolvedReasonPrefill
-        microStep = resolvedMicroStepPrefill
-        countdownSeconds = policy.effectiveDelaySeconds
-        fillProgress.snapTo(0f)
-
-        val totalDurationMs = (policy.effectiveDelaySeconds * 1000L).coerceAtLeast(900L)
-        val expandDuration = (totalDurationMs * 0.65f).toInt()
-        val settleDuration = (totalDurationMs - expandDuration).toInt()
-        val startTime = System.currentTimeMillis()
-
-        coroutineScope {
-            launch {
-                while (true) {
-                    val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(0L)
-                    val remainingMs = (totalDurationMs - elapsed).coerceAtLeast(0L)
-                    countdownSeconds = ((remainingMs + 999L) / 1000L).toInt()
-                    if (remainingMs <= 0L) break
-                    delay(100)
+                if (focusOneSecEnabled && !policy.hardBlocked) {
+                    stage = FocusGateStage.OneSec
+                } else {
+                    stage = FocusGateStage.Animation
                 }
             }
-            launch {
-                fillProgress.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(expandDuration),
-                )
-                fillProgress.animateTo(
-                    targetValue = 0f,
-                    animationSpec = tween(settleDuration),
-                )
+            FocusGateStage.OneSec -> {
+                // Wait for user interaction
+            }
+            FocusGateStage.Animation -> {
+                reason = resolvedReasonPrefill
+                microStep = resolvedMicroStepPrefill
+
+                val minDelay = if (focusMicroDelaysEnabled) 3 else 0
+                val effectiveDelay = policy.effectiveDelaySeconds.coerceAtLeast(minDelay)
+                countdownSeconds = effectiveDelay
+                fillProgress.snapTo(0f)
+
+                val totalDurationMs = (effectiveDelay * 1000L).coerceAtLeast(900L)
+                val expandDuration = (totalDurationMs * 0.65f).toInt()
+                val settleDuration = (totalDurationMs - expandDuration).toInt()
+                val startTime = System.currentTimeMillis()
+
+                coroutineScope {
+                    launch {
+                        while (true) {
+                            val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(0L)
+                            val remainingMs = (totalDurationMs - elapsed).coerceAtLeast(0L)
+                            countdownSeconds = ((remainingMs + 999L) / 1000L).toInt()
+                            if (remainingMs <= 0L) break
+                            delay(100)
+                        }
+                    }
+                    launch {
+                        fillProgress.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(expandDuration),
+                        )
+                        fillProgress.animateTo(
+                            targetValue = 0f,
+                            animationSpec = tween(settleDuration),
+                        )
+                    }
+                }
+
+                countdownSeconds = 0
+                stage = if (policy.hardBlocked) FocusGateStage.Blocked else FocusGateStage.Intent
+            }
+            FocusGateStage.Intent, FocusGateStage.Blocked -> {
+                // Wait for user interaction
             }
         }
-
-        countdownSeconds = 0
-        stage = if (policy.hardBlocked) FocusGateStage.Blocked else FocusGateStage.Intent
     }
 
     val message = when {
@@ -561,6 +585,73 @@ private fun FocusGateScreen(
             when (stageValue) {
                 FocusGateStage.Entry -> {
                     Spacer(modifier = Modifier.fillMaxSize())
+                }
+                FocusGateStage.OneSec -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 48.dp),
+                            verticalArrangement = Arrangement.spacedBy(24.dp),
+                        ) {
+                            Text(
+                                text = app.labelOverride ?: app.label,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = secondaryText,
+                            )
+                            Text(
+                                text = stringResource(R.string.focus_gate_one_sec_title),
+                                style = MaterialTheme.typography.displayMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = primaryText,
+                            )
+                            Text(
+                                text = stringResource(R.string.focus_gate_one_sec_message),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = secondaryText,
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            Button(
+                                onClick = { stage = FocusGateStage.Animation },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                ),
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.focus_gate_one_sec_continue),
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                            }
+
+                            FilledTonalButton(
+                                onClick = onGoBack,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = panelColor,
+                                    contentColor = primaryText,
+                                ),
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.focus_gate_cancel),
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                            }
+                        }
+                    }
                 }
                 FocusGateStage.Animation -> {
                     Column(
@@ -686,6 +777,7 @@ private fun FocusGateScreen(
                                                 .height(140.dp),
                                             value = reason,
                                             onValueChange = { reason = it },
+                                            shape = RoundedCornerShape(20.dp),
                                             label = {
                                                 Text(stringResource(R.string.focus_gate_reason_label))
                                             },
@@ -717,6 +809,7 @@ private fun FocusGateScreen(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 value = microStep,
                                                 onValueChange = { microStep = it },
+                                                shape = RoundedCornerShape(20.dp),
                                                 label = {
                                                     Text(stringResource(R.string.focus_gate_micro_step_label))
                                                 },
@@ -787,11 +880,18 @@ private fun FocusGateScreen(
                                                     (!microStepPromptEnabled || microStep.isNotBlank())
                                                 ),
                                             onClick = {
+                                                val unlockUntil = System.currentTimeMillis() + sessionMinutes * 60_000L
                                                 customAttributesRepository.setFocusTemporaryUnlock(
                                                     app,
                                                     FocusTemporaryUnlock(
-                                                        untilMillis = System.currentTimeMillis() + sessionMinutes * 60_000L
+                                                        untilMillis = unlockUntil
                                                     ),
+                                                )
+                                                AppSessionExpiryWorker.schedule(
+                                                    context = context,
+                                                    appKey = app.key,
+                                                    appLabel = app.labelOverride ?: app.label,
+                                                    delayMillis = sessionMinutes * 60_000L
                                                 )
                                                 searchUiSettings.setFocusLastResumeContext(
                                                     FocusResumeContext(

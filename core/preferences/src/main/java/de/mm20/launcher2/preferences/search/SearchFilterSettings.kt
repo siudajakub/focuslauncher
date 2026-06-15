@@ -10,6 +10,9 @@ private val disallowedFocusFirstItems = setOf(
     KeyboardFilterBarItem.Websites,
     KeyboardFilterBarItem.Articles,
     KeyboardFilterBarItem.Places,
+    KeyboardFilterBarItem.Files,
+    KeyboardFilterBarItem.Contacts,
+    KeyboardFilterBarItem.Events,
 )
 
 val focusFirstFilterBarItems = KeyboardFilterBarItem.entries.filterNot { it in disallowedFocusFirstItems }
@@ -17,9 +20,6 @@ val focusFirstFilterBarItems = KeyboardFilterBarItem.entries.filterNot { it in d
 fun SearchFilters.sanitizedForFocusFirst(): SearchFilters {
     return copy(
         allowNetwork = false,
-        websites = false,
-        articles = false,
-        places = false,
     )
 }
 

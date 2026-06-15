@@ -9,16 +9,11 @@ import de.mm20.launcher2.calendar.providers.CalendarList
 import de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.ui.launcher.focus.shouldShowFocusQuickStart
-import de.mm20.launcher2.searchactions.SearchActionService
-import de.mm20.launcher2.searchactions.actions.SearchActionIcon
-import de.mm20.launcher2.searchactions.builders.CustomIntentActionBuilder
 import de.mm20.launcher2.ui.settings.SettingsActivity
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -26,7 +21,7 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
     private val context: Context by inject()
     private val searchUiSettings: SearchUiSettings by inject()
     private val calendarRepository: CalendarRepository by inject()
-    private val searchActionService: SearchActionService by inject()
+    private val permissionsManager: de.mm20.launcher2.permissions.PermissionsManager by inject()
 
     val focusModeEnabled = searchUiSettings.focusModeEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
@@ -58,6 +53,24 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
     val environmentChargingContextEnabled = searchUiSettings.focusEnvironmentChargingContextEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
 
+    val focusOneSecEnabled = searchUiSettings.focusOneSecEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    val focusMicroDelaysEnabled = searchUiSettings.focusMicroDelaysEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    val focusDistractingDailyLaunchLimit = searchUiSettings.focusDistractingDailyLaunchLimit
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
+
+    val focusTimeBlindnessRemindersEnabled = searchUiSettings.focusTimeBlindnessRemindersEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    val focusTimeBlindnessIntervalMinutes = searchUiSettings.focusTimeBlindnessIntervalMinutes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 15)
+
+    val focusTodoistApiToken = searchUiSettings.focusTodoistApiToken
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
+
     val environmentExplainabilityEnabled = searchUiSettings.focusEnvironmentExplainabilityEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
 
@@ -72,6 +85,20 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
 
     val applyToPrivateProfile = searchUiSettings.focusApplyToPrivateProfile
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
+
+    val hasManageProfilesPermission = permissionsManager.hasPermission(de.mm20.launcher2.permissions.PermissionGroup.ManageProfiles)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    fun requestManageProfilesPermission(context: androidx.appcompat.app.AppCompatActivity) {
+        permissionsManager.requestPermission(context, de.mm20.launcher2.permissions.PermissionGroup.ManageProfiles)
+    }
+
+    val hasNotificationPolicyPermission = permissionsManager.hasPermission(de.mm20.launcher2.permissions.PermissionGroup.NotificationPolicy)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    fun requestNotificationPolicyPermission(context: androidx.appcompat.app.AppCompatActivity) {
+        permissionsManager.requestPermission(context, de.mm20.launcher2.permissions.PermissionGroup.NotificationPolicy)
+    }
 
     val adaptiveFrictionMode = searchUiSettings.focusAdaptiveFrictionMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), FocusAdaptiveFrictionMode.Auto)
@@ -167,52 +194,32 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
         searchUiSettings.setFocusEnvironmentExplainabilityEnabled(enabled)
     }
 
-    fun installFocusQuickActions() {
-        viewModelScope.launch {
-            val existing = searchActionService.getSearchActionBuilders().first()
-            val focusActions = listOf(
-                buildSettingsAction(
-                    label = context.getString(de.mm20.launcher2.ui.R.string.focus_system_quick_action_open_system),
-                    route = SettingsActivity.ROUTE_FOCUS_SYSTEM,
-                    icon = SearchActionIcon.Search,
-                ),
-                buildSettingsAction(
-                    label = context.getString(de.mm20.launcher2.ui.R.string.focus_system_quick_action_open_report),
-                    route = SettingsActivity.ROUTE_FOCUS_REPORT,
-                    icon = SearchActionIcon.StatsSearch,
-                ),
-                buildSettingsAction(
-                    label = context.getString(de.mm20.launcher2.ui.R.string.focus_system_quick_action_open_apps),
-                    route = SettingsActivity.ROUTE_FOCUS_APPS,
-                    icon = SearchActionIcon.SearchList,
-                ),
-            )
-            val merged = (existing + focusActions)
-                .distinctBy { it.key }
-            searchActionService.saveSearchActionBuilders(merged)
-        }
+    fun setFocusOneSecEnabled(enabled: Boolean) {
+        searchUiSettings.setFocusOneSecEnabled(enabled)
     }
 
-    private fun buildSettingsAction(
-        label: String,
-        route: String,
-        icon: SearchActionIcon,
-    ): CustomIntentActionBuilder {
-        return CustomIntentActionBuilder(
-            label = label,
-            queryKey = "focus_quick_action_query",
-            baseIntent = Intent().apply {
-                setClass(context, SettingsActivity::class.java)
-                putExtra(SettingsActivity.EXTRA_ROUTE, route)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            },
-            icon = icon,
-            iconColor = 0,
-            customIcon = null,
-        )
+    fun setFocusMicroDelaysEnabled(enabled: Boolean) {
+        searchUiSettings.setFocusMicroDelaysEnabled(enabled)
+    }
+
+    fun setFocusDistractingDailyLaunchLimit(limit: Int) {
+        searchUiSettings.setFocusDistractingDailyLaunchLimit(limit)
+    }
+
+    fun setFocusTimeBlindnessRemindersEnabled(enabled: Boolean) {
+        searchUiSettings.setFocusTimeBlindnessRemindersEnabled(enabled)
+    }
+
+    fun setFocusTimeBlindnessIntervalMinutes(minutes: Int) {
+        searchUiSettings.setFocusTimeBlindnessIntervalMinutes(minutes)
+    }
+
+    fun setFocusTodoistApiToken(token: String) {
+        searchUiSettings.setFocusTodoistApiToken(token)
     }
 
     fun applyBalancedPreset() {
+        searchUiSettings.setFocusOneSecEnabled(false)
         searchUiSettings.setFocusModeEnabled(true)
         searchUiSettings.setFocusHideDistractingApps(true)
         searchUiSettings.setFocusDefaultDelaySeconds(4)
@@ -239,6 +246,7 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
     }
 
     fun applyHardFocusPreset() {
+        searchUiSettings.setFocusOneSecEnabled(true)
         searchUiSettings.setFocusModeEnabled(true)
         searchUiSettings.setFocusHideDistractingApps(true)
         searchUiSettings.setFocusDefaultDelaySeconds(10)
@@ -265,6 +273,7 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
     }
 
     fun applyMinimalPreset() {
+        searchUiSettings.setFocusOneSecEnabled(false)
         searchUiSettings.setFocusModeEnabled(true)
         searchUiSettings.setFocusHideDistractingApps(true)
         searchUiSettings.setFocusDefaultDelaySeconds(2)

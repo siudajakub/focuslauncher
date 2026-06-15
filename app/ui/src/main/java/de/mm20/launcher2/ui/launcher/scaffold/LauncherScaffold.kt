@@ -93,7 +93,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.mm20.launcher2.ktx.isAtLeastApiLevel
 import de.mm20.launcher2.preferences.SearchBarStyle
-import de.mm20.launcher2.searchactions.actions.SearchAction
 import de.mm20.launcher2.ui.component.SearchBarLevel
 import de.mm20.launcher2.ui.ktx.toPixels
 import de.mm20.launcher2.ui.launcher.SharedLauncherActivity
@@ -1111,7 +1110,6 @@ internal fun LauncherScaffold(
         .let { if (config.showNavBar) it.union(WindowInsets.navigationBars) else it }
 
     val searchVM = viewModel<SearchVM>()
-    val searchActions = searchVM.searchActionResults
     val highlightedResult by searchVM.bestMatch
     val launchOnEnter by searchVM.launchOnEnter.collectAsState(false)
 
@@ -1192,8 +1190,7 @@ internal fun LauncherScaffold(
 
         val searchBarHeight by animateDpAsState(
             if (state.isSearchBarHidden) 0.dp
-            else if (searchActions.isEmpty()) 56.dp
-            else 104.dp
+            else 56.dp
         )
 
         LaunchedEffect(state) {
@@ -1480,7 +1477,6 @@ internal fun LauncherScaffold(
                     searchBarOffset = { state.currentSearchBarOffset.roundToInt() },
                     style = config.searchBarStyle,
                     focused = state.isSearchBarFocused,
-                    actions = searchActions,
                     level = { state.searchBarLevel },
                     bottomSearchBar = config.searchBarPosition == SearchBarPosition.Bottom,
                     onFocusChange = {
@@ -1492,7 +1488,6 @@ internal fun LauncherScaffold(
                     onKeyboardActionGo = if (launchOnEnter) {
                         { searchVM.launchBestMatchOrAction(activity) }
                     } else null,
-                    highlightedAction = highlightedResult as? SearchAction,
                     darkColors = config.darkSearchBar,
                     isSearchOpen = state.currentComponent is SearchComponent && state.isSettledOnSecondaryPage ||
                             config.homeComponent is SearchComponent && !state.isSettledOnSecondaryPage,

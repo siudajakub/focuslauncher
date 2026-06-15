@@ -149,6 +149,10 @@ class FocusHistoryRepository : KoinComponent {
         return database.focusEventDao().getEventsForAppSince(appKey, since)
     }
 
+    suspend fun getEventsSince(since: Long): List<FocusEventEntity> {
+        return database.focusEventDao().getEventsSinceSuspend(since)
+    }
+
     suspend fun getRecentAppLaunchTimestamps(appKey: String, sinceMillis: Long): List<Long> {
         return getEventsForAppSince(appKey, sinceMillis).map { it.timestamp }
     }
@@ -319,7 +323,7 @@ class FocusHistoryRepository : KoinComponent {
                 totalUnlocks = currentEvents.size,
                 totalUnlockMinutes = totalUnlockMinutes,
                 averageDelaySeconds = averageDelaySeconds,
-                streakDays = calculateStreak(currentEvents, zone),
+                streakDays = calculateFocusStreakDays(currentEvents, zone),
                 topFocusBreakers = breakers,
                 topUnlockReasons = reasons,
                 inSessionUnlocks = currentEvents.count { it.duringFocusSession },
@@ -340,18 +344,22 @@ class FocusHistoryRepository : KoinComponent {
         }
     }
 
-    private fun calculateStreak(events: List<FocusEventEntity>, zone: ZoneId): Int {
-        val launchDays = events.map {
-            Instant.ofEpochMilli(it.timestamp).atZone(zone).toLocalDate()
-        }.toSet()
-        var streak = 0
-        var currentDay = LocalDate.now(zone)
-        while (!launchDays.contains(currentDay)) {
-            streak++
-            currentDay = currentDay.minusDays(1)
-        }
-        return streak
-    }
+}
+
+internal fun calculateFocusStreakDays(
+    events: List<FocusEventEntity>,
+    zone: ZoneId,
+    today: LocalDate = LocalDate.now(zone),
+): Int {
+    if (events.isEmpty()) return 0
+    val launchDays = events
+        .map { Instant.ofEpochMilli(it.timestamp).atZone(zone).toLocalDate() }
+        .filter { !it.isAfter(today) }
+        .toSet()
+    if (launchDays.isEmpty()) return 0
+    return (0..6).firstOrNull { offset ->
+        launchDays.contains(today.minusDays(offset.toLong()))
+    } ?: 0
 }
 
 internal fun computeWeeklyDelta(

@@ -20,7 +20,6 @@ import de.mm20.launcher2.database.entities.IconEntity
 import de.mm20.launcher2.database.entities.IconPackEntity
 import de.mm20.launcher2.database.entities.PluginEntity
 import de.mm20.launcher2.database.entities.SavedSearchableEntity
-import de.mm20.launcher2.database.entities.SearchActionEntity
 import de.mm20.launcher2.database.entities.ShapesEntity
 import de.mm20.launcher2.database.entities.TransparenciesEntity
 import de.mm20.launcher2.database.entities.TypographyEntity
@@ -50,6 +49,8 @@ import de.mm20.launcher2.database.migrations.Migration_31_32
 import de.mm20.launcher2.database.migrations.Migration_32_33
 import de.mm20.launcher2.database.migrations.Migration_33_34
 import de.mm20.launcher2.database.migrations.Migration_34_35
+import de.mm20.launcher2.database.migrations.Migration_35_36
+import de.mm20.launcher2.database.migrations.Migration_36_37
 import de.mm20.launcher2.database.migrations.Migration_6_7
 import de.mm20.launcher2.database.migrations.Migration_7_8
 import de.mm20.launcher2.database.migrations.Migration_8_9
@@ -67,7 +68,6 @@ import java.util.UUID
         IconPackEntity::class,
         WidgetEntity::class,
         CustomAttributeEntity::class,
-        SearchActionEntity::class,
         ColorsEntity::class,
         PluginEntity::class,
         ShapesEntity::class,
@@ -75,7 +75,7 @@ import java.util.UUID
         TypographyEntity::class,
         FocusEventEntity::class,
         FocusSessionEntity::class,
-    ], version = 35, exportSchema = true
+    ], version = 37, exportSchema = true
 )
 @TypeConverters(ComponentNameConverter::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -91,8 +91,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun focusEventDao(): FocusEventDao
     abstract fun focusSessionDao(): FocusSessionDao
 
-    abstract fun searchActionDao(): SearchActionDao
-
     abstract fun themeDao(): ThemeDao
 
     abstract fun pluginDao(): PluginDao
@@ -106,42 +104,6 @@ abstract class AppDatabase : RoomDatabase() {
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            db.execSQL(
-                                "INSERT INTO `SearchAction` (`position`, `type`) VALUES" +
-                                        "(0, 'call')," +
-                                        "(1, 'message')," +
-                                        "(2, 'email')," +
-                                        "(3, 'contact')," +
-                                        "(4, 'alarm')," +
-                                        "(5, 'timer')," +
-                                        "(6, 'calendar')," +
-                                        "(7, 'website')," +
-                                        "(8, 'websearch')"
-                            )
-
-                            db.execSQL(
-                                "INSERT INTO `SearchAction` (`position`, `type`, `data`, `label`, `color`, `icon`, `customIcon`, `options`) " +
-                                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?)",
-                                arrayOf<Any?>(
-                                    9,
-                                    "url",
-                                    context.getString(R.string.default_websearch_2_url),
-                                    context.getString(R.string.default_websearch_2_name),
-                                    0,
-                                    0,
-                                    null,
-                                    null,
-                                    10,
-                                    "url",
-                                    context.getString(R.string.default_websearch_3_url),
-                                    context.getString(R.string.default_websearch_3_name),
-                                    0,
-                                    0,
-                                    null,
-                                    null,
-                                )
-                            )
-
                             val defaultParentId = WidgetScreenTarget.Default.scopeId
                             db.execSQL(
                                 "INSERT INTO Widget (`type`, `position`, `id`, `parentId`) VALUES " +
@@ -189,6 +151,8 @@ abstract class AppDatabase : RoomDatabase() {
                         Migration_32_33(),
                         Migration_33_34(),
                         Migration_34_35(),
+                        Migration_35_36(),
+                        Migration_36_37(),
                     ).build()
             if (_instance == null) _instance = instance
             return instance
