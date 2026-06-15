@@ -22,8 +22,6 @@ import de.mm20.launcher2.ui.component.preferences.Preference
 import de.mm20.launcher2.ui.component.preferences.PreferenceCategory
 import de.mm20.launcher2.ui.component.preferences.PreferenceScreen
 import de.mm20.launcher2.ui.component.preferences.PreferenceWithSwitch
-import de.mm20.launcher2.ui.locals.LocalBackStack
-import de.mm20.launcher2.ui.settings.calendarsearch.CalendarProviderSettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -33,7 +31,6 @@ data object TasksIntegrationSettingsRoute: NavKey
 fun TasksIntegrationSettingsScreen() {
     val viewModel: TasksSettingsScreenVM = viewModel()
     val activity = LocalActivity.current
-    val backStack = LocalBackStack.current
 
     val isTasksInstalled by viewModel.isTasksAppInstalled.collectAsStateWithLifecycle(null)
     val hasTasksPermission by viewModel.hasTasksPermission.collectAsStateWithLifecycle(null)
@@ -89,16 +86,16 @@ fun TasksIntegrationSettingsScreen() {
                     ) {
                         PreferenceWithSwitch(
                             icon = R.drawable.task_alt_24px,
-                            title = stringResource(R.string.preference_search_tasks),
-                            summary = stringResource(R.string.preference_search_tasks_summary),
+                            title = stringResource(R.string.preference_tasks_integration),
+                            summary = stringResource(
+                                R.string.preference_tasks_integration_description,
+                                stringResource(R.string.app_name),
+                            ),
                             switchValue = isTasksSearchEnabled == true && hasTasksPermission == true,
                             onSwitchChanged = {
                                 viewModel.setTasksSearchEnabled(it)
                             },
                             enabled = hasTasksPermission == true,
-                            onClick = {
-                                backStack.add(CalendarProviderSettingsRoute(providerId = "tasks.org"))
-                            }
                         )
                     }
                     Preference(

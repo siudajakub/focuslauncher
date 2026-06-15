@@ -19,34 +19,81 @@ data class FocusSessionSummary(
     val unlockCount: Int,
 )
 
+sealed interface FocusSessionEndResult {
+    data class Finished(
+        val session: FocusSessionEntity,
+        val status: FocusSessionStatus,
+    ) : FocusSessionEndResult
+
+    data object NoActiveSession : FocusSessionEndResult
+    data object StaleSession : FocusSessionEndResult
+}
+
 class FocusSessionRepository : KoinComponent {
     private val database: AppDatabase by inject()
 
-    suspend fun startSession(startedAt: Long, plannedEndsAt: Long) {
-        database.focusSessionDao().getLatestActive()?.let { active ->
-            database.focusSessionDao().finishSession(
-                id = active.id,
-                endedAt = startedAt,
-                status = FocusSessionStatus.Replaced.name,
-            )
-        }
-        database.focusSessionDao().insert(
-            FocusSessionEntity(
-                startedAt = startedAt,
-                plannedEndsAt = plannedEndsAt,
-                status = FocusSessionStatus.Active.name,
-            )
+    suspend fun startSession(startedAt: Long, plannedEndsAt: Long): FocusSessionEntity {
+        val session = FocusSessionEntity(
+            startedAt = startedAt,
+            plannedEndsAt = plannedEndsAt,
+            status = FocusSessionStatus.Active.name,
+        )
+        val id = database.focusSessionDao().replaceActiveSession(
+            session = session,
+            activeStatus = FocusSessionStatus.Active.name,
+            replacedStatus = FocusSessionStatus.Replaced.name,
+        )
+        return session.copy(id = id)
+    }
+
+    suspend fun getActiveSession(): FocusSessionEntity? {
+        return database.focusSessionDao().getLatestActive(FocusSessionStatus.Active.name)
+    }
+
+    suspend fun endActiveSession(endedAt: Long): FocusSessionEndResult {
+        val active = getActiveSession() ?: return FocusSessionEndResult.NoActiveSession
+        return finishExpectedSession(
+            expectedSessionId = active.id,
+            expectedPlannedEndsAt = active.plannedEndsAt,
+            endedAt = endedAt,
         )
     }
 
-    suspend fun endActiveSession(endedAt: Long) {
-        val active = database.focusSessionDao().getLatestActive() ?: return
+    suspend fun finishExpectedSession(
+        expectedSessionId: Long,
+        expectedPlannedEndsAt: Long,
+        endedAt: Long,
+    ): FocusSessionEndResult {
+        val active = getActiveSession() ?: return FocusSessionEndResult.NoActiveSession
+        if (!isExpectedFocusSession(
+                activeSessionId = active.id,
+                activePlannedEndsAt = active.plannedEndsAt,
+                expectedSessionId = expectedSessionId,
+                expectedPlannedEndsAt = expectedPlannedEndsAt,
+            )
+        ) {
+            return FocusSessionEndResult.StaleSession
+        }
         val status = if (endedAt >= active.plannedEndsAt) {
             FocusSessionStatus.Completed
         } else {
             FocusSessionStatus.EndedEarly
         }
-        database.focusSessionDao().finishSession(active.id, endedAt, status.name)
+        val updatedRows = database.focusSessionDao().finishSessionIfActive(
+            id = active.id,
+            expectedPlannedEndsAt = active.plannedEndsAt,
+            endedAt = endedAt,
+            activeStatus = FocusSessionStatus.Active.name,
+            finishedStatus = status.name,
+        )
+        return if (updatedRows == 1) {
+            FocusSessionEndResult.Finished(
+                session = active.copy(endedAt = endedAt, status = status.name),
+                status = status,
+            )
+        } else {
+            FocusSessionEndResult.StaleSession
+        }
     }
 
     fun getSessionsSince(since: Long): Flow<List<FocusSessionEntity>> {

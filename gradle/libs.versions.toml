@@ -84,6 +84,7 @@ androidx-activitycompose = { group = "androidx.activity", name = "activity-compo
 androidx-room = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
 androidx-roomruntime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-roomcompiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
+androidx-roomtesting = { group = "androidx.room", name = "room-testing", version.ref = "androidx-room" }
 
 androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
@@ -128,6 +129,8 @@ koin-androidxcompose = { group = "io.insert-koin", name = "koin-androidx-compose
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-test-core = { group = "androidx.test", name = "core-ktx", version = "1.6.1" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version = "1.6.2" }
 
 osmopeninghours = { group = "de.westnordost", name = "osm-opening-hours", version.ref = "osmOpeningHours" }
 

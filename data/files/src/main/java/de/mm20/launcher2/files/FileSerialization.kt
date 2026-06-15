@@ -5,8 +5,6 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.core.database.getStringOrNull
 import de.mm20.launcher2.files.providers.LocalFile
-import de.mm20.launcher2.files.providers.NextcloudFile
-import de.mm20.launcher2.files.providers.OwncloudFile
 import de.mm20.launcher2.files.providers.PluginFile
 import de.mm20.launcher2.files.providers.PluginFileProvider
 import de.mm20.launcher2.ktx.jsonObjectOf
@@ -103,112 +101,6 @@ internal class LocalFileDeserializer(
         }
         cursor.close()
         return null
-    }
-}
-
-internal class NextcloudFileSerializer : SearchableSerializer {
-    override fun serialize(searchable: SavableSearchable): String {
-        searchable as NextcloudFile
-        return jsonObjectOf(
-            "id" to searchable.fileId,
-            "label" to searchable.label,
-            "path" to searchable.path,
-            "mimeType" to searchable.mimeType,
-            "size" to searchable.size,
-            "isDirectory" to searchable.isDirectory,
-            "server" to searchable.server
-        ).apply {
-            for ((k, v) in searchable.metaData) {
-                put(
-                    when (k) {
-                        FileMetaType.Owner -> "owner"
-                        else -> "other"
-                    }, v
-                )
-            }
-        }.toString()
-    }
-
-    override val typePrefix: String
-        get() = "nextcloud"
-}
-
-internal class NextcloudFileDeserializer : SearchableDeserializer {
-    override suspend fun deserialize(serialized: String): SavableSearchable {
-        val json = JSONObject(serialized)
-        val id = json.getLong("id")
-        val label = json.getString("label")
-        val path = json.getString("path")
-        val mimeType = json.getString("mimeType")
-        val size = json.getLong("size")
-        val isDirectory = json.getBoolean("isDirectory")
-        val server = json.getString("server")
-        val owner = json.optString("owner").takeIf { it.isNotEmpty() }
-
-        return NextcloudFile(
-            fileId = id,
-            label = label,
-            path = path,
-            mimeType = mimeType,
-            size = size,
-            isDirectory = isDirectory,
-            server = server,
-            metaData = owner?.let { persistentMapOf(FileMetaType.Owner to it) } ?: persistentMapOf()
-
-        )
-    }
-}
-
-internal class OwncloudFileSerializer : SearchableSerializer {
-    override fun serialize(searchable: SavableSearchable): String {
-        searchable as OwncloudFile
-        return jsonObjectOf(
-            "id" to searchable.fileId,
-            "label" to searchable.label,
-            "path" to searchable.path,
-            "mimeType" to searchable.mimeType,
-            "size" to searchable.size,
-            "isDirectory" to searchable.isDirectory,
-            "server" to searchable.server
-        ).apply {
-            for ((k, v) in searchable.metaData) {
-                put(
-                    when (k) {
-                        FileMetaType.Owner -> "owner"
-                        else -> "other"
-                    }, v
-                )
-            }
-        }.toString()
-    }
-
-    override val typePrefix: String
-        get() = "owncloud"
-}
-
-internal class OwncloudFileDeserializer : SearchableDeserializer {
-    override suspend fun deserialize(serialized: String): SavableSearchable {
-        val json = JSONObject(serialized)
-        val id = json.getLong("id")
-        val label = json.getString("label")
-        val path = json.getString("path")
-        val mimeType = json.getString("mimeType")
-        val size = json.getLong("size")
-        val isDirectory = json.getBoolean("isDirectory")
-        val server = json.getString("server")
-        val owner = json.optString("owner").takeIf { it.isNotEmpty() }
-
-        return OwncloudFile(
-            fileId = id,
-            label = label,
-            path = path,
-            mimeType = mimeType,
-            size = size,
-            isDirectory = isDirectory,
-            server = server,
-            metaData = owner?.let { persistentMapOf(FileMetaType.Owner to it) } ?: persistentMapOf()
-
-        )
     }
 }
 

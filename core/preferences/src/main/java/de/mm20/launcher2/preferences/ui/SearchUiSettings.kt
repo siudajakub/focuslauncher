@@ -321,6 +321,34 @@ class SearchUiSettings internal constructor(
         launcherDataStore.update { it.copy(focusDailyScheduleCalendarId = calendarId) }
     }
 
+    val focusPlanSelectedCalendarId
+        get() = launcherDataStore.data.map { it.focusPlanSelectedCalendarId }.distinctUntilChanged()
+
+    fun setFocusPlanSelectedCalendarId(calendarId: Long?) {
+        launcherDataStore.update { it.copy(focusPlanSelectedCalendarId = calendarId) }
+    }
+
+    val focusPlanTimelineStartHour
+        get() = launcherDataStore.data.map { it.focusPlanTimelineStartHour }.distinctUntilChanged()
+
+    fun setFocusPlanTimelineStartHour(hour: Int) {
+        launcherDataStore.update { it.copy(focusPlanTimelineStartHour = hour) }
+    }
+
+    val focusPlanTimelineEndHour
+        get() = launcherDataStore.data.map { it.focusPlanTimelineEndHour }.distinctUntilChanged()
+
+    fun setFocusPlanTimelineEndHour(hour: Int) {
+        launcherDataStore.update { it.copy(focusPlanTimelineEndHour = hour) }
+    }
+
+    val focusPlanDurations
+        get() = launcherDataStore.data.map { it.focusPlanDurations }.distinctUntilChanged()
+
+    fun setFocusPlanDurations(durations: List<Int>) {
+        launcherDataStore.update { it.copy(focusPlanDurations = durations) }
+    }
+
     val focusScheduleDockMappings
         get() = launcherDataStore.data.map { it.focusScheduleDockMappings }.distinctUntilChanged()
 
@@ -689,4 +717,74 @@ class SearchUiSettings internal constructor(
         }
     }
 
+    val focusOneSecEnabled
+        get() = launcherDataStore.data.map { it.focusOneSecEnabled }.distinctUntilChanged()
+
+    fun setFocusOneSecEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusOneSecEnabled = enabled) }
+    }
+
+    val focusMicroDelaysEnabled
+        get() = launcherDataStore.data.map { it.focusMicroDelaysEnabled }.distinctUntilChanged()
+
+    fun setFocusMicroDelaysEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusMicroDelaysEnabled = enabled) }
+    }
+
+    val focusDistractingDailyLaunchLimit
+        get() = launcherDataStore.data.map { it.focusDistractingDailyLaunchLimit }.distinctUntilChanged()
+
+    fun setFocusDistractingDailyLaunchLimit(limit: Int) {
+        launcherDataStore.update { it.copy(focusDistractingDailyLaunchLimit = limit) }
+    }
+
+    val focusTimeBlindnessRemindersEnabled
+        get() = launcherDataStore.data.map { it.focusTimeBlindnessRemindersEnabled }.distinctUntilChanged()
+
+    fun setFocusTimeBlindnessRemindersEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusTimeBlindnessRemindersEnabled = enabled) }
+    }
+
+    val focusTimeBlindnessIntervalMinutes
+        get() = launcherDataStore.data.map { it.focusTimeBlindnessIntervalMinutes }.distinctUntilChanged()
+
+    fun setFocusTimeBlindnessIntervalMinutes(minutes: Int) {
+        launcherDataStore.update { it.copy(focusTimeBlindnessIntervalMinutes = minutes) }
+    }
+
+    val focusTodoistApiToken
+        get() = launcherDataStore.data.map { it.focusTodoistApiToken }.distinctUntilChanged()
+
+    fun setFocusTodoistApiToken(token: String) {
+        launcherDataStore.update { it.copy(focusTodoistApiToken = token.trim()) }
+    }
+
+    val focusDailyIntention
+        get() = launcherDataStore.data.map { it.focusDailyIntention }.distinctUntilChanged()
+
+    val focusDailyIntentionDate
+        get() = launcherDataStore.data.map { it.focusDailyIntentionDate }.distinctUntilChanged()
+
+    fun setFocusDailyIntention(intention: String, date: String) {
+        launcherDataStore.update {
+            it.copy(
+                focusDailyIntention = intention,
+                focusDailyIntentionDate = date
+            )
+        }
+    }
+
+    val focusGrayscaleModeEnabled
+        get() = launcherDataStore.data.map { it.focusGrayscaleModeEnabled }.distinctUntilChanged()
+
+    fun setFocusGrayscaleModeEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusGrayscaleModeEnabled = enabled) }
+    }
+
+    val focusGrayscaleDuringFocusBlocks
+        get() = launcherDataStore.data.map { it.focusGrayscaleDuringFocusBlocks }.distinctUntilChanged()
+
+    fun setFocusGrayscaleDuringFocusBlocks(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusGrayscaleDuringFocusBlocks = enabled) }
+    }
 }

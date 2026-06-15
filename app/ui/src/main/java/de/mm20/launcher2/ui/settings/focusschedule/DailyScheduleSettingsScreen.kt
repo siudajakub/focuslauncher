@@ -34,6 +34,9 @@ import de.mm20.launcher2.ui.component.preferences.Preference
 import de.mm20.launcher2.ui.component.preferences.PreferenceCategory
 import de.mm20.launcher2.ui.component.preferences.PreferenceScreen
 import de.mm20.launcher2.ui.component.preferences.SwitchPreference
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.platform.LocalContext
+import de.mm20.launcher2.ui.component.MissingPermissionBanner
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -46,6 +49,8 @@ fun DailyScheduleSettingsScreen() {
     val selectedCalendarId by viewModel.selectedCalendarId.collectAsStateWithLifecycle(null)
     val selectedCalendar by viewModel.selectedCalendar.collectAsStateWithLifecycle(null)
     val calendars by viewModel.calendars.collectAsStateWithLifecycle(emptyList())
+    val hasCalendarPermission by viewModel.hasCalendarPermission.collectAsStateWithLifecycle(true)
+    val context = LocalContext.current
     var pickerOpen by remember { mutableStateOf(false) }
 
     PreferenceScreen(title = stringResource(R.string.focus_daily_schedule_title)) {
@@ -63,6 +68,17 @@ fun DailyScheduleSettingsScreen() {
                     value = enabled == true,
                     onValueChanged = viewModel::setDailyScheduleEnabled,
                 )
+                if (!hasCalendarPermission) {
+                    MissingPermissionBanner(
+                        modifier = Modifier.padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
+                        text = stringResource(R.string.missing_permission_calendar_widget_settings),
+                        onClick = {
+                            (context as? AppCompatActivity)?.let {
+                                viewModel.requestCalendarPermission(it)
+                            }
+                        }
+                    )
+                }
                 Preference(
                     title = stringResource(R.string.focus_daily_schedule_calendar),
                     summary = selectedCalendar?.let { calendarLabel(it) }

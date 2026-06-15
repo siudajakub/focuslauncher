@@ -414,7 +414,7 @@ class UiSettings internal constructor(
             }
             data.copy(
                 homeScreenWidgetPagesEnabled = enabled,
-                gesturesSwipeUp = resetGesture(data.gesturesSwipeUp),
+                gesturesSwipeRight = resetGesture(data.gesturesSwipeRight),
                 gesturesSwipeDown = resetGesture(data.gesturesSwipeDown),
                 gesturesSwipeLeft = resetGesture(data.gesturesSwipeLeft),
                 gesturesSwipeUp = resetGesture(data.gesturesSwipeUp),
@@ -462,7 +462,7 @@ class UiSettings internal constructor(
             }
 
             updatedData = updatedData.copy(
-                gesturesSwipeUp = resetGesture(updatedData.gesturesSwipeUp),
+                gesturesSwipeRight = resetGesture(updatedData.gesturesSwipeRight),
                 gesturesSwipeDown = resetGesture(updatedData.gesturesSwipeDown),
                 gesturesSwipeLeft = resetGesture(updatedData.gesturesSwipeLeft),
                 gesturesSwipeUp = resetGesture(updatedData.gesturesSwipeUp),

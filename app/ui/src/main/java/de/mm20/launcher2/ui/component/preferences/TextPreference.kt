@@ -3,6 +3,7 @@ package de.mm20.launcher2.ui.component.preferences
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun TextPreference(
@@ -11,7 +12,9 @@ fun TextPreference(
     summary: String? = value,
     enabled: Boolean = true,
     onValueChanged: (String) -> Unit,
-    placeholder: String? = null
+    placeholder: String? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    singleLine: Boolean = false,
 ) {
     var showDialog by remember { mutableStateOf(false) }
     Preference(
@@ -33,6 +36,8 @@ fun TextPreference(
                     value = textFieldValue,
                     textStyle = MaterialTheme.typography.bodyLarge,
                     onValueChange = { textFieldValue = it },
+                    visualTransformation = visualTransformation,
+                    singleLine = singleLine,
                     placeholder = placeholder?.let {
                         {
                             Text(

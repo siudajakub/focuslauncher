@@ -1,0 +1,4 @@
+interface:
+  display_name: "Room Migration"
+  short_description: "Implement Room migrations"
+  default_prompt: "Use $room-migration to implement and verify FocusLauncher Room schema changes and migrations."

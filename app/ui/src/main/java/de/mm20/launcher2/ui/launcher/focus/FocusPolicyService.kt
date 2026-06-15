@@ -3,6 +3,7 @@ package de.mm20.launcher2.ui.launcher.focus
 import android.app.NotificationManager
 import android.content.Context
 import android.provider.Settings
+import androidx.core.content.getSystemService
 import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
 import de.mm20.launcher2.data.customattrs.FocusTemporaryUnlock
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
@@ -193,8 +194,18 @@ class FocusPolicyService : KoinComponent {
                 frictionResolution = frictionResolution,
             )
         }
+        val dailyLaunchLimit = searchUiSettings.focusDistractingDailyLaunchLimit.first()
+        val budgetBlocked = if (appType == FocusAppType.Distracting && dailyLaunchLimit > 0) {
+            val startOfDay = LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val eventsToday = historyRepository.getEventsSince(startOfDay)
+            val distractingLaunchesToday = eventsToday.count {
+                focusAppClassifier.classifyNow(it.appKey) == FocusAppType.Distracting
+            }
+            distractingLaunchesToday >= dailyLaunchLimit
+        } else {
+            false
+        }
         val scheduleBlocked = false
-        val budgetBlocked = false
         val sessionLocked = sessionActive && appType == FocusAppType.Distracting
         val hardBlocked = scheduleBlocked || budgetBlocked
         val gatedByClassification = appType == FocusAppType.Distracting
@@ -204,6 +215,7 @@ class FocusPolicyService : KoinComponent {
             searchUiSettings.focusHideDistractingApps.first()
 
         val reason = when {
+            budgetBlocked -> FocusBlockReason.DailyBudget
             hardBlocked -> FocusBlockReason.HardBlockWindow
             sessionLocked -> FocusBlockReason.FocusSessionLock
             gatedByClassification -> FocusBlockReason.Classification
@@ -238,29 +250,129 @@ class FocusPolicyService : KoinComponent {
     }
 
     suspend fun beginFocusSession(context: Context, minutes: Int) {
-        val startedAt = System.currentTimeMillis()
-        val until = startedAt + minutes.coerceIn(5, 180) * 60_000L
-        if (searchUiSettings.focusEnableDnd.first()) {
-            val manager = context.getSystemService(NotificationManager::class.java)
-            if (manager != null && manager.isNotificationPolicyAccessGranted) {
-                searchUiSettings.setFocusPreviousDndFilter(manager.currentInterruptionFilter)
-                manager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
-            }
+        focusSessionMutationMutex.lock()
+        try {
+            val startedAt = System.currentTimeMillis()
+            val until = startedAt + minutes.coerceIn(5, 180) * 60_000L
+            applySessionDndStart(context)
+            val session = sessionRepository.startSession(startedAt, until)
+            searchUiSettings.setFocusSessionEndsAt(session.plannedEndsAt)
+            FocusSessionScheduler(context).schedule(
+                sessionId = session.id,
+                plannedEndsAt = session.plannedEndsAt,
+                now = startedAt,
+            )
+        } finally {
+            focusSessionMutationMutex.unlock()
         }
-        sessionRepository.startSession(startedAt, until)
-        searchUiSettings.setFocusSessionEndsAt(until)
     }
 
     suspend fun endFocusSession(context: Context) {
-        val endedAt = System.currentTimeMillis()
-        val manager = context.getSystemService(NotificationManager::class.java)
+        focusSessionMutationMutex.lock()
+        try {
+            FocusSessionScheduler(context).cancel()
+            val result = sessionRepository.endActiveSession(System.currentTimeMillis())
+            if (result is FocusSessionEndResult.Finished || result is FocusSessionEndResult.NoActiveSession) {
+                restoreSessionDndIfLauncherStillControls(context)
+                searchUiSettings.setFocusSessionEndsAt(0L)
+            }
+        } finally {
+            focusSessionMutationMutex.unlock()
+        }
+    }
+
+    suspend fun completeScheduledFocusSession(
+        context: Context,
+        expectedSessionId: Long,
+        expectedPlannedEndsAt: Long,
+    ) {
+        focusSessionMutationMutex.lock()
+        try {
+            val result = sessionRepository.finishExpectedSession(
+                expectedSessionId = expectedSessionId,
+                expectedPlannedEndsAt = expectedPlannedEndsAt,
+                endedAt = System.currentTimeMillis(),
+            )
+            if (result is FocusSessionEndResult.Finished) {
+                restoreSessionDndIfLauncherStillControls(context)
+                searchUiSettings.setFocusSessionEndsAt(0L)
+            }
+        } finally {
+            focusSessionMutationMutex.unlock()
+        }
+    }
+
+    suspend fun reconcileFocusSession(context: Context) {
+        focusSessionMutationMutex.lock()
+        try {
+            val now = System.currentTimeMillis()
+            val active = sessionRepository.getActiveSession()
+            when (
+                val reconciliation = resolveFocusSessionReconciliation(
+                    activeSessionId = active?.id,
+                    activePlannedEndsAt = active?.plannedEndsAt,
+                    now = now,
+                )
+            ) {
+                is FocusSessionReconciliation.Active -> {
+                    searchUiSettings.setFocusSessionEndsAt(reconciliation.projectedEndsAt)
+                    FocusSessionScheduler(context).schedule(
+                        sessionId = reconciliation.sessionId,
+                        plannedEndsAt = reconciliation.plannedEndsAt,
+                        now = now,
+                    )
+                }
+                is FocusSessionReconciliation.Expired -> {
+                    sessionRepository.finishExpectedSession(
+                        expectedSessionId = reconciliation.sessionId,
+                        expectedPlannedEndsAt = reconciliation.plannedEndsAt,
+                        endedAt = now,
+                    )
+                    restoreSessionDndIfLauncherStillControls(context)
+                    searchUiSettings.setFocusSessionEndsAt(0L)
+                    FocusSessionScheduler(context).cancel()
+                }
+                FocusSessionReconciliation.NoActiveSession -> {
+                    searchUiSettings.setFocusSessionEndsAt(0L)
+                    FocusSessionScheduler(context).cancel()
+                }
+            }
+        } finally {
+            focusSessionMutationMutex.unlock()
+        }
+    }
+
+    private suspend fun applySessionDndStart(context: Context) {
+        val manager = context.getSystemService<NotificationManager>() ?: return
+        val decision = resolveFocusDndStart(
+            dndEnabled = searchUiSettings.focusEnableDnd.first(),
+            policyAccessGranted = manager.isNotificationPolicyAccessGranted,
+            storedPreviousFilter = searchUiSettings.focusPreviousDndFilter.first(),
+            currentFilter = manager.currentInterruptionFilter,
+        )
+        decision.previousFilterToStore?.let {
+            searchUiSettings.setFocusPreviousDndFilter(it)
+        }
+        if (decision.shouldSetPriority) {
+            manager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+        }
+    }
+
+    private suspend fun restoreSessionDndIfLauncherStillControls(context: Context) {
+        val manager = context.getSystemService<NotificationManager>()
         val previous = searchUiSettings.focusPreviousDndFilter.first()
-        if (manager != null && manager.isNotificationPolicyAccessGranted && previous >= 0) {
+        if (
+            manager != null &&
+            shouldRestorePreviousDndFilter(
+                policyAccessGranted = manager.isNotificationPolicyAccessGranted,
+                storedPreviousFilter = previous,
+                currentFilter = manager.currentInterruptionFilter,
+                launcherFilter = NotificationManager.INTERRUPTION_FILTER_PRIORITY,
+            )
+        ) {
             manager.setInterruptionFilter(previous)
         }
         searchUiSettings.setFocusPreviousDndFilter(-1)
-        searchUiSettings.setFocusSessionEndsAt(0L)
-        sessionRepository.endActiveSession(endedAt)
     }
 
     fun getDndSettingsIntent(): android.content.Intent {

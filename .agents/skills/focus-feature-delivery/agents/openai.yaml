@@ -1,0 +1,4 @@
+interface:
+  display_name: "Focus Feature Delivery"
+  short_description: "Deliver FocusLauncher features end to end"
+  default_prompt: "Use $focus-feature-delivery to implement a FocusLauncher feature across architecture, UI, tests, docs, and verification."

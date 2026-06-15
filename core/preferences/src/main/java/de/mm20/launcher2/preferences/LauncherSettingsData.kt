@@ -64,7 +64,7 @@ data class LauncherSettingsData internal constructor(
     val homeScreenDock: Boolean = true,
     val homeScreenDockRows: Int = 1,
     val homeScreenWidgets: Boolean = false,
-    val homeScreenWidgetPagesEnabled: Boolean = true,
+    val homeScreenWidgetPagesEnabled: Boolean = false,
 
     val favoritesEnabled: Boolean = false,
     val favoritesFrequentlyUsed: Boolean = false,
@@ -90,12 +90,6 @@ data class LauncherSettingsData internal constructor(
     val focusEmergencyBypassEndsAt: Long = 0L,
     val focusEmergencyBypassReason: String? = null,
     val focusPreviousDndFilter: Int = -1,
-    val focusMorningModeEnabled: Boolean = false,
-    val focusMorningStartMinutes: Int = 5 * 60,
-    val focusMorningEndMinutes: Int = 9 * 60,
-    val focusSleepModeEnabled: Boolean = false,
-    val focusSleepStartMinutes: Int = 22 * 60,
-    val focusSleepEndMinutes: Int = 7 * 60,
     val focusProductivityTimeEnabled: Boolean = false,
     val focusProductivityWindows: List<FocusProductivityWindow> = listOf(
         FocusProductivityWindow(
@@ -105,6 +99,10 @@ data class LauncherSettingsData internal constructor(
     ),
     val focusDailyScheduleEnabled: Boolean = false,
     val focusDailyScheduleCalendarId: String? = null,
+    val focusPlanSelectedCalendarId: Long? = null,
+    val focusPlanTimelineStartHour: Int = 9,
+    val focusPlanTimelineEndHour: Int = 22,
+    val focusPlanDurations: List<Int> = listOf(15, 30, 45, 60, 90, 120, 180, 240),
     val focusScheduleDockMappings: List<ScheduleDockMapping> = emptyList(),
     val focusHabitsEnabled: Boolean = false,
     val focusHabits: List<FocusHabit> = emptyList(),
@@ -144,6 +142,17 @@ data class LauncherSettingsData internal constructor(
     val focusCommuteModeEnabled: Boolean = false,
     val focusAtAGlanceEnabled: Boolean = true,
 
+    val focusOneSecEnabled: Boolean = false,
+    val focusMicroDelaysEnabled: Boolean = false,
+    val focusDistractingDailyLaunchLimit: Int = 0,
+    val focusTimeBlindnessRemindersEnabled: Boolean = false,
+    val focusTimeBlindnessIntervalMinutes: Int = 15,
+    val focusTodoistApiToken: String = "",
+    val focusDailyIntention: String = "",
+    val focusDailyIntentionDate: String = "",
+    val focusGrayscaleModeEnabled: Boolean = false,
+    val focusGrayscaleDuringFocusBlocks: Boolean = false,
+
     val searchAllApps: Boolean = false,
 
     val fileSearchProviders: Set<String> = setOf("local"),
@@ -153,8 +162,6 @@ data class LauncherSettingsData internal constructor(
     val contactSearchProviders: Set<String> = setOf("local"),
     val contactSearchCallOnTap: Boolean = false,
 
-    @Deprecated("Use calendarSearchProviders `local` instead")
-    val calendarSearchEnabled: Boolean = true,
     val calendarSearchProviders: Set<String> = setOf("local"),
     val calendarSearchExcludedCalendars: Set<String> = setOf(),
 

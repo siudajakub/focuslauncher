@@ -39,6 +39,13 @@ interface CalendarRepository : SearchableRepository<CalendarEvent> {
     ): Flow<ImmutableList<CalendarEvent>>
 
     fun getCalendars(providerId: String? = null): Flow<List<CalendarList>>
+
+    suspend fun insertEvent(
+        title: String,
+        startTime: Long,
+        endTime: Long,
+        calendarId: Long
+    ): Boolean
 }
 
 internal class CalendarRepositoryImpl(
@@ -215,6 +222,17 @@ internal class CalendarRepositoryImpl(
             }
         }
 
+    }
 
+    override suspend fun insertEvent(
+        title: String,
+        startTime: Long,
+        endTime: Long,
+        calendarId: Long
+    ): Boolean {
+        val hasCalendarPermission = permissionsManager.hasPermission(PermissionGroup.Calendar)
+        // Ensure local calendar is allowed
+        val provider = AndroidCalendarProvider(context)
+        return provider.insertEvent(title, startTime, endTime, calendarId)
     }
 }

@@ -53,63 +53,6 @@ fun SearchFilters(
             )
             FilterChip(
                 modifier = Modifier.padding(end = 16.dp),
-                selected = filters.files && (!allCategoriesEnabled || settings),
-                onClick = {
-                    if (settings) {
-                        onFiltersChange(filters.copy(files = !filters.files))
-                    } else {
-                        onFiltersChange(filters.toggleFiles())
-                    }
-                },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.description_20px),
-                        contentDescription = null,
-                        modifier = Modifier.size(FilterChipDefaults.IconSize)
-                    )
-                },
-                label = { Text(stringResource(R.string.preference_search_files)) }
-            )
-            FilterChip(
-                modifier = Modifier.padding(end = 16.dp),
-                selected = filters.contacts && (!allCategoriesEnabled || settings),
-                onClick = {
-                    if (settings) {
-                        onFiltersChange(filters.copy(contacts = !filters.contacts))
-                    } else {
-                        onFiltersChange(filters.toggleContacts())
-                    }
-                },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.person_20px),
-                        contentDescription = null,
-                        modifier = Modifier.size(FilterChipDefaults.IconSize)
-                    )
-                },
-                label = { Text(stringResource(R.string.preference_search_contacts)) }
-            )
-            FilterChip(
-                modifier = Modifier.padding(end = 16.dp),
-                selected = filters.events && (!allCategoriesEnabled || settings),
-                onClick = {
-                    if (settings) {
-                        onFiltersChange(filters.copy(events = !filters.events))
-                    } else {
-                        onFiltersChange(filters.toggleEvents())
-                    }
-                },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.today_20px),
-                        contentDescription = null,
-                        modifier = Modifier.size(FilterChipDefaults.IconSize)
-                    )
-                },
-                label = { Text(stringResource(R.string.preference_search_calendar)) }
-            )
-            FilterChip(
-                modifier = Modifier.padding(end = 16.dp),
                 selected = filters.shortcuts && (!allCategoriesEnabled || settings),
                 onClick = {
                     if (settings) {

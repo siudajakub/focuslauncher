@@ -91,6 +91,7 @@ import de.mm20.launcher2.ui.component.weather.WeatherIconDefaults
 import de.mm20.launcher2.ui.ktx.animateShapeAsState
 import de.mm20.launcher2.ui.locals.LocalMeasurementSystem
 import de.mm20.launcher2.ui.locals.LocalTimeFormat
+import de.mm20.launcher2.ui.settings.SettingsActivity
 import de.mm20.launcher2.ui.theme.transparency.transparency
 import de.mm20.launcher2.ui.utils.formatPercent
 import de.mm20.launcher2.ui.utils.formatPrecipitation
@@ -143,7 +144,7 @@ fun WeatherWidget(widget: WeatherWidget) {
                 primaryAction = {
                     Button(
                         onClick = {
-                            viewModel.openSettings(context)
+                            context.startActivity(Intent(context, SettingsActivity::class.java))
                         },
                         contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                     ) {

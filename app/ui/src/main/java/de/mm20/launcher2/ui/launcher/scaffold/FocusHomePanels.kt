@@ -43,6 +43,34 @@ data class HabitPanelState(
     val gate: HabitGateState = HabitGateState(blocked = false, overdueCount = 0),
 )
 
+data class FocusInsightsPanelState(
+    val streakDays: Int = 0,
+    val show: Boolean = true,
+)
+
+@Composable
+internal fun FocusInsightsCard(
+    state: FocusInsightsPanelState,
+    onOpenInsights: () -> Unit,
+) {
+    if (!state.show) return
+
+    FocusSection(
+        title = stringResource(R.string.focus_insights_title),
+        supportingText = if (state.streakDays > 0) {
+            stringResource(R.string.focus_insights_streak) + ": ${state.streakDays}"
+        } else null,
+        emphasis = false,
+    ) {
+        OutlinedButton(
+            onClick = onOpenInsights,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.focus_insights_title))
+        }
+    }
+}
+
 @Composable
 internal fun FocusGuidanceCard(
     state: FocusGuidanceState,
@@ -240,14 +268,16 @@ internal fun FocusSection(
     emphasis: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val backgroundColor = if (emphasis) {
+        MaterialTheme.colorScheme.surfaceContainerHighest
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow
+    }
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = if (emphasis) {
-            MaterialTheme.colorScheme.surfaceContainerHighest
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerLow
-        },
+        color = backgroundColor,
         tonalElevation = if (emphasis) 4.dp else 2.dp,
     ) {
         Column(

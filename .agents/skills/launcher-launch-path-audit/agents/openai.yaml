@@ -1,0 +1,4 @@
+interface:
+  display_name: "Launcher Launch Path Audit"
+  short_description: "Audit launcher launch paths"
+  default_prompt: "Use $launcher-launch-path-audit to audit every launcher app launch and visibility entry point for consistent focus behavior."

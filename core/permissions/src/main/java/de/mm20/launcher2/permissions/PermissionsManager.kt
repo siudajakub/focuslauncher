@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
+import android.app.NotificationManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
@@ -68,6 +69,7 @@ enum class PermissionGroup {
     Accessibility,
     ManageProfiles,
     Call,
+    NotificationPolicy,
 }
 
 internal class PermissionsManagerImpl(
@@ -101,6 +103,9 @@ internal class PermissionsManagerImpl(
     )
     private val callPermissionState = MutableStateFlow(
         checkPermissionOnce(PermissionGroup.Call)
+    )
+    private val notificationPolicyPermissionState = MutableStateFlow(
+        checkPermissionOnce(PermissionGroup.NotificationPolicy)
     )
 
     override fun requestPermission(context: AppCompatActivity, permissionGroup: PermissionGroup) {
@@ -192,6 +197,15 @@ internal class PermissionsManagerImpl(
                     permissionGroup.ordinal
                 )
             }
+
+            PermissionGroup.NotificationPolicy -> {
+                try {
+                    context.tryStartActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+                    pendingPermissionRequests.add(PermissionGroup.NotificationPolicy)
+                } catch (e: ActivityNotFoundException) {
+                    CrashReporter.logException(e)
+                }
+            }
         }
     }
 
@@ -242,6 +256,10 @@ internal class PermissionsManagerImpl(
             PermissionGroup.Call -> {
                 callPermissions.all { context.checkPermission(it) }
             }
+
+            PermissionGroup.NotificationPolicy -> {
+                context.getSystemService<NotificationManager>()?.isNotificationPolicyAccessGranted == true
+            }
         }
     }
 
@@ -257,6 +275,7 @@ internal class PermissionsManagerImpl(
             PermissionGroup.Accessibility -> accessibilityPermissionState
             PermissionGroup.ManageProfiles -> manageProfilesPermissionState
             PermissionGroup.Call -> callPermissionState
+            PermissionGroup.NotificationPolicy -> notificationPolicyPermissionState
         }
     }
 
@@ -278,6 +297,7 @@ internal class PermissionsManagerImpl(
             PermissionGroup.Accessibility -> accessibilityPermissionState.value = granted
             PermissionGroup.ManageProfiles -> manageProfilesPermissionState.value = granted
             PermissionGroup.Call -> callPermissionState.value = granted
+            PermissionGroup.NotificationPolicy -> notificationPolicyPermissionState.value = granted
         }
     }
 
@@ -285,6 +305,15 @@ internal class PermissionsManagerImpl(
         externalStoragePermissionState.value = checkPermissionOnce(PermissionGroup.ExternalStorage)
         appShortcutsPermissionState.value = checkPermissionOnce(PermissionGroup.AppShortcuts)
         manageProfilesPermissionState.value = checkPermissionOnce(PermissionGroup.ManageProfiles)
+        callPermissionState.value = checkPermissionOnce(PermissionGroup.Call)
+        notificationPolicyPermissionState.value = checkPermissionOnce(PermissionGroup.NotificationPolicy)
+
+        pendingPermissionRequests.toList().forEach {
+            if (checkPermissionOnce(it)) {
+                pendingPermissionRequests.remove(it)
+                // Trigger any necessary callbacks here
+            }
+        }
     }
 
     override fun reportNotificationListenerState(running: Boolean) {

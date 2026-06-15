@@ -26,22 +26,25 @@ import de.mm20.launcher2.ui.settings.focushabits.DailyHabitsSettingsRoute
 import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsRoute
 import de.mm20.launcher2.ui.settings.focusschedule.ScheduleDockSettingsRoute
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsRoute
-import de.mm20.launcher2.ui.settings.focusreport.FocusReportSettingsRoute
+import de.mm20.launcher2.ui.launcher.focus.FocusInsightsRoute
 import de.mm20.launcher2.ui.settings.focussupport.FocusSupportSettingsRoute
-import de.mm20.launcher2.ui.settings.homepanels.HomePanelsSettingsRoute
 import de.mm20.launcher2.ui.settings.search.SearchSettingsRoute
-import de.mm20.launcher2.ui.settings.searchactions.SearchActionsSettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
 data object FocusSystemSettingsRoute : NavKey
+
+@Serializable
+data object FocusQuickStartRoute : NavKey
+
+@Serializable
+data object FocusSystemBasicsRoute : NavKey
 
 @Composable
 fun FocusSystemSettingsScreen() {
     val viewModel: FocusSystemSettingsScreenVM = viewModel()
     val backStack = LocalBackStack.current
     val shouldPromoteQuickStart = viewModel.shouldPromoteQuickStart.collectAsStateWithLifecycle().value
-    var showQuickStartSheet by rememberSaveable(shouldPromoteQuickStart) { mutableStateOf(shouldPromoteQuickStart) }
 
     val focusModeEnabled = viewModel.focusModeEnabled.collectAsStateWithLifecycle().value
     val hideDistractingApps = viewModel.hideDistractingApps.collectAsStateWithLifecycle().value
@@ -73,7 +76,7 @@ fun FocusSystemSettingsScreen() {
                     title = stringResource(R.string.focus_system_quick_start_open_title),
                     summary = stringResource(R.string.focus_system_quick_start_open_summary),
                     icon = R.drawable.emoji_objects_24px,
-                    onClick = { showQuickStartSheet = true },
+                    onClick = { backStack.add(FocusQuickStartRoute) },
                 )
                 Preference(
                     title = stringResource(R.string.focus_system_preset_balanced_title),
@@ -157,12 +160,6 @@ fun FocusSystemSettingsScreen() {
                     onClick = { backStack.add(SearchSettingsRoute) },
                 )
                 Preference(
-                    title = stringResource(R.string.focus_system_quick_actions_title),
-                    summary = stringResource(R.string.focus_system_quick_actions_summary),
-                    icon = R.drawable.manage_search_24px,
-                    onClick = viewModel::installFocusQuickActions,
-                )
-                Preference(
                     title = stringResource(R.string.focus_support_title),
                     summary = stringResource(R.string.focus_support_summary),
                     icon = R.drawable.emoji_objects_24px,
@@ -193,12 +190,6 @@ fun FocusSystemSettingsScreen() {
                     summary = stringResource(R.string.focus_settings_daily_habits_summary),
                     icon = R.drawable.check_24px,
                     onClick = { backStack.add(DailyHabitsSettingsRoute) },
-                )
-                Preference(
-                    title = stringResource(R.string.home_panels_title),
-                    summary = stringResource(R.string.focus_system_home_panels_summary),
-                    icon = R.drawable.home_24px,
-                    onClick = { backStack.add(HomePanelsSettingsRoute) },
                 )
             }
         }
@@ -271,45 +262,10 @@ fun FocusSystemSettingsScreen() {
                     title = stringResource(R.string.focus_report_title),
                     summary = stringResource(R.string.focus_report_summary),
                     icon = R.drawable.query_stats_24px,
-                    onClick = { backStack.add(FocusReportSettingsRoute) },
+                    onClick = { backStack.add(FocusInsightsRoute) },
                 )
             }
         }
-    }
-
-    if (showQuickStartSheet) {
-        FocusSystemQuickStartSheet(
-            expanded = true,
-            onDismissRequest = { showQuickStartSheet = false },
-            onBalancedPreset = {
-                viewModel.applyBalancedPreset()
-                showQuickStartSheet = false
-            },
-            onHardFocusPreset = {
-                viewModel.applyHardFocusPreset()
-                showQuickStartSheet = false
-            },
-            onMinimalPreset = {
-                viewModel.applyMinimalPreset()
-                showQuickStartSheet = false
-            },
-            onOpenFocusApps = {
-                showQuickStartSheet = false
-                backStack.add(FocusAppsSettingsRoute)
-            },
-            onOpenSchedule = {
-                showQuickStartSheet = false
-                backStack.add(DailyScheduleSettingsRoute)
-            },
-            onOpenHabits = {
-                showQuickStartSheet = false
-                backStack.add(DailyHabitsSettingsRoute)
-            },
-            onOpenReport = {
-                showQuickStartSheet = false
-                backStack.add(FocusReportSettingsRoute)
-            },
-        )
     }
 }
 

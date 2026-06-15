@@ -36,6 +36,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import de.mm20.launcher2.ktx.isAtLeastApiLevel
 import de.mm20.launcher2.preferences.GestureAction
 import de.mm20.launcher2.preferences.SearchBarColors
@@ -60,13 +61,13 @@ import de.mm20.launcher2.ui.launcher.scaffold.RecentsComponent
 import de.mm20.launcher2.ui.launcher.scaffold.ScaffoldAnimation
 import de.mm20.launcher2.ui.launcher.scaffold.ScaffoldConfiguration
 import de.mm20.launcher2.ui.launcher.scaffold.ScaffoldGesture
-import de.mm20.launcher2.ui.launcher.scaffold.ScreenOffComponent
 import de.mm20.launcher2.ui.launcher.scaffold.SearchBarPosition
 import de.mm20.launcher2.ui.launcher.scaffold.SearchComponent
 import de.mm20.launcher2.ui.launcher.scaffold.SecretComponent
 import de.mm20.launcher2.ui.launcher.scaffold.WidgetsComponent
 import de.mm20.launcher2.ui.launcher.focus.FocusHomeCommandCenter
 import de.mm20.launcher2.ui.launcher.focus.FocusHomeCommandType
+import de.mm20.launcher2.ui.launcher.focus.FocusPolicyService
 import de.mm20.launcher2.ui.launcher.sheets.LauncherBottomSheetManager
 import de.mm20.launcher2.ui.launcher.sheets.LauncherBottomSheets
 import de.mm20.launcher2.ui.launcher.sheets.LocalBottomSheetManager
@@ -81,6 +82,7 @@ import de.mm20.launcher2.ui.locals.LocalWindowSize
 import de.mm20.launcher2.ui.overlays.OverlayHost
 import de.mm20.launcher2.ui.theme.LauncherTheme
 import de.mm20.launcher2.ui.theme.wallpaperColorsAsState
+import kotlinx.coroutines.launch
 
 
 abstract class SharedLauncherActivity(
@@ -460,6 +462,13 @@ abstract class SharedLauncherActivity(
     override fun onPause() {
         super.onPause()
         isNewIntent = false
+    }
+
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch {
+            FocusPolicyService().reconcileFocusSession(this@SharedLauncherActivity)
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

@@ -3,6 +3,8 @@ package de.mm20.launcher2.ui.launcher.focus
 import de.mm20.launcher2.database.entities.FocusEventEntity
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.LocalDate
+import java.time.ZoneId
 
 class FocusHistoryRepositoryModelsTest {
     @Test
@@ -28,6 +30,42 @@ class FocusHistoryRepositoryModelsTest {
         assertEquals(30, delta.sessionMinutesDelta)
         assertEquals("Video", delta.topBreakerLabel)
         assertEquals(1, delta.topBreakerDelta)
+    }
+
+    @Test
+    fun `focus streak ignores future events instead of walking forever`() {
+        val zone = ZoneId.of("UTC")
+        val today = LocalDate.of(2026, 6, 14)
+        val futureEvent = focusEvent(
+            appLabel = "Video",
+            timestamp = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli(),
+        )
+
+        val streak = calculateFocusStreakDays(
+            events = listOf(futureEvent),
+            zone = zone,
+            today = today,
+        )
+
+        assertEquals(0, streak)
+    }
+
+    @Test
+    fun `focus streak reports days since latest current week event`() {
+        val zone = ZoneId.of("UTC")
+        val today = LocalDate.of(2026, 6, 14)
+        val twoDaysAgoEvent = focusEvent(
+            appLabel = "Video",
+            timestamp = today.minusDays(2).atStartOfDay(zone).toInstant().toEpochMilli(),
+        )
+
+        val streak = calculateFocusStreakDays(
+            events = listOf(twoDaysAgoEvent),
+            zone = zone,
+            today = today,
+        )
+
+        assertEquals(2, streak)
     }
 
     private fun focusEvent(

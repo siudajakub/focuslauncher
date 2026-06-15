@@ -38,13 +38,13 @@ val KeyboardFilterBarItem.iconSmall
 fun KeyboardFilterBarItem.getLabel(context: Context): String {
     return when (this) {
         KeyboardFilterBarItem.Apps -> context.getString(R.string.search_filter_apps)
-        KeyboardFilterBarItem.Events -> context.getString(R.string.preference_search_calendar)
-        KeyboardFilterBarItem.Contacts -> context.getString(R.string.preference_search_contacts)
-        KeyboardFilterBarItem.Places -> context.getString(R.string.preference_search_locations)
-        KeyboardFilterBarItem.Files -> context.getString(R.string.preference_search_files)
+        KeyboardFilterBarItem.Events -> "Calendar"
+        KeyboardFilterBarItem.Contacts -> "Contacts"
+        KeyboardFilterBarItem.Places -> "Places"
+        KeyboardFilterBarItem.Files -> "Files"
         KeyboardFilterBarItem.Tools -> context.getString(R.string.search_filter_tools)
-        KeyboardFilterBarItem.Articles -> context.getString(R.string.preference_search_wikipedia)
-        KeyboardFilterBarItem.Websites -> context.getString(R.string.preference_search_websites)
+        KeyboardFilterBarItem.Articles -> "Wikipedia"
+        KeyboardFilterBarItem.Websites -> "Websites"
         KeyboardFilterBarItem.Shortcuts -> context.getString(R.string.preference_search_appshortcuts)
         KeyboardFilterBarItem.HiddenResults -> context.getString(R.string.preference_hidden_items)
         KeyboardFilterBarItem.OnlineResults -> context.getString(R.string.search_filter_online)
@@ -61,13 +61,13 @@ fun SearchFilters.isSelected(item: KeyboardFilterBarItem): Boolean {
     if (item.isCategory && allCategoriesEnabled) return false
     return when (item) {
         KeyboardFilterBarItem.Apps -> apps
-        KeyboardFilterBarItem.Events -> events
-        KeyboardFilterBarItem.Contacts -> contacts
-        KeyboardFilterBarItem.Places -> places
-        KeyboardFilterBarItem.Files -> files
+        KeyboardFilterBarItem.Events -> false
+        KeyboardFilterBarItem.Contacts -> false
+        KeyboardFilterBarItem.Places -> false
+        KeyboardFilterBarItem.Files -> false
         KeyboardFilterBarItem.Tools -> tools
-        KeyboardFilterBarItem.Articles -> articles
-        KeyboardFilterBarItem.Websites -> websites
+        KeyboardFilterBarItem.Articles -> false
+        KeyboardFilterBarItem.Websites -> false
         KeyboardFilterBarItem.Shortcuts -> shortcuts
         KeyboardFilterBarItem.HiddenResults -> hiddenItems
         KeyboardFilterBarItem.OnlineResults -> allowNetwork
@@ -77,13 +77,13 @@ fun SearchFilters.isSelected(item: KeyboardFilterBarItem): Boolean {
 fun SearchFilters.toggle(item: KeyboardFilterBarItem): SearchFilters {
     return when (item) {
         KeyboardFilterBarItem.Apps -> return toggleApps()
-        KeyboardFilterBarItem.Events -> return toggleEvents()
-        KeyboardFilterBarItem.Contacts -> return toggleContacts()
-        KeyboardFilterBarItem.Places -> return togglePlaces()
-        KeyboardFilterBarItem.Files -> return toggleFiles()
+        KeyboardFilterBarItem.Events -> return this
+        KeyboardFilterBarItem.Contacts -> return this
+        KeyboardFilterBarItem.Places -> return this
+        KeyboardFilterBarItem.Files -> return this
         KeyboardFilterBarItem.Tools -> return toggleTools()
-        KeyboardFilterBarItem.Articles -> return toggleArticles()
-        KeyboardFilterBarItem.Websites -> return toggleWebsites()
+        KeyboardFilterBarItem.Articles -> return this
+        KeyboardFilterBarItem.Websites -> return this
         KeyboardFilterBarItem.Shortcuts -> return toggleShortcuts()
         KeyboardFilterBarItem.HiddenResults -> return copy(hiddenItems = !hiddenItems)
         KeyboardFilterBarItem.OnlineResults -> return copy(allowNetwork = !allowNetwork)

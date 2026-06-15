@@ -20,12 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.mm20.launcher2.preferences.SearchBarStyle
-import de.mm20.launcher2.searchactions.actions.SearchAction
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.component.SearchBar
 import de.mm20.launcher2.ui.component.SearchBarLevel
@@ -39,8 +37,6 @@ fun LauncherSearchBar(
     level: () -> SearchBarLevel,
     focused: Boolean,
     onFocusChange: (Boolean) -> Unit,
-    actions: List<SearchAction>,
-    highlightedAction: SearchAction? = null,
     isSearchOpen: Boolean = false,
     darkColors: Boolean = false,
     bottomSearchBar: Boolean = false,
@@ -96,13 +92,6 @@ fun LauncherSearchBar(
                 SearchBarMenu(searchBarValue = value, onInputClear = {
                     searchVM.reset()
                 })
-            },
-            actions = {
-                SearchBarActions(
-                    actions = actions,
-                    reverse = bottomSearchBar,
-                    highlightedAction = highlightedAction
-                )
             },
             focusRequester = focusRequester,
             onFocus = { onFocusChange(true) },

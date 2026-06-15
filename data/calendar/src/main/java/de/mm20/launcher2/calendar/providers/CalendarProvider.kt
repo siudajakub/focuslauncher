@@ -14,5 +14,14 @@ internal interface CalendarProvider {
 
     suspend fun getCalendarLists(): List<CalendarList>
 
+    suspend fun insertEvent(
+        title: String,
+        startTime: Long,
+        endTime: Long,
+        calendarId: Long
+    ): Boolean {
+        return false // Default unsupported
+    }
+
     val namespace: String
 }
