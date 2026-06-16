@@ -10,6 +10,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 
+private val WHITESPACE_REGEX = Regex("\\s+")
+
+
 data class DailyScheduleBlock(
     val label: String,
     val startTimeMillis: Long,
@@ -64,7 +67,7 @@ data class FocusGuidanceState(
 )
 
 fun normalizeScheduleEventName(name: String): String {
-    return name.trim().lowercase().replace(Regex("\\s+"), " ")
+    return name.trim().lowercase().replace(WHITESPACE_REGEX, " ")
 }
 
 fun resolveDailyScheduleSnapshot(

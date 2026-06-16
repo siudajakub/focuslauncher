@@ -48,6 +48,8 @@ import de.mm20.launcher2.ui.ktx.toHexString
 import hct.Hct
 import kotlin.math.atan2
 import kotlin.math.roundToInt
+private val HEX_REGEX = Regex("[0-9a-fA-F]{0,6}")
+
 
 @Stable
 class HctColorPickerState(
@@ -327,7 +329,7 @@ fun HctColorPicker(
                 .padding(horizontal = 48.dp),
             value = hexValue,
             onValueChange = {
-                if (Regex("[0-9a-fA-F]{0,6}").matches(it)) {
+                if (HEX_REGEX.matches(it)) {
                     hexValue = it
                     if (it.length == 6) {
                         val hex = it.toIntOrNull(16) ?: return@OutlinedTextField
