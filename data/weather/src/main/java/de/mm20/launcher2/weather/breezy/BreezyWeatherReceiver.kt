@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import de.mm20.launcher2.crashreporter.CrashReporter
+import de.mm20.launcher2.ktx.readTextLimited
 import de.mm20.launcher2.preferences.weather.WeatherSettings
 import de.mm20.launcher2.serialization.Json
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +37,8 @@ class BreezyWeatherReceiver : BroadcastReceiver(), KoinComponent {
 
                 val json = try {
                     val inputStream = GZIPInputStream(gz.inputStream())
-                    inputStream.bufferedReader().use { it.readText() }
+                    // Limit input stream read to 1MB to prevent zip bombs/OOM
+                    inputStream.use { it.readTextLimited(1024 * 1024) }
                 } catch (e: IOException) {
                     CrashReporter.logException(e)
                     return@launch
