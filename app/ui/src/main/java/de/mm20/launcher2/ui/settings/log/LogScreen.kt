@@ -117,7 +117,7 @@ fun LogScreen() {
                     )
                 }
             }) {
-                Icon(painterResource(R.drawable.share_24px), contentDescription = null)
+                Icon(painterResource(R.drawable.share_24px), contentDescription = stringResource(R.string.menu_share))
             }
         },
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -137,7 +137,7 @@ fun LogScreen() {
                 }) {
                     Icon(
                         painterResource(R.drawable.arrow_downward_24px),
-                        null,
+                        stringResource(R.string.action_scroll_to_bottom),
                     )
                 }
             }

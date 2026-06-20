@@ -24,6 +24,7 @@
     <string name="action_done">Done</string>
     <string name="action_more_actions">More actions</string>
     <string name="action_clear">Clear</string>
+    <string name="action_scroll_to_bottom">Scroll to bottom</string>
     <string name="action_install">Install</string>
     <string name="action_quit">Quit</string>
     <string name="menu_delete">Delete</string>
