@@ -1,0 +1,4 @@
+## 2025-02-14 - Prevent Cleartext Traffic in AndroidManifest.xml
+**Vulnerability:** The application globally permitted unencrypted HTTP connections (`android:usesCleartextTraffic="true"`) in its main `AndroidManifest.xml`, exposing network data to interception via Man-in-the-Middle (MITM) attacks.
+**Learning:** Overly permissive global flags are often leftover from earlier stages of development. Although Android 9+ defaults to false, explicitly setting it to false removes ambiguity and enforces security as the application baseline.
+**Prevention:** Always default to encrypted communication by setting `android:usesCleartextTraffic="false"` in the Manifest. If unencrypted connections are required for specific, legacy domains, configure them granularly via a Network Security Configuration file rather than enabling cleartext traffic application-wide.
