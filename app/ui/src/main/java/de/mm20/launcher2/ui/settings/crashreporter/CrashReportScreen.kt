@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
@@ -43,11 +44,11 @@ fun CrashReportScreen(fileName: String) {
         },
         topBarActions = {
             IconButton(onClick = { crashReport?.let { viewModel.shareCrashReport(context, it) } }) {
-                Icon(painterResource(R.drawable.share_24px), contentDescription = null)
+                Icon(painterResource(R.drawable.share_24px), contentDescription = stringResource(id = R.string.menu_share))
             }
             if (crashReport?.type == CrashReportType.Crash) {
                 IconButton(onClick = { crashReport?.let { viewModel.createIssue(context, it) } }) {
-                    Icon(painterResource(R.drawable.bug_report_24px), contentDescription = null)
+                    Icon(painterResource(R.drawable.bug_report_24px), contentDescription = stringResource(id = R.string.menu_bugreport))
                 }
             }
         }
