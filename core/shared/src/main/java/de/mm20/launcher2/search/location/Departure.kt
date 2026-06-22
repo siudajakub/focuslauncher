@@ -39,12 +39,12 @@ data class Departure(
 object LineNameComparator : Comparator<String> {
 
     // Split line into parts, e.g. "11A" -> ["11", "A"], "S1" -> ["S", "1"], "40-X" -> ["40", "X"]
-    private val regex = Regex("\\p{L}+|[0-9]+")
+    private val LINE_REGEX = Regex("\\p{L}+|[0-9]+")
 
     override fun compare(a: String, b: String): Int {
         if (a == b) return 0
-        val aParts = regex.findAll(a).toList()
-        val bParts = regex.findAll(b).toList()
+        val aParts = LINE_REGEX.findAll(a).toList()
+        val bParts = LINE_REGEX.findAll(b).toList()
 
         for (i in 0 until minOf(aParts.size, bParts.size)) {
             val aPart = aParts[i].value
