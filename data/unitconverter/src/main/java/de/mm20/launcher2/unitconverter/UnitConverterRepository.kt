@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 
+private val QUERY_REGEX = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
+
 interface UnitConverterRepository {
     fun search(query: String): Flow<UnitConverter?>
     suspend fun getAvailableConverters(includeCurrencies: Boolean): List<Converter>
@@ -76,9 +78,8 @@ internal class UnitConverterRepositoryImpl(
         query: String,
         includeCurrencies: Boolean
     ): UnitConverter? {
-        val regex = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
+        val matches = QUERY_REGEX.findAll(query)
 
-        val matches = regex.findAll(query)
 
         var inputStr: String? = null
         var inputValue: Double? = null
