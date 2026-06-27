@@ -24,9 +24,9 @@ runs alongside another session. For a quick, self-contained change you can skip 
    overlap your task, coordinate or choose a non-overlapping slice. Parallel writers use
    **separate worktrees** and must not edit the same files concurrently
    (see [code-review.md](../engineering/code-review.md)).
-2. **Copy [`TEMPLATE.md`](TEMPLATE.md)** to `YYYY-MM-DD-<short-topic-slug>.md`
-   (e.g. `2026-06-27-focus-gate-copy.md`). One file per session keeps parallel sessions from
-   conflicting on the same file. Use today's date.
+2. **Scaffold the worklog** with `sh tools/session_new.sh <short-topic-slug>` — it copies
+   [`TEMPLATE.md`](TEMPLATE.md) to `YYYY-MM-DD-<short-topic-slug>.md` with the date and branch
+   prefilled. One file per session keeps parallel sessions from conflicting on the same file.
 3. **Fill the claim**: goal, branch/worktree, and the files/modules you are touching. This is
    how other sessions see what is taken.
 4. **Keep it current** as you work — decisions, current state, next step, verification status.
@@ -43,6 +43,26 @@ README and `TEMPLATE.md`) into every session's context — so each session autom
 other sessions' claims without anyone remembering to look. The hook is read-only; opening,
 updating, and pruning worklogs is still a deliberate step you take per this protocol. Codex
 relies on the same protocol via [`AGENTS.md`](../../AGENTS.md).
+
+## Parallel Sessions Use Separate Worktrees
+
+Two sessions editing the same checkout share one Git index and **will race** on `git add`/commit.
+For genuine parallel work, give each session its own worktree — a separate working directory and
+index on its own branch:
+
+```bash
+# from the main checkout: create a sibling worktree on a new branch
+git worktree add ../lanucher-<topic> -b <branch>
+
+# work in ../lanucher-<topic> from the parallel session, then when merged:
+git worktree remove ../lanucher-<topic>
+git worktree list   # show active worktrees
+```
+
+Keep worktrees as **siblings** of the repo, not inside it. Each worktree has its own
+`.gradle-home`/build output, so set the build environment per worktree
+(see [`AGENTS.md`](../../AGENTS.md) and [verification.md](../engineering/verification.md)). Record the
+worktree path in the worklog's `Branch / worktree` line so other sessions can see where it lives.
 
 ## Conventions
 
