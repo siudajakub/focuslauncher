@@ -35,6 +35,15 @@ runs alongside another session. For a quick, self-contained change you can skip 
    for follow-ups, then **delete the worklog** (or set Status to `DONE` if a near-term session
    will resume it). Do not let stale worklogs accumulate.
 
+## Automation
+
+For Claude Code, a `SessionStart` hook in `.claude/settings.json` runs
+`tools/session_context.sh` and injects the active worklogs (this directory, minus this
+README and `TEMPLATE.md`) into every session's context — so each session automatically sees
+other sessions' claims without anyone remembering to look. The hook is read-only; opening,
+updating, and pruning worklogs is still a deliberate step you take per this protocol. Codex
+relies on the same protocol via [`AGENTS.md`](../../AGENTS.md).
+
 ## Conventions
 
 - One worklog per session; never share a file between two concurrent sessions.

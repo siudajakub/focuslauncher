@@ -52,7 +52,10 @@ separate Claude tabs, or subagents). To keep that safe and recoverable:
   to GitHub Issues, then prune the worklog. Worklogs are ephemeral working memory — not
   status, not a backlog, not architecture.
 
-See [docs/sessions/README.md](docs/sessions/README.md) for the full protocol and template.
+A `SessionStart` hook in `.claude/settings.json` runs `tools/session_context.sh` and injects
+the active worklogs into context automatically, so awareness of other sessions is not left to
+memory. Maintaining your own worklog stays a deliberate step. See
+[docs/sessions/README.md](docs/sessions/README.md) for the full protocol and template.
 
 ## Claude Code Notes
 
