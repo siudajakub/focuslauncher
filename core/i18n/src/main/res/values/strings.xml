@@ -93,6 +93,8 @@
     <string name="alert_delete_directory">The directory %1$s and all its content will be deleted permanently. Proceed\?</string>
     <string name="alert_delete_file">The file %1$s will be deleted permanently. Proceed\?</string>
     <string name="alert_delete_shortcut">The shortcut %1$s will be removed permanently. Proceed\?</string>
+    <string name="shortcut_pinned">Pinned %1$s</string>
+    <string name="shortcut_pin_failed">Couldn\'t add shortcut</string>
     <string name="default_websearch_2_name">YouTube</string>
     <string name="default_websearch_2_url">https://www.youtube.com/results\?search_query=${1}</string>
     <string name="default_websearch_3_name">Google Play</string>
@@ -1011,6 +1013,8 @@
     <string name="focus_home_essentials_title">Essentials</string>
     <string name="focus_home_essentials_empty">Pin a few essentials to keep this surface small and predictable.</string>
     <string name="focus_home_essentials_summary">Keep the basics close when no focus block is active.</string>
+    <string name="focus_home_web_apps_title">Web apps</string>
+    <string name="focus_home_web_apps_summary">Sites you added to your home screen.</string>
     <string name="focus_home_agenda_title">Upcoming events</string>
     <string name="focus_home_agenda_empty">No upcoming event right now.</string>
     <string name="focus_home_commute_mode_title">Commute actions</string>
@@ -1067,6 +1071,12 @@
     <string name="focus_report_action_friction_updated">Friction increased for %1$s</string>
     <string name="focus_report_action_cap_updated">Unlock cap shortened for %1$s</string>
     <string name="focus_report_action_habit_updated">Moved %1$s earlier</string>
+    <string name="focus_recommendation_enable_prep_title">Enable prep prompts</string>
+    <string name="focus_recommendation_enable_prep_summary">Prep prompts can reduce rough starts before demanding blocks.</string>
+    <string name="focus_recommendation_adjust_lead_title">Increase prep lead time</string>
+    <string name="focus_recommendation_adjust_lead_summary">A slightly earlier prep window may make transitions smoother.</string>
+    <string name="focus_recommendation_move_habit_title">Move %1$s earlier</string>
+    <string name="focus_recommendation_move_habit_summary">Earlier habit deadlines can reduce late-night drift.</string>
     <string name="focus_block_setup_title">%1$s setup</string>
     <string name="focus_block_setup_mode_create">Create a plan for this block</string>
     <string name="focus_block_setup_mode_edit">Editing today\'s block plan</string>
@@ -1197,8 +1207,12 @@
     <string name="focus_settings_micro_delays_enabled_summary">Enforce an unskippable 3-second delay to break impulsive loops.</string>
     <string name="focus_settings_daily_limit">Daily Distraction Limit</string>
     <string name="focus_settings_time_blindness_enabled">Time Blindness Reminders</string>
-    <string name="focus_settings_time_blindness_enabled_summary">Vibrate periodically while using the phone to stay aware of time passing.</string>
+    <string name="focus_settings_time_blindness_enabled_summary">Vibrate and show a check-in while you keep using a distracting app, so long sessions don\'t slip by unnoticed.</string>
     <string name="focus_settings_time_blindness_interval">Reminder Interval</string>
+    <string name="focus_system_time_awareness_title">Time Awareness</string>
+    <string name="focus_settings_time_blindness_summary">A launcher can\'t close other apps, so these reminders are a nudge — not a hard block — while you overrun a distracting app.</string>
+    <string name="focus_settings_time_blindness_usage_access">Usage access required to detect which app is open. Tap to grant.</string>
+    <string name="focus_settings_time_blindness_notifications">Allow notifications so reminders can reach you. Tap to grant.</string>
     <string name="focus_notification_channel_name">Time Management</string>
     <string name="focus_notification_channel_desc">Notifications for focus session expiry</string>
     <string name="focus_notification_expiry_title">Time to get back to work!</string>
@@ -1242,7 +1256,12 @@
     <string name="daily_intention_placeholder">e.g. Finish the project, go for a workout...</string>
     <string name="daily_intention_title">DAILY INTENTION</string>
     <string name="quick_capture_title">Brain dump</string>
-    <string name="quick_capture_placeholder">Jot down an idea and send...</string>
+    <string name="quick_capture_placeholder">Jot down an idea and save...</string>
+    <string name="quick_capture_save">Save note</string>
+    <string name="quick_capture_share">Share note</string>
+    <string name="quick_capture_recent_title">Recent notes</string>
+    <string name="quick_capture_delete">Delete note</string>
+    <string name="quick_capture_clear_all">Clear all</string>
     <string name="focus_gate_daily_intention">Remember your intention for today: %1$s</string>
     <string name="focus_system_setup_category_title">Setup</string>
     <string name="focus_system_day_category_title">Day planning</string>

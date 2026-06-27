@@ -10,8 +10,12 @@ import de.mm20.launcher2.search.AppShortcut
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.services.favorites.FavoritesService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -20,6 +24,16 @@ class FocusLaunchCoordinator : KoinComponent {
     private val searchUiSettings: SearchUiSettings by inject()
     private val focusPolicyService = FocusPolicyService()
 
+    private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    /**
+     * Launches [searchable]. For non-applications and when focus mode is disabled this resolves
+     * synchronously and returns whether the launch succeeded. For applications with focus mode
+     * enabled the gating decision (DataStore + DB reads) is evaluated off the main thread to avoid
+     * blocking the UI thread; the launch is then completed asynchronously (either a direct launch
+     * or by opening the focus gate). In that case [launch] returns `true` to signal that the launch
+     * has been handled so callers do not fall back to showing item details.
+     */
     fun launch(
         searchable: SavableSearchable,
         context: Context,
@@ -29,25 +43,31 @@ class FocusLaunchCoordinator : KoinComponent {
         if (searchable !is Application) {
             return launchDirect(searchable, context, options)
         }
-        val focusModeEnabled = runBlocking {
-            searchUiSettings.focusModeEnabled.first()
-        }
-        if (!focusModeEnabled) {
-            return launchDirect(searchable, context, options)
-        }
-        val decision = runBlocking {
-            focusPolicyService.evaluate(searchable)
-        }
-        if (!decision.requiresGate) {
-            return launchDirect(searchable, context, options)
-        }
-        favoritesService.upsert(searchable)
+        // Application + potential focus gating: resolve off the main thread. We have committed to
+        // handling the launch here, so report it as handled to the caller and complete it async.
+        scope.launch {
+            val focusModeEnabled = withContext(Dispatchers.Default) {
+                searchUiSettings.focusModeEnabled.first()
+            }
+            if (!focusModeEnabled) {
+                launchDirect(searchable, context, options)
+                return@launch
+            }
+            val decision = withContext(Dispatchers.Default) {
+                focusPolicyService.evaluate(searchable)
+            }
+            if (!decision.requiresGate) {
+                launchDirect(searchable, context, options)
+                return@launch
+            }
+            favoritesService.upsert(searchable)
 
-        val intent = FocusGateActivity.intent(context, searchable, launchBounds)
-        if (context !is Activity) {
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val intent = FocusGateActivity.intent(context, searchable, launchBounds)
+            if (context !is Activity) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
         }
-        context.startActivity(intent)
         return true
     }
 

@@ -44,6 +44,10 @@ Test process death, stale workers, repeated end calls, expired sessions, and mis
 
 Migration `35 -> 36` removes legacy focus custom attributes while preserving `FocusTemporaryUnlock` payloads. Any future persistence change must include migration tests and exported schema updates.
 
+## Time Awareness Reminders
+
+`TimeBlindnessService` is a foreground poller that nudges the user while a distracting app stays in the foreground. It needs Usage Access (`PACKAGE_USAGE_STATS`) to read the foreground app and `POST_NOTIFICATIONS` for its reminders. A launcher cannot block or close a foreground app, so this is a soft nudge, not enforcement. The service is started when the user enables reminders in Focus System settings and on `BOOT_COMPLETED`; the settings screen requests Usage Access and notifications. The gate "time" sets a `FocusTemporaryUnlock` and an `AppSessionExpiryWorker` notification — also a reminder, never a hard block.
+
 ## UI Principles
 
 - Keep the launcher calm and apps-first.

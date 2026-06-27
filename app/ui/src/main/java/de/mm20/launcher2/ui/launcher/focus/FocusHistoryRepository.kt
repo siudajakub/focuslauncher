@@ -3,9 +3,11 @@ package de.mm20.launcher2.ui.launcher.focus
 import de.mm20.launcher2.database.AppDatabase
 import de.mm20.launcher2.database.entities.FocusEventEntity
 import de.mm20.launcher2.database.entities.FocusSessionEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -323,7 +325,7 @@ class FocusHistoryRepository : KoinComponent {
                 totalUnlocks = currentEvents.size,
                 totalUnlockMinutes = totalUnlockMinutes,
                 averageDelaySeconds = averageDelaySeconds,
-                streakDays = calculateFocusStreakDays(currentEvents, zone),
+                streakDays = calculateFocusStreakDays(currentSessions, zone),
                 topFocusBreakers = breakers,
                 topUnlockReasons = reasons,
                 inSessionUnlocks = currentEvents.count { it.duringFocusSession },
@@ -342,24 +344,56 @@ class FocusHistoryRepository : KoinComponent {
                 delta = delta,
             )
         }
+            // The combine block above runs heavy groupBy/groupingBy/sortedBy/average/streak
+            // aggregation over up to two weeks of Room rows. Without flowOn, Room resumes the
+            // combine continuation on the Unconfined dispatcher and the work runs on the main
+            // thread, causing input-dispatch ANRs. Move all aggregation off the main thread.
+            .flowOn(Dispatchers.Default)
     }
 
 }
 
+/**
+ * A genuine, positive focus streak: the number of consecutive days (counting backward from
+ * [today]) on which the user had at least one focus session.
+ *
+ * Signal choice: we key off focus SESSIONS (a deliberate, positive action the user took),
+ * not distraction-unlock events. The old implementation passed distraction-unlock events and
+ * returned "days since the most recent distraction", which inverted the meaning (a perfect week
+ * with zero distractions and "distracted today" both collapsed to 0). Sessions are the sound
+ * signal for a positive streak: each session row keyed by [FocusSessionEntity.startedAt] marks
+ * a focus day.
+ *
+ * Grace rule: if [today] has no focus day yet but yesterday does, counting starts from yesterday,
+ * so the streak isn't considered broken until a full day has lapsed. Counting stops at the first
+ * gap. Empty data returns 0. O(days) over the set of focus days.
+ */
 internal fun calculateFocusStreakDays(
-    events: List<FocusEventEntity>,
+    sessions: List<FocusSessionEntity>,
     zone: ZoneId,
     today: LocalDate = LocalDate.now(zone),
 ): Int {
-    if (events.isEmpty()) return 0
-    val launchDays = events
-        .map { Instant.ofEpochMilli(it.timestamp).atZone(zone).toLocalDate() }
+    if (sessions.isEmpty()) return 0
+    val focusDays = sessions
+        .map { Instant.ofEpochMilli(it.startedAt).atZone(zone).toLocalDate() }
         .filter { !it.isAfter(today) }
         .toSet()
-    if (launchDays.isEmpty()) return 0
-    return (0..6).firstOrNull { offset ->
-        launchDays.contains(today.minusDays(offset.toLong()))
-    } ?: 0
+    if (focusDays.isEmpty()) return 0
+
+    // Apply the grace rule: anchor the streak at today if it qualifies, otherwise yesterday.
+    val anchor = when {
+        focusDays.contains(today) -> today
+        focusDays.contains(today.minusDays(1)) -> today.minusDays(1)
+        else -> return 0
+    }
+
+    var streak = 0
+    var day = anchor
+    while (focusDays.contains(day)) {
+        streak++
+        day = day.minusDays(1)
+    }
+    return streak
 }
 
 internal fun computeWeeklyDelta(

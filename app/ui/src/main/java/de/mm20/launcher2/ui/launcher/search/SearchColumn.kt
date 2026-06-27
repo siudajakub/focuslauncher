@@ -22,6 +22,7 @@ import de.mm20.launcher2.profiles.Profile
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.ui.component.LauncherCard
 import de.mm20.launcher2.ui.launcher.search.apps.AppResults
+import de.mm20.launcher2.ui.launcher.search.common.grid.SearchResultGrid
 import de.mm20.launcher2.ui.launcher.search.favorites.SearchFavorites
 import de.mm20.launcher2.ui.launcher.search.favorites.SearchFavoritesVM
 import de.mm20.launcher2.ui.launcher.sheets.HiddenItemsSheet
@@ -58,6 +59,7 @@ fun SearchColumn(
     val apps = viewModel.appResults
     val workApps = viewModel.workAppResults
     val privateApps = viewModel.privateSpaceAppResults
+    val shortcuts = viewModel.shortcutResults
     val hiddenResults = viewModel.hiddenResults
 
     val profiles by viewModel.profiles.collectAsState(emptyList())
@@ -120,6 +122,16 @@ fun SearchColumn(
                 selectedIndex = selectedAppIndex,
                 onSelect = { selectedAppIndex = it },
             )
+        }
+
+        if (shortcuts.isNotEmpty()) {
+            item(key = "shortcuts", span = { GridItemSpan(maxLineSpan) }) {
+                LauncherCard(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                ) {
+                    SearchResultGrid(shortcuts, reverse = reverse)
+                }
+            }
         }
     }
 

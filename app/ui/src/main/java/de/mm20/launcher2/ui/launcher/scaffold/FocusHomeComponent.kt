@@ -38,9 +38,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.core.content.getSystemService
 import de.mm20.launcher2.applications.AppRepository
 import de.mm20.launcher2.calendar.CalendarRepository
+import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
+import de.mm20.launcher2.data.customattrs.utils.withCustomLabels
 import de.mm20.launcher2.permissions.PermissionGroup
 import de.mm20.launcher2.permissions.PermissionsManager
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
+import de.mm20.launcher2.searchable.PinnedLevel
+import de.mm20.launcher2.services.favorites.FavoritesService
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.launcher.focus.FocusHistoryRepository
 import de.mm20.launcher2.ui.launcher.focus.FocusBlockPlan
@@ -86,11 +90,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.isActive
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.compose.koinInject
@@ -136,6 +140,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
         )
         val showResetButton by viewModel.showResetButton.collectAsStateWithLifecycle(initialValue = false)
         val essentialApps by viewModel.essentialApps.collectAsStateWithLifecycle(initialValue = emptyList())
+        val webApps by viewModel.webApps.collectAsStateWithLifecycle(initialValue = emptyList())
         val shouldShowQuickStart by viewModel.shouldShowQuickStart.collectAsStateWithLifecycle(initialValue = false)
         val habitState by viewModel.habitState.collectAsStateWithLifecycle(
             initialValue = HabitPanelState(),
@@ -419,6 +424,8 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                 )
 
                 FocusEssentialAppsCard(apps = essentialApps)
+
+                FocusWebAppsCard(apps = webApps)
             }
 
             nextAlarm?.let {
@@ -582,6 +589,8 @@ internal object FocusHomeComponent : ScaffoldComponent() {
 
 internal class FocusHomeVM : ViewModel(), KoinComponent {
     private val appRepository: AppRepository by inject()
+    private val favoritesService: FavoritesService by inject()
+    private val customAttributesRepository: CustomAttributesRepository by inject()
     private val calendarRepository: CalendarRepository by inject()
     private val permissionsManager: PermissionsManager by inject()
     private val searchUiSettings: SearchUiSettings by inject()
@@ -590,20 +599,21 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
     private val historyRepository = FocusHistoryRepository()
     private val sessionRepository = FocusSessionRepository()
     private val focusPolicyService = FocusPolicyService()
-    private val currentTime = MutableStateFlow(System.currentTimeMillis())
+
+    // Cold ticking clock: only runs while a derived flow is actually being collected
+    // (i.e. the Focus Home UI is on screen). It stops when the launcher is backgrounded,
+    // avoiding an always-on CPU wakeup while the home-screen VM stays alive. 60s resolution
+    // is enough because the UI only renders minutes. `.value` still returns the last emit.
+    private val currentTime: StateFlow<Long> = flow {
+        while (true) {
+            emit(System.currentTimeMillis())
+            kotlinx.coroutines.delay(60_000)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), System.currentTimeMillis())
 
     private val hasCalendarPermission = permissionsManager.hasPermission(PermissionGroup.Calendar)
     private val availableCalendars = calendarRepository.getCalendars()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
-
-    init {
-        viewModelScope.launch {
-            while (isActive) {
-                currentTime.value = System.currentTimeMillis()
-                kotlinx.coroutines.delay(30_000)
-            }
-        }
-    }
 
     val nextEvents = combine(
         hasCalendarPermission,
@@ -801,6 +811,15 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
     ) { essentialKeys, apps ->
         apps.filter { it.key in essentialKeys }.sortedBy { it.labelOverride ?: it.label }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    // Pinned launcher shortcuts (e.g. PWAs added from a browser). The focus home has no other
+    // surface for these, so they would otherwise be invisible after being pinned.
+    val webApps = favoritesService.getFavorites(
+        includeTypes = listOf("shortcut", "legacyshortcut"),
+        minPinnedLevel = PinnedLevel.AutomaticallySorted,
+        limit = 12,
+    ).withCustomLabels(customAttributesRepository)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val shouldShowQuickStart = combine(
         searchUiSettings.focusModeEnabled,

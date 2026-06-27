@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <uses-permission android:name="com.kieronquinn.app.smartspacer.permission.ACCESS_SMARTSPACER"/>
@@ -110,14 +112,24 @@
         <service
             android:name=".launcher.focus.TimeBlindnessService"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse">
+            <!-- Required for specialUse FGS on API 34+ (Play policy / platform). -->
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="time_awareness_reminder" />
+        </service>
 
+        <!--
+            Only BOOT_COMPLETED is deliverable to a manifest-declared receiver.
+            ACTION_SCREEN_OFF and ACTION_USER_PRESENT cannot be received via a
+            manifest filter on modern Android, so they are registered at runtime
+            inside TimeBlindnessService instead.
+        -->
         <receiver
             android:name=".launcher.focus.TimeBlindnessReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:directBootAware="false">
             <intent-filter>
-                <action android:name="android.intent.action.USER_PRESENT" />
-                <action android:name="android.intent.action.SCREEN_OFF" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>

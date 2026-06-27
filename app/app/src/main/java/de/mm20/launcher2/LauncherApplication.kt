@@ -37,8 +37,14 @@ import de.mm20.launcher2.services.tags.servicesTagsModule
 import de.mm20.launcher2.services.widgets.widgetsServiceModule
 import de.mm20.launcher2.themes.themesModule
 import de.mm20.launcher2.ui.launcher.focus.FocusPolicyService
+import de.mm20.launcher2.ui.launcher.focus.TimeBlindnessService
 import de.mm20.launcher2.weather.weatherModule
+import android.content.Intent
+import androidx.core.content.ContextCompat
+import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
+import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -49,6 +55,8 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
 
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + SupervisorJob()
+
+    private val searchUiSettings: SearchUiSettings by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -99,6 +107,18 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
 
         launch {
             FocusPolicyService().reconcileFocusSession(this@LauncherApplication)
+
+            // Start the time-blindness foreground poller if the feature is enabled.
+            // Previously the service was only ever started from BOOT_COMPLETED, so a
+            // user who enabled it before this build (or who never rebooted) would not
+            // get reminders until the next reboot. Reading the flag here keeps the
+            // feature consistent on every app launch, off the main thread.
+            if (searchUiSettings.focusTimeBlindnessRemindersEnabled.first()) {
+                val intent = Intent(this@LauncherApplication, TimeBlindnessService::class.java).apply {
+                    action = TimeBlindnessService.ACTION_START
+                }
+                ContextCompat.startForegroundService(this@LauncherApplication, intent)
+            }
         }
     }
 

@@ -1,5 +1,8 @@
 package de.mm20.launcher2.ui.launcher.focus
 
+import androidx.annotation.StringRes
+import de.mm20.launcher2.ui.R
+
 typealias FocusExperiment = de.mm20.launcher2.preferences.FocusExperiment
 typealias FocusExperimentKind = de.mm20.launcher2.preferences.FocusExperimentKind
 
@@ -22,8 +25,10 @@ data class FocusReviewInputs(
 data class FocusRecommendation(
     val key: String,
     val kind: FocusRecommendationKind,
-    val title: String,
-    val summary: String,
+    @StringRes val titleRes: Int,
+    val titleArgs: List<Any> = emptyList(),
+    @StringRes val summaryRes: Int? = null,
+    val summaryArgs: List<Any> = emptyList(),
     val priority: Int,
 )
 
@@ -38,8 +43,8 @@ fun resolveRecommendations(
                 FocusRecommendation(
                     key = "enable-prep-prompts",
                     kind = FocusRecommendationKind.EnablePrepPrompts,
-                    title = "Enable prep prompts",
-                    summary = "Prep prompts can reduce rough starts before demanding blocks.",
+                    titleRes = R.string.focus_recommendation_enable_prep_title,
+                    summaryRes = R.string.focus_recommendation_enable_prep_summary,
                     priority = 100,
                 )
             )
@@ -49,8 +54,8 @@ fun resolveRecommendations(
                 FocusRecommendation(
                     key = "adjust-prep-lead:${inputs.prepLeadMinutes}",
                     kind = FocusRecommendationKind.AdjustPrepLeadTime,
-                    title = "Increase prep lead time",
-                    summary = "A slightly earlier prep window may make transitions smoother.",
+                    titleRes = R.string.focus_recommendation_adjust_lead_title,
+                    summaryRes = R.string.focus_recommendation_adjust_lead_summary,
                     priority = 80,
                 )
             )
@@ -61,8 +66,9 @@ fun resolveRecommendations(
                     FocusRecommendation(
                         key = "move-habit-earlier:$title",
                         kind = FocusRecommendationKind.MoveHabitEarlier,
-                        title = "Move $title earlier",
-                        summary = "Earlier habit deadlines can reduce late-night drift.",
+                        titleRes = R.string.focus_recommendation_move_habit_title,
+                        titleArgs = listOf(title),
+                        summaryRes = R.string.focus_recommendation_move_habit_summary,
                         priority = 90,
                     )
                 )

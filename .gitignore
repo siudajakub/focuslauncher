@@ -297,3 +297,10 @@ fabric.properties
 .idea/studiobot.xml
 
 .kotlin
+
+# FocusLauncher local artifacts
+# Local throwaway scripts and one-off transforms (already applied). Not part of the repo.
+/scratch/
+# Transient ANR / crash dumps pulled from devices for debugging.
+anr_log.txt
+*.anr

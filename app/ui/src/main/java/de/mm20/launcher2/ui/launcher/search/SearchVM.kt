@@ -107,6 +107,9 @@ class SearchVM : ViewModel(), KoinComponent {
     val workAppResults = mutableStateListOf<Application>()
     val privateSpaceAppResults = mutableStateListOf<Application>()
 
+    // Pinned launcher shortcuts (incl. PWAs added from a browser) that match the current query.
+    val shortcutResults = mutableStateListOf<SavableSearchable>()
+
 
 
     var previousResults: SearchResults? = null
@@ -227,6 +230,7 @@ class SearchVM : ViewModel(), KoinComponent {
                         workAppResults.updateItems(workApps)
                         privateSpaceAppResults.updateItems(privateApps)
                         hiddenResults.updateItems(hiddenItems)
+                        shortcutResults.clear()
                     }
 
             } else {
@@ -269,6 +273,11 @@ class SearchVM : ViewModel(), KoinComponent {
                             results.apps
                             ?.filterNot { hiddenKeys.contains(it.key) }
                             ?.applyRanking(query, appTypes, focusModeEnabled)
+                        )
+
+                        shortcutResults.updateItems(
+                            results.shortcuts
+                            ?.filterNot { hiddenKeys.contains(it.key) }
                         )
 
                         if (launchOnEnter.value) {
@@ -345,7 +354,7 @@ class SearchVM : ViewModel(), KoinComponent {
             allowNetwork = false,
             hiddenItems = false,
             apps = true,
-            shortcuts = false,
+            shortcuts = true,
             tools = false,
         )
     }

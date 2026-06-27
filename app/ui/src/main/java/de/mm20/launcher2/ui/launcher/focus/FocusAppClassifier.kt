@@ -42,9 +42,21 @@ class FocusAppClassifier : KoinComponent {
     suspend fun classifyNow(key: String): FocusAppType {
         val essentials = searchUiSettings.focusEssentialAppKeys.first()
         val distracting = searchUiSettings.focusDistractingAppKeys.first()
+        return classifyWith(key, essentials, distracting)
+    }
+
+    /**
+     * Pure, in-memory classification against already-loaded key sets. Use this to classify many
+     * keys without reading DataStore once per key.
+     */
+    fun classifyWith(
+        key: String,
+        essentialKeys: Collection<String>,
+        distractingKeys: Collection<String>,
+    ): FocusAppType {
         return when {
-            key in essentials -> FocusAppType.Essential
-            key in distracting -> FocusAppType.Distracting
+            key in essentialKeys -> FocusAppType.Essential
+            key in distractingKeys -> FocusAppType.Distracting
             else -> FocusAppType.Normal
         }
     }

@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.mm20.launcher2.search.Application
+import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.launcher.focus.DailyScheduleBlock
 import de.mm20.launcher2.ui.launcher.focus.DailyScheduleSnapshot
@@ -668,6 +669,24 @@ internal fun FocusEssentialAppsCard(
         SearchResultGrid(
             items = apps,
             showLabels = false,
+            columns = apps.size.coerceAtMost(4).coerceAtLeast(1),
+        )
+    }
+}
+
+@Composable
+internal fun FocusWebAppsCard(
+    apps: List<SavableSearchable>,
+) {
+    if (apps.isEmpty()) return
+
+    FocusSection(
+        title = stringResource(R.string.focus_home_web_apps_title),
+        supportingText = stringResource(R.string.focus_home_web_apps_summary),
+    ) {
+        SearchResultGrid(
+            items = apps,
+            showLabels = true,
             columns = apps.size.coerceAtMost(4).coerceAtLeast(1),
         )
     }
