@@ -198,8 +198,10 @@ class FocusPolicyService : KoinComponent {
         val budgetBlocked = if (appType == FocusAppType.Distracting && dailyLaunchLimit > 0) {
             val startOfDay = LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             val eventsToday = historyRepository.getEventsSince(startOfDay)
+            val essentialKeys = searchUiSettings.focusEssentialAppKeys.first()
+            val distractingKeys = searchUiSettings.focusDistractingAppKeys.first()
             val distractingLaunchesToday = eventsToday.count {
-                focusAppClassifier.classifyNow(it.appKey) == FocusAppType.Distracting
+                focusAppClassifier.classifyWith(it.appKey, essentialKeys, distractingKeys) == FocusAppType.Distracting
             }
             distractingLaunchesToday >= dailyLaunchLimit
         } else {
@@ -333,6 +335,7 @@ class FocusPolicyService : KoinComponent {
                     FocusSessionScheduler(context).cancel()
                 }
                 FocusSessionReconciliation.NoActiveSession -> {
+                    restoreSessionDndIfLauncherStillControls(context)
                     searchUiSettings.setFocusSessionEndsAt(0L)
                     FocusSessionScheduler(context).cancel()
                 }

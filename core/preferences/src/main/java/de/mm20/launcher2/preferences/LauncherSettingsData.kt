@@ -152,6 +152,7 @@ data class LauncherSettingsData internal constructor(
     val focusDailyIntentionDate: String = "",
     val focusGrayscaleModeEnabled: Boolean = false,
     val focusGrayscaleDuringFocusBlocks: Boolean = false,
+    val focusQuickCaptures: List<String> = emptyList(),
 
     val searchAllApps: Boolean = false,
 
@@ -232,7 +233,7 @@ data class LauncherSettingsData internal constructor(
     val gesturesSwipeDown: GestureAction = GestureAction.Search,
     val gesturesSwipeLeft: GestureAction = GestureAction.NoAction,
     val gesturesSwipeRight: GestureAction = GestureAction.NoAction,
-    val gesturesSwipeUp: GestureAction = GestureAction.Widgets(),
+    val gesturesSwipeUp: GestureAction = GestureAction.NoAction,
     val gesturesLongPress: GestureAction = GestureAction.NoAction,
     val gesturesHomeButton: GestureAction = GestureAction.NoAction,
 

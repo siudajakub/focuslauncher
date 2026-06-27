@@ -329,13 +329,19 @@ private fun InsightRecommendationCard(
         ) {
             Column {
                 Text(
-                    text = recommendation.title,
+                    text = stringResource(
+                        recommendation.titleRes,
+                        *recommendation.titleArgs.toTypedArray()
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                if (recommendation.summary != null) {
+                if (recommendation.summaryRes != null) {
                     Text(
-                        text = recommendation.summary,
+                        text = stringResource(
+                            recommendation.summaryRes,
+                            *recommendation.summaryArgs.toTypedArray()
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp)

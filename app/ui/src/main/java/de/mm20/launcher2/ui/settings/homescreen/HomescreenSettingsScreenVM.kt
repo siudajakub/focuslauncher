@@ -166,6 +166,13 @@ class HomescreenSettingsScreenVM(
         uiSettings.setHomeScreenWidgets(widgetsOnHomeScreen)
     }
 
+    val widgetPagesEnabled = uiSettings.widgetPagesEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    fun setWidgetPagesEnabled(enabled: Boolean) {
+        uiSettings.setWidgetPagesEnabled(enabled)
+    }
+
 
 
     companion object : KoinComponent {

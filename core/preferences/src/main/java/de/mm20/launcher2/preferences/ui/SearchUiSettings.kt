@@ -787,4 +787,36 @@ class SearchUiSettings internal constructor(
     fun setFocusGrayscaleDuringFocusBlocks(enabled: Boolean) {
         launcherDataStore.update { it.copy(focusGrayscaleDuringFocusBlocks = enabled) }
     }
+
+    val focusQuickCaptures
+        get() = launcherDataStore.data.map { it.focusQuickCaptures }.distinctUntilChanged()
+
+    fun addFocusQuickCapture(text: String) {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return
+        launcherDataStore.update { data ->
+            val updated = (listOf(trimmed) + data.focusQuickCaptures.filterNot { it == trimmed })
+                .take(MAX_FOCUS_QUICK_CAPTURES)
+            data.copy(focusQuickCaptures = updated)
+        }
+    }
+
+    fun removeFocusQuickCapture(index: Int) {
+        launcherDataStore.update { data ->
+            if (index !in data.focusQuickCaptures.indices) return@update data
+            data.copy(
+                focusQuickCaptures = data.focusQuickCaptures.filterIndexed { currentIndex, _ ->
+                    currentIndex != index
+                }
+            )
+        }
+    }
+
+    fun clearFocusQuickCaptures() {
+        launcherDataStore.update { it.copy(focusQuickCaptures = emptyList()) }
+    }
+
+    companion object {
+        private const val MAX_FOCUS_QUICK_CAPTURES = 20
+    }
 }

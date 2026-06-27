@@ -2,14 +2,22 @@ package de.mm20.launcher2.ui.settings.focussystem
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.app.AppOpsManager
 import android.content.Intent
 import android.content.Context
+import android.os.Build
+import android.os.Process
+import android.provider.Settings
+import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import de.mm20.launcher2.calendar.CalendarRepository
 import de.mm20.launcher2.calendar.providers.CalendarList
 import de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
+import de.mm20.launcher2.ui.launcher.focus.TimeBlindnessService
 import de.mm20.launcher2.ui.launcher.focus.shouldShowFocusQuickStart
 import de.mm20.launcher2.ui.settings.SettingsActivity
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -67,6 +75,41 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
 
     val focusTimeBlindnessIntervalMinutes = searchUiSettings.focusTimeBlindnessIntervalMinutes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 15)
+
+    // Time blindness reminders rely on Usage Access to know which app is in the
+    // foreground. Without it the service can never detect a distracting app, so the
+    // UI surfaces this state and lets the user grant it. Refreshed on screen resume
+    // because the grant happens in system settings, outside this process.
+    val usageAccessGranted = MutableStateFlow(hasUsageAccess())
+
+    fun refreshUsageAccess() {
+        usageAccessGranted.value = hasUsageAccess()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun hasUsageAccess(): Boolean {
+        val appOps = context.getSystemService<AppOpsManager>() ?: return false
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOps.unsafeCheckOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName,
+            )
+        } else {
+            appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName,
+            )
+        }
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    fun openUsageAccessSettings() {
+        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(intent) }
+    }
 
     val focusTodoistApiToken = searchUiSettings.focusTodoistApiToken
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
@@ -208,6 +251,16 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
 
     fun setFocusTimeBlindnessRemindersEnabled(enabled: Boolean) {
         searchUiSettings.setFocusTimeBlindnessRemindersEnabled(enabled)
+        // Start/stop the foreground poller immediately. Previously the service was
+        // only ever started by the boot receiver, so enabling the toggle did nothing
+        // until the next reboot.
+        val intent = Intent(context, TimeBlindnessService::class.java)
+        if (enabled) {
+            intent.action = TimeBlindnessService.ACTION_START
+            ContextCompat.startForegroundService(context, intent)
+        } else {
+            context.stopService(intent)
+        }
     }
 
     fun setFocusTimeBlindnessIntervalMinutes(minutes: Int) {

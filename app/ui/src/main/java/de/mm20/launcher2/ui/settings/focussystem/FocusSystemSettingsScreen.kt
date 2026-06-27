@@ -1,20 +1,31 @@
 package de.mm20.launcher2.ui.settings.focussystem
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import de.mm20.launcher2.calendar.providers.CalendarList
 import de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode
 import de.mm20.launcher2.ui.R
+import de.mm20.launcher2.ui.component.MissingPermissionBanner
 import de.mm20.launcher2.ui.component.SmallMessage
 import de.mm20.launcher2.ui.component.preferences.ListPreference
 import de.mm20.launcher2.ui.component.preferences.Preference
@@ -44,7 +55,21 @@ data object FocusSystemBasicsRoute : NavKey
 fun FocusSystemSettingsScreen() {
     val viewModel: FocusSystemSettingsScreenVM = viewModel()
     val backStack = LocalBackStack.current
+    val context = LocalContext.current
     val shouldPromoteQuickStart = viewModel.shouldPromoteQuickStart.collectAsStateWithLifecycle().value
+
+    var notificationsGranted by remember { mutableStateOf(hasNotificationPermission(context)) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> notificationsGranted = granted }
+
+    // Usage Access (and POST_NOTIFICATIONS, if granted from the system dialog) are
+    // resolved outside this composition, so re-check them whenever the screen resumes.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshUsageAccess()
+        notificationsGranted = hasNotificationPermission(context)
+        onPauseOrDispose { }
+    }
 
     val focusModeEnabled = viewModel.focusModeEnabled.collectAsStateWithLifecycle().value
     val hideDistractingApps = viewModel.hideDistractingApps.collectAsStateWithLifecycle().value
@@ -63,6 +88,9 @@ fun FocusSystemSettingsScreen() {
     val applyToWorkProfile = viewModel.applyToWorkProfile.collectAsStateWithLifecycle().value
     val applyToPrivateProfile = viewModel.applyToPrivateProfile.collectAsStateWithLifecycle().value
     val adaptiveFrictionMode = viewModel.adaptiveFrictionMode.collectAsStateWithLifecycle().value
+    val timeBlindnessEnabled = viewModel.focusTimeBlindnessRemindersEnabled.collectAsStateWithLifecycle().value
+    val timeBlindnessIntervalMinutes = viewModel.focusTimeBlindnessIntervalMinutes.collectAsStateWithLifecycle().value
+    val usageAccessGranted = viewModel.usageAccessGranted.collectAsStateWithLifecycle().value
 
     PreferenceScreen(title = stringResource(R.string.focus_system_title)) {
         item {
@@ -105,7 +133,14 @@ fun FocusSystemSettingsScreen() {
                     summary = stringResource(R.string.focus_settings_mode_enabled_summary),
                     icon = R.drawable.timer_24px,
                     value = focusModeEnabled,
-                    onValueChanged = viewModel::setFocusModeEnabled,
+                    onValueChanged = { enabled ->
+                        viewModel.setFocusModeEnabled(enabled)
+                        // The gate "time" fires an AppSessionExpiryWorker notification when it
+                        // ends; without POST_NOTIFICATIONS that reminder silently never shows.
+                        if (enabled && !hasNotificationPermission(context)) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    },
                 )
                 SwitchPreference(
                     title = stringResource(R.string.focus_settings_hide_distracting),
@@ -194,6 +229,52 @@ fun FocusSystemSettingsScreen() {
             }
         }
         item {
+            PreferenceCategory(title = stringResource(R.string.focus_system_time_awareness_title)) {
+                SmallMessage(
+                    modifier = Modifier.padding(bottom = 12.dp),
+                    icon = R.drawable.alarm_24px,
+                    text = stringResource(R.string.focus_settings_time_blindness_summary),
+                )
+                SwitchPreference(
+                    title = stringResource(R.string.focus_settings_time_blindness_enabled),
+                    summary = stringResource(R.string.focus_settings_time_blindness_enabled_summary),
+                    icon = R.drawable.alarm_24px,
+                    value = timeBlindnessEnabled,
+                    onValueChanged = { enabled ->
+                        viewModel.setFocusTimeBlindnessRemindersEnabled(enabled)
+                        if (enabled && !hasNotificationPermission(context)) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    },
+                )
+                if (timeBlindnessEnabled && !usageAccessGranted) {
+                    MissingPermissionBanner(
+                        modifier = Modifier.padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
+                        text = stringResource(R.string.focus_settings_time_blindness_usage_access),
+                        onClick = { viewModel.openUsageAccessSettings() },
+                    )
+                }
+                if (timeBlindnessEnabled && !notificationsGranted) {
+                    MissingPermissionBanner(
+                        modifier = Modifier.padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
+                        text = stringResource(R.string.focus_settings_time_blindness_notifications),
+                        onClick = { notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
+                    )
+                }
+                if (timeBlindnessEnabled) {
+                    ListPreference(
+                        title = stringResource(R.string.focus_settings_time_blindness_interval),
+                        items = listOf(5, 10, 15, 20, 30, 45, 60).map {
+                            stringResource(R.string.focus_settings_time_blindness_interval_value, it) to it
+                        },
+                        value = timeBlindnessIntervalMinutes,
+                        onValueChanged = viewModel::setFocusTimeBlindnessIntervalMinutes,
+                        icon = R.drawable.timer_24px,
+                    )
+                }
+            }
+        }
+        item {
             PreferenceCategory(title = stringResource(R.string.focus_system_intelligence_title)) {
                 SwitchPreference(
                     title = stringResource(R.string.focus_system_personal_profile_title),
@@ -267,6 +348,14 @@ fun FocusSystemSettingsScreen() {
             }
         }
     }
+}
+
+private fun hasNotificationPermission(context: Context): Boolean {
+    return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
 }
 
 private fun formatCalendarSummary(calendar: CalendarList): String {
