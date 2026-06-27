@@ -16,6 +16,7 @@ preserve the upstream architecture.
 - [Work management](docs/engineering/work-management.md) before adding or changing task tracking.
 - [Project status](PROJECT_STATUS.md) for the latest verified snapshot.
 - [Roadmap](ROADMAP.md) for product direction. GitHub Issues and the project board own actionable work.
+- [Sessions protocol](docs/sessions/README.md) before running alongside other sessions or worktrees. Claude Code starts from [CLAUDE.md](CLAUDE.md).
 
 ## Context Loading
 
@@ -86,6 +87,12 @@ Default APK: `app/app/build/outputs/apk/default/debug/app-default-debug.apk`.
 - User-visible behavior, architecture, and project status docs are updated when affected.
 - The final diff contains no unrelated churn, debug artifacts, or stale generated files.
 - Substantial changes receive a fresh-context review following `docs/engineering/code-review.md`.
+
+## Parallel Sessions
+
+- One worktree per concurrent writer; never edit the same files from two sessions at once.
+- Keep a worklog under `docs/sessions/` for work that spans sittings or runs in parallel; scan that directory for overlapping claims before starting.
+- Fold durable facts into `PROJECT_STATUS.md` and follow-ups into GitHub Issues, then prune the worklog. See [docs/sessions/README.md](docs/sessions/README.md).
 
 ## Working Mode
 

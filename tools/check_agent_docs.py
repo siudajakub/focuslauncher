@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = (
     "AGENTS.md",
+    "CLAUDE.md",
     "PROJECT_STATUS.md",
     "ROADMAP.md",
     "CLEANUP_STATUS.md",
@@ -18,6 +19,8 @@ REQUIRED_FILES = (
     "docs/engineering/verification.md",
     "docs/engineering/code-review.md",
     "docs/engineering/work-management.md",
+    "docs/sessions/README.md",
+    "docs/sessions/TEMPLATE.md",
 )
 STATUS_FILES = ("PROJECT_STATUS.md", "ROADMAP.md", "CLEANUP_STATUS.md")
 EXPECTED_SKILLS = (
