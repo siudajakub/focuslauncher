@@ -10,6 +10,10 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 
+// ⚡ Bolt: Hoisted regex compilation out of the normalize function
+// to prevent recompiling on every call, optimizing schedule string normalization.
+private val WHITESPACE_REGEX = Regex("\\s+")
+
 data class DailyScheduleBlock(
     val label: String,
     val startTimeMillis: Long,
@@ -64,7 +68,7 @@ data class FocusGuidanceState(
 )
 
 fun normalizeScheduleEventName(name: String): String {
-    return name.trim().lowercase().replace(Regex("\\s+"), " ")
+    return name.trim().lowercase().replace(WHITESPACE_REGEX, " ")
 }
 
 fun resolveDailyScheduleSnapshot(

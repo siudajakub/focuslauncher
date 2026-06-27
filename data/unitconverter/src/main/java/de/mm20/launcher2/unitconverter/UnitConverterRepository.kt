@@ -25,6 +25,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 
+// ⚡ Bolt: Hoisted regex compilation out of queryUnitConverter
+// to avoid allocating and recompiling the expression on each unit conversion query.
+private val UNIT_CONVERTER_REGEX = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
+
 interface UnitConverterRepository {
     fun search(query: String): Flow<UnitConverter?>
     suspend fun getAvailableConverters(includeCurrencies: Boolean): List<Converter>
@@ -76,9 +80,8 @@ internal class UnitConverterRepositoryImpl(
         query: String,
         includeCurrencies: Boolean
     ): UnitConverter? {
-        val regex = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
 
-        val matches = regex.findAll(query)
+        val matches = UNIT_CONVERTER_REGEX.findAll(query)
 
         var inputStr: String? = null
         var inputValue: Double? = null

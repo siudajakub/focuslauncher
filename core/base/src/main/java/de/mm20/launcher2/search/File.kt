@@ -12,6 +12,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.Locale
 
+// ⚡ Bolt: Hoisted regex compilation out of the getFileType extension function
+// to prevent recompiling the matching pattern whenever a file extension is checked.
+private val FILE_EXTENSION_REGEX = Regex(".+\\..+")
+
 interface File : SavableSearchable {
     val path: String?
     val mimeType: String
@@ -124,7 +128,7 @@ interface File : SavableSearchable {
                 else -> R.string.file_type_none
             }
         }
-        if (resource == R.string.file_type_none && label.matches(Regex(".+\\..+"))) {
+        if (resource == R.string.file_type_none && label.matches(FILE_EXTENSION_REGEX)) {
             val extension = label.substringAfterLast(".").uppercase(Locale.getDefault())
             return context.getString(R.string.file_type_generic, extension)
         }

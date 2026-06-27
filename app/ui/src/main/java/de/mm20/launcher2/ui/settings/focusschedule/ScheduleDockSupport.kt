@@ -3,6 +3,10 @@ package de.mm20.launcher2.ui.settings.focusschedule
 import de.mm20.launcher2.ktx.normalize
 import de.mm20.launcher2.preferences.ScheduleDockMapping
 
+// ⚡ Bolt: Hoisted regex compilation out of the normalize function
+// to prevent recompiling on every call, saving allocations during mapping resolution.
+private val WHITESPACE_REGEX = Regex("\\s+")
+
 fun findScheduleDockMapping(
     eventName: String,
     mappings: List<ScheduleDockMapping>,
@@ -14,7 +18,7 @@ fun findScheduleDockMapping(
 }
 
 private fun String.normalizeScheduleDockEventName(): String {
-    return normalize().trim().replace(Regex("\\s+"), " ")
+    return normalize().trim().replace(WHITESPACE_REGEX, " ")
 }
 
 fun formatScheduleDockAppsSummary(appLabels: List<String>): String {
