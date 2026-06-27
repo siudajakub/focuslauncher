@@ -20,7 +20,8 @@ preserve the upstream architecture.
 
 ## Context Loading
 
-Always read this file first.
+Always read this file first. Then list `docs/sessions/` and read any worklog whose claim
+overlaps your task, so you do not collide with a parallel session.
 
 Before implementation, read the linked project docs that match the task:
 

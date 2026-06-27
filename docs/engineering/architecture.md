@@ -41,10 +41,12 @@ The active module graph is defined only by `settings.gradle.kts`. Do not infer p
 
 ## Documentation Boundaries
 
-- `AGENTS.md`: concise rules that apply to every Codex task.
+- `AGENTS.md`: concise rules that apply to every agent task.
+- `CLAUDE.md`: Claude Code entry point and multi-session protocol; defers shared rules to `AGENTS.md`.
 - `PROJECT_STATUS.md`: dated, verified current state.
 - `ROADMAP.md`: durable product direction, not task tracking.
 - `CLEANUP_STATUS.md`: factual inventory, not task tracking.
 - GitHub Issues/Project: actionable tasks, priority, ownership, and status.
 - `docs/engineering`: architecture and procedures.
+- `docs/sessions`: ephemeral in-flight worklogs for parallel sessions; not status or a backlog.
 - `docs/superpowers`: historical plans and specifications; these are not current status.
