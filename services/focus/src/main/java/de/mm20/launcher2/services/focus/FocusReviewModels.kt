@@ -1,7 +1,7 @@
-package de.mm20.launcher2.ui.launcher.focus
+package de.mm20.launcher2.services.focus
 
 import androidx.annotation.StringRes
-import de.mm20.launcher2.ui.R
+import de.mm20.launcher2.i18n.R
 
 typealias FocusExperiment = de.mm20.launcher2.preferences.FocusExperiment
 typealias FocusExperimentKind = de.mm20.launcher2.preferences.FocusExperimentKind
