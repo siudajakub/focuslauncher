@@ -53,7 +53,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.mm20.launcher2.search.AppShortcut
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.search.CalendarEvent
-import de.mm20.launcher2.search.Contact
 import de.mm20.launcher2.search.File
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.search.Searchable
@@ -64,7 +63,6 @@ import de.mm20.launcher2.ui.ktx.toPixels
 import de.mm20.launcher2.ui.launcher.search.apps.AppItemGridPopup
 import de.mm20.launcher2.ui.launcher.search.calendar.CalendarItemGridPopup
 import de.mm20.launcher2.ui.launcher.search.common.SearchableItemVM
-import de.mm20.launcher2.ui.launcher.search.contacts.ContactItemGridPopup
 import de.mm20.launcher2.ui.launcher.search.files.FileItemGridPopup
 import de.mm20.launcher2.ui.launcher.search.listItemViewModel
 import de.mm20.launcher2.ui.launcher.search.shortcut.ShortcutItemGridPopup
@@ -310,18 +308,6 @@ fun ItemPopup(origin: IntRect, searchable: Searchable, onDismissRequest: () -> U
                     }
 
 
-
-                    is Contact -> {
-                        ContactItemGridPopup(
-                            contact = searchable,
-                            show = show,
-                            animationProgress = p,
-                            origin = origin,
-                            onDismiss = {
-                                show.targetState = false
-                            }
-                        )
-                    }
 
                     is File -> {
                         FileItemGridPopup(

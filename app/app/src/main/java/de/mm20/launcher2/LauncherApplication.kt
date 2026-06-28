@@ -10,7 +10,6 @@ import de.mm20.launcher2.appshortcuts.appShortcutsModule
 import de.mm20.launcher2.backup.backupModule
 import de.mm20.launcher2.badges.badgesModule
 import de.mm20.launcher2.calendar.calendarModule
-import de.mm20.launcher2.contacts.contactsModule
 import de.mm20.launcher2.data.customattrs.customAttrsModule
 import de.mm20.launcher2.data.i18nDataModule
 import de.mm20.launcher2.searchable.searchableModule
@@ -75,7 +74,6 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     baseModule,
                     badgesModule,
                     calendarModule,
-                    contactsModule,
                     customAttrsModule,
                     databaseModule,
                     favoritesModule,

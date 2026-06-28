@@ -115,7 +115,6 @@ dependencies {
     implementation(project(":services:badges"))
     implementation(project(":core:base"))
     implementation(project(":data:calendar"))
-    implementation(project(":data:contacts"))
     implementation(project(":core:crashreporter"))
     implementation(project(":data:currencies"))
     implementation(project(":data:customattrs"))

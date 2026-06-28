@@ -17,7 +17,6 @@ import de.mm20.launcher2.notifications.Notification
 import de.mm20.launcher2.notifications.NotificationRepository
 import de.mm20.launcher2.permissions.PermissionGroup
 import de.mm20.launcher2.permissions.PermissionsManager
-import de.mm20.launcher2.preferences.search.ContactSearchSettings
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.search.AppShortcut
 import de.mm20.launcher2.search.Application
@@ -58,7 +57,6 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
     private val appRepository: AppRepository by inject()
     private val appShortcutRepository: AppShortcutRepository by inject()
     private val permissionsManager: PermissionsManager by inject()
-    private val contactSearchSettings: ContactSearchSettings by inject()
     private val searchUiSettings: SearchUiSettings by inject()
 
     val isUpToDate = MutableStateFlow(true)
@@ -258,9 +256,6 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
     fun requestShortcutPermission(activity: AppCompatActivity) {
         permissionsManager.requestPermission(activity, PermissionGroup.AppShortcuts)
     }
-
-    val callOnTap = contactSearchSettings.callOnTap
-        .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     fun reportUsage(searchable: SavableSearchable) {
         favoritesService.reportLaunch(searchable)
