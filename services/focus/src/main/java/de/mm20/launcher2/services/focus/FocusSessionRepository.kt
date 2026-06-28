@@ -1,6 +1,7 @@
 package de.mm20.launcher2.services.focus
 
 import de.mm20.launcher2.database.AppDatabase
+import de.mm20.launcher2.database.FocusSessionDao
 import de.mm20.launcher2.database.entities.FocusSessionEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -27,9 +28,11 @@ sealed interface FocusSessionEndResult {
     data object StaleSession : FocusSessionEndResult
 }
 
-class FocusSessionRepository(
-    private val database: AppDatabase,
+class FocusSessionRepository internal constructor(
+    private val dao: FocusSessionDao,
 ) {
+
+    constructor(database: AppDatabase) : this(database.focusSessionDao())
 
     suspend fun startSession(startedAt: Long, plannedEndsAt: Long): FocusSessionEntity {
         val session = FocusSessionEntity(
@@ -37,7 +40,7 @@ class FocusSessionRepository(
             plannedEndsAt = plannedEndsAt,
             status = FocusSessionStatus.Active.name,
         )
-        val id = database.focusSessionDao().replaceActiveSession(
+        val id = dao.replaceActiveSession(
             session = session,
             activeStatus = FocusSessionStatus.Active.name,
             replacedStatus = FocusSessionStatus.Replaced.name,
@@ -46,7 +49,7 @@ class FocusSessionRepository(
     }
 
     suspend fun getActiveSession(): FocusSessionEntity? {
-        return database.focusSessionDao().getLatestActive(FocusSessionStatus.Active.name)
+        return dao.getLatestActive(FocusSessionStatus.Active.name)
     }
 
     suspend fun endActiveSession(endedAt: Long): FocusSessionEndResult {
@@ -78,7 +81,7 @@ class FocusSessionRepository(
         } else {
             FocusSessionStatus.EndedEarly
         }
-        val updatedRows = database.focusSessionDao().finishSessionIfActive(
+        val updatedRows = dao.finishSessionIfActive(
             id = active.id,
             expectedPlannedEndsAt = active.plannedEndsAt,
             endedAt = endedAt,
@@ -96,14 +99,14 @@ class FocusSessionRepository(
     }
 
     fun getSessionsSince(since: Long): Flow<List<FocusSessionEntity>> {
-        return database.focusSessionDao().getSessionsSince(since)
+        return dao.getSessionsSince(since)
     }
 
     fun getRecentSessions(limit: Int = 20): Flow<List<FocusSessionEntity>> {
-        return database.focusSessionDao().getRecent(limit)
+        return dao.getRecent(limit)
     }
 
     fun getLatestSession(): Flow<FocusSessionEntity?> {
-        return database.focusSessionDao().getLatest()
+        return dao.getLatest()
     }
 }
