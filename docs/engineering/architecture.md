@@ -8,7 +8,7 @@ FocusLauncher is a multi-module Android application using Gradle Kotlin DSL, Jet
 - `app/ui`: launcher activities, Compose surfaces, settings, search orchestration, and focus UI.
 - `core`: shared search types, preferences, permissions, compatibility, profiles, i18n, and utilities.
 - `data`: low-level repositories and providers for applications, custom attributes, database, files, widgets, and other data sources.
-- `services`: higher-level APIs for search, icons, backup, favorites, widgets, and related orchestration.
+- `services`: higher-level APIs for search, icons, backup, favorites, focus, widgets, and related orchestration. `services/focus` owns focus classification, policy, sessions, history, and session-expiry scheduling; UI-coupled focus helpers and screens stay in `app/ui`.
 - `libs`: standalone or vendored libraries.
 - `plugins/sdk`: public plugin contracts retained from upstream.
 - `docs`: VitePress user and contributor documentation.
@@ -41,10 +41,12 @@ The active module graph is defined only by `settings.gradle.kts`. Do not infer p
 
 ## Documentation Boundaries
 
-- `AGENTS.md`: concise rules that apply to every Codex task.
+- `AGENTS.md`: concise rules that apply to every agent task.
+- `CLAUDE.md`: Claude Code entry point and multi-session protocol; defers shared rules to `AGENTS.md`.
 - `PROJECT_STATUS.md`: dated, verified current state.
 - `ROADMAP.md`: durable product direction, not task tracking.
 - `CLEANUP_STATUS.md`: factual inventory, not task tracking.
 - GitHub Issues/Project: actionable tasks, priority, ownership, and status.
 - `docs/engineering`: architecture and procedures.
+- `docs/sessions`: ephemeral in-flight worklogs for parallel sessions; not status or a backlog.
 - `docs/superpowers`: historical plans and specifications; these are not current status.

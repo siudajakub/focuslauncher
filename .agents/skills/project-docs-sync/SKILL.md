@@ -5,10 +5,12 @@ description: Reconcile FocusLauncher agent and project documentation with the cu
 
 # Project Documentation Sync
 
-1. Read `AGENTS.md`, `PROJECT_STATUS.md`, `ROADMAP.md`, `CLEANUP_STATUS.md`, and relevant `docs/engineering` files.
+1. Read `AGENTS.md`, `CLAUDE.md`, `PROJECT_STATUS.md`, `ROADMAP.md`, `CLEANUP_STATUS.md`, relevant `docs/engineering` files, and `docs/sessions/README.md`.
 2. Verify claims against code, `settings.gradle.kts`, dependencies, routes, tests, migrations, and fresh command output. Do not infer physical removal from hidden UI.
 3. Keep responsibilities separate:
-   - `AGENTS.md`: universal Codex rules and routing.
+   - `AGENTS.md`: universal agent rules and routing.
+   - `CLAUDE.md`: Claude Code entry point and multi-session protocol; defers shared rules to `AGENTS.md`.
+   - `docs/sessions/`: ephemeral in-flight worklogs; never status or a backlog.
    - `PROJECT_STATUS.md`: dated verified facts.
    - `ROADMAP.md`: strategic direction without task checkboxes.
    - `CLEANUP_STATUS.md`: factual legacy inventory without task checkboxes.

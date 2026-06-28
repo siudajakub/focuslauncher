@@ -1,7 +1,14 @@
 #!/bin/sh
-# Emitted into Claude Code session context by the SessionStart hook in .claude/settings.json.
-# Surfaces in-flight session worklogs so parallel sessions notice each other's file claims
-# before editing. Read-only and side-effect free; always exits 0 so it never blocks a session.
+# Emitted into Claude Code session context by the SessionStart and PreCompact hooks in
+# .claude/settings.json. Surfaces in-flight session worklogs so parallel sessions notice each
+# other's file claims before editing, and (with --remind) nudges the session to flush its state
+# into its worklog before context is compacted. Read-only and side-effect free; always exits 0 so
+# it never blocks a session.
+#
+# Usage: session_context.sh [--remind]
+
+remind=0
+[ "$1" = "--remind" ] && remind=1
 
 root="${CLAUDE_PROJECT_DIR:-.}"
 dir="$root/docs/sessions"
@@ -12,6 +19,7 @@ if [ -z "$worklogs" ]; then
   echo "If this work spans sessions or runs alongside another, scaffold one with"
   echo "  sh tools/session_new.sh <short-topic-slug>"
   echo "and record your file claims (see docs/sessions/README.md)."
+  [ "$remind" -eq 1 ] && echo "Context is about to be compacted: if mid-task, capture state in a worklog first."
   exit 0
 fi
 
@@ -42,6 +50,12 @@ if [ -n "$stale" ]; then
   echo ""
   echo "Worklogs marked DONE — fold durable facts into PROJECT_STATUS.md, then delete:"
   for f in $stale; do echo "  - ${f#"$root/"}"; done
+fi
+
+if [ "$remind" -eq 1 ] && [ -n "$active" ]; then
+  echo ""
+  echo "Context is about to be compacted: update your active worklog's Current State and Next"
+  echo "Step now, so the handoff survives the summary."
 fi
 
 exit 0

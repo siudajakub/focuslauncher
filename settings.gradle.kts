@@ -55,6 +55,7 @@ include(":libs:address-formatter")
 include(":services:global-actions")
 include(":services:widgets")
 include(":services:favorites")
+include(":services:focus")
 
 include(":plugins:sdk")
 include(":data:locations")

@@ -67,7 +67,7 @@ import de.mm20.launcher2.ui.launcher.scaffold.SecretComponent
 import de.mm20.launcher2.ui.launcher.scaffold.WidgetsComponent
 import de.mm20.launcher2.ui.launcher.focus.FocusHomeCommandCenter
 import de.mm20.launcher2.ui.launcher.focus.FocusHomeCommandType
-import de.mm20.launcher2.ui.launcher.focus.FocusPolicyService
+import de.mm20.launcher2.services.focus.FocusPolicyService
 import de.mm20.launcher2.ui.launcher.sheets.LauncherBottomSheetManager
 import de.mm20.launcher2.ui.launcher.sheets.LauncherBottomSheets
 import de.mm20.launcher2.ui.launcher.sheets.LocalBottomSheetManager

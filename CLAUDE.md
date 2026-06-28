@@ -35,6 +35,10 @@ When a rule changes, edit AGENTS.md (the source of truth), not this file.
 `docs/superpowers/` holds historical plans and specs — context, not current status. GitHub
 Issues and the project board (see [work-management](docs/engineering/work-management.md)) own actionable work.
 
+**Tooling:** `tools/session_new.sh <slug>` scaffolds a worklog from the template;
+`tools/session_context.sh` backs the `SessionStart`/`PreCompact` hooks; `tools/check_agent_docs.py`
+validates the docs, the session scripts, and the hook wiring.
+
 ## Multi-Session Work
 
 This project is built to support several sessions running at once (parallel worktrees,
@@ -52,9 +56,10 @@ separate Claude tabs, or subagents). To keep that safe and recoverable:
   to GitHub Issues, then prune the worklog. Worklogs are ephemeral working memory — not
   status, not a backlog, not architecture.
 
-A `SessionStart` hook in `.claude/settings.json` runs `tools/session_context.sh` and injects
-the active worklogs into context automatically, so awareness of other sessions is not left to
-memory. Maintaining your own worklog stays a deliberate step. See
+`SessionStart` and `PreCompact` hooks in `.claude/settings.json` run `tools/session_context.sh`
+and inject the active worklogs into context automatically, so awareness of other sessions is not
+left to memory; the `PreCompact` run also reminds you to flush your worklog before context is
+summarized. Maintaining your own worklog stays a deliberate step. See
 [docs/sessions/README.md](docs/sessions/README.md) for the full protocol and template.
 
 ## Claude Code Notes
@@ -63,7 +68,8 @@ memory. Maintaining your own worklog stays a deliberate step. See
   [AGENTS.md](AGENTS.md) and [verification.md](docs/engineering/verification.md) — use those exact
   commands; do not invent new ones. Always set `GRADLE_USER_HOME="$PWD/.gradle-home"`.
 - **Documentation changes** must keep `python3 tools/check_agent_docs.py` green; it validates the
-  required docs, their internal links, AGENTS.md length, and the `.agents` skills.
+  required docs, their internal links, AGENTS.md length, the `.agents` skills, the session scripts,
+  and the `SessionStart`/`PreCompact` hook wiring.
 - **Keep AGENTS.md ≤ 140 lines** (validator-enforced). Push detail into `docs/engineering/`.
 - **Do not revert unrelated dirty-tree changes.** The working tree usually carries
   substantial uncommitted product work; integrate with it.

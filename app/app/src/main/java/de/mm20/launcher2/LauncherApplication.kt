@@ -36,7 +36,7 @@ import de.mm20.launcher2.services.favorites.favoritesModule
 import de.mm20.launcher2.services.tags.servicesTagsModule
 import de.mm20.launcher2.services.widgets.widgetsServiceModule
 import de.mm20.launcher2.themes.themesModule
-import de.mm20.launcher2.ui.launcher.focus.FocusPolicyService
+import de.mm20.launcher2.services.focus.FocusPolicyService
 import de.mm20.launcher2.ui.launcher.focus.TimeBlindnessService
 import de.mm20.launcher2.weather.weatherModule
 import android.content.Intent

@@ -1,5 +1,7 @@
 package de.mm20.launcher2.ui.settings.focussystem
 
+import de.mm20.launcher2.services.focus.*
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.app.AppOpsManager
@@ -15,7 +17,7 @@ import de.mm20.launcher2.calendar.providers.CalendarList
 import de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.ui.launcher.focus.TimeBlindnessService
-import de.mm20.launcher2.ui.launcher.focus.shouldShowFocusQuickStart
+import de.mm20.launcher2.services.focus.shouldShowFocusQuickStart
 import de.mm20.launcher2.ui.settings.SettingsActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

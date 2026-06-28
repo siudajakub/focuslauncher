@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -22,6 +23,12 @@ REQUIRED_FILES = (
     "docs/sessions/README.md",
     "docs/sessions/TEMPLATE.md",
 )
+REQUIRED_TOOLS = (
+    "tools/session_context.sh",
+    "tools/session_new.sh",
+)
+SETTINGS_FILE = ".claude/settings.json"
+REQUIRED_HOOK_EVENTS = ("SessionStart", "PreCompact")
 STATUS_FILES = ("PROJECT_STATUS.md", "ROADMAP.md", "CLEANUP_STATUS.md")
 EXPECTED_SKILLS = (
     "focus-feature-delivery",
@@ -76,6 +83,31 @@ def validate_skill(name: str, errors: list[str]) -> None:
         fail(errors, f"{skill.relative_to(ROOT)}: unresolved template TODO")
 
 
+def validate_session_hooks(errors: list[str]) -> None:
+    settings_path = ROOT / SETTINGS_FILE
+    if not settings_path.is_file():
+        fail(errors, f"missing {SETTINGS_FILE}: the SessionStart/PreCompact hooks live here")
+        return
+    try:
+        settings = json.loads(settings_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(errors, f"{SETTINGS_FILE}: invalid JSON ({exc})")
+        return
+    hooks = settings.get("hooks", {})
+    for event in REQUIRED_HOOK_EVENTS:
+        groups = hooks.get(event)
+        if not groups:
+            fail(errors, f"{SETTINGS_FILE}: missing {event} hook")
+            continue
+        commands = [
+            entry.get("command", "")
+            for group in groups
+            for entry in group.get("hooks", [])
+        ]
+        if not any("session_context.sh" in command for command in commands):
+            fail(errors, f"{SETTINGS_FILE}: {event} hook must run tools/session_context.sh")
+
+
 def main() -> int:
     errors: list[str] = []
     for relative in REQUIRED_FILES:
@@ -84,6 +116,12 @@ def main() -> int:
             fail(errors, f"missing required document: {relative}")
             continue
         validate_markdown_links(path, errors)
+
+    for relative in REQUIRED_TOOLS:
+        if not (ROOT / relative).is_file():
+            fail(errors, f"missing required tool: {relative}")
+
+    validate_session_hooks(errors)
 
     agents = ROOT / "AGENTS.md"
     if agents.is_file() and len(agents.read_text(encoding="utf-8").splitlines()) > 140:

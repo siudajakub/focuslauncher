@@ -35,14 +35,40 @@ runs alongside another session. For a quick, self-contained change you can skip 
    for follow-ups, then **delete the worklog** (or set Status to `DONE` if a near-term session
    will resume it). Do not let stale worklogs accumulate.
 
+## Example
+
+A filled worklog stays terse — enough for another session to pick up cold:
+
+```markdown
+# Session: focus gate copy pass
+
+- Date: 2026-06-27
+- Agent: Claude Code
+- Branch / worktree: focus/gate-copy @ ../lanucher-gate-copy
+- Status: ACTIVE
+
+## Goal
+Tighten the friction-gate explanation so blocked launches read calmly.
+
+## Claim (files / modules being touched)
+- `app/ui/.../launcher/focus/FocusLaunchCoordinator.kt`
+- `core/i18n/src/main/res/values/strings.xml` (focus_gate_* keys)
+
+## Current State
+New strings drafted; coordinator wired to the calmer message. Dark-mode check pending.
+
+## Next Step
+Run `:app:ui:testDebugUnitTest`, then Pixel smoke for a distracting-app launch.
+```
+
 ## Automation
 
-For Claude Code, a `SessionStart` hook in `.claude/settings.json` runs
-`tools/session_context.sh` and injects the active worklogs (this directory, minus this
-README and `TEMPLATE.md`) into every session's context — so each session automatically sees
-other sessions' claims without anyone remembering to look. The hook is read-only; opening,
-updating, and pruning worklogs is still a deliberate step you take per this protocol. Codex
-relies on the same protocol via [`AGENTS.md`](../../AGENTS.md).
+For Claude Code, `SessionStart` and `PreCompact` hooks in `.claude/settings.json` run
+`tools/session_context.sh` and inject the active worklogs (this directory, minus this README and
+`TEMPLATE.md`) into context — so each session automatically sees other sessions' claims without
+anyone remembering to look, and is reminded to flush its own worklog before context is compacted.
+The hooks are read-only; opening, updating, and pruning worklogs is still a deliberate step you
+take per this protocol. Codex relies on the same protocol via [`AGENTS.md`](../../AGENTS.md).
 
 ## Parallel Sessions Use Separate Worktrees
 

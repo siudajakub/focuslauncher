@@ -1,6 +1,6 @@
-package de.mm20.launcher2.ui.launcher.focus
+package de.mm20.launcher2.services.focus
 
-internal fun shouldShowFocusQuickStart(
+fun shouldShowFocusQuickStart(
     focusModeEnabled: Boolean,
     essentialCount: Int,
     distractingCount: Int,
