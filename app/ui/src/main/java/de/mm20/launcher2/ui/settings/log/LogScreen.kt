@@ -117,7 +117,7 @@ fun LogScreen() {
                     )
                 }
             }) {
-                Icon(painterResource(R.drawable.share_24px), contentDescription = null)
+                Icon(painterResource(R.drawable.share_24px), contentDescription = stringResource(R.string.menu_share))
             }
         },
         verticalArrangement = Arrangement.spacedBy(2.dp),
