@@ -1,6 +1,6 @@
 # Cleanup Inventory
 
-Last reviewed: 2026-06-15
+Last reviewed: 2026-06-28
 
 This is a factual inventory of legacy surface still present in the current tree. Actionable cleanup work belongs in GitHub Issues under the `cleanup` label.
 
@@ -23,7 +23,7 @@ This is a factual inventory of legacy surface still present in the current tree.
 - Some settings routes, strings, serializers, and provider abstractions inherited from upstream
 - Unreachable orphaned settings routes and screens (e.g., smartspacer, apps search settings).
 - Stale routes in SettingsActivity (ROUTE_WEATHER_INTEGRATION, ROUTE_MEDIA_INTEGRATION) that will crash if invoked by widgets.
-- Legacy preferences in LauncherSettingsData.kt and FileSearchSettings.kt for Calculator, Wikipedia, Nextcloud, Owncloud.
+- FileSearchSettings.kt still exposes Nextcloud/Owncloud accessors (live: backs WebDAV file search) — gated on the integrations decision (#4). The Calculator/Wikipedia/Website preference wrappers and their LauncherSettingsData fields have been removed (safe: the DataStore serializer ignores unknown keys).
 - Vestigial AccountType enum containing only removed Nextcloud/Owncloud.
 - Hardcoded Wikipedia/Websites strings in KeyboardFilterBarItem.
 
@@ -39,7 +39,7 @@ Presence in this list does not mean a feature is reachable from the main UX. Che
 ## Search Legacy State
 
 - Product search is apps-first.
-- Historical preference fields for calculator, websites, Wikipedia, and file providers remain for compatibility and require deliberate migration before deletion.
+- Historical preference fields for calculator, websites, and Wikipedia have been removed; the DataStore serializer's `ignoreUnknownKeys = true` makes dropping unused keys safe for existing installs. File-provider (WebDAV) fields remain pending the integrations decision (#4).
 - Search changes must audit ranking, filters, hidden-item behavior, best-match launch, customization, and home launch surfaces together.
 
 ## Maintenance Rule
