@@ -29,8 +29,8 @@ import de.mm20.launcher2.search.UpdatableSearchable
 import de.mm20.launcher2.search.UpdateResult
 import de.mm20.launcher2.services.favorites.FavoritesService
 import de.mm20.launcher2.ui.R
-import de.mm20.launcher2.ui.launcher.focus.FocusAppClassifier
-import de.mm20.launcher2.ui.launcher.focus.FocusAppType
+import de.mm20.launcher2.services.focus.FocusAppClassifier
+import de.mm20.launcher2.services.focus.FocusAppType
 import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
 import de.mm20.launcher2.ui.launcher.search.ListItemViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi

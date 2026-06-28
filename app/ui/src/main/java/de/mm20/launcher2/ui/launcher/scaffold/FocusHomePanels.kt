@@ -1,5 +1,7 @@
 package de.mm20.launcher2.ui.launcher.scaffold
 
+import de.mm20.launcher2.services.focus.*
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -23,13 +25,13 @@ import androidx.compose.ui.unit.dp
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.ui.R
-import de.mm20.launcher2.ui.launcher.focus.DailyScheduleBlock
-import de.mm20.launcher2.ui.launcher.focus.DailyScheduleSnapshot
-import de.mm20.launcher2.ui.launcher.focus.FocusGuidanceState
-import de.mm20.launcher2.ui.launcher.focus.FocusGuidanceType
-import de.mm20.launcher2.ui.launcher.focus.HabitGateState
-import de.mm20.launcher2.ui.launcher.focus.HabitStatus
-import de.mm20.launcher2.ui.launcher.focus.TransitionWarningState
+import de.mm20.launcher2.services.focus.DailyScheduleBlock
+import de.mm20.launcher2.services.focus.DailyScheduleSnapshot
+import de.mm20.launcher2.services.focus.FocusGuidanceState
+import de.mm20.launcher2.services.focus.FocusGuidanceType
+import de.mm20.launcher2.services.focus.HabitGateState
+import de.mm20.launcher2.services.focus.HabitStatus
+import de.mm20.launcher2.services.focus.TransitionWarningState
 import de.mm20.launcher2.ui.launcher.search.common.grid.SearchResultGrid
 
 data class DailySchedulePanelState(
@@ -92,16 +94,18 @@ internal fun FocusGuidanceCard(
         FocusGuidanceType.None -> return
     }
 
+    val taskLabel = state.taskLabel
+    val blockLabel = state.blockLabel
     val supportingText = when (state.type) {
         FocusGuidanceType.Recover -> when {
-            !state.taskLabel.isNullOrBlank() && !state.blockLabel.isNullOrBlank() -> stringResource(
+            !taskLabel.isNullOrBlank() && !blockLabel.isNullOrBlank() -> stringResource(
                 R.string.focus_home_guidance_recover_body_block,
-                state.taskLabel,
-                state.blockLabel,
+                taskLabel,
+                blockLabel,
             )
-            !state.taskLabel.isNullOrBlank() -> stringResource(
+            !taskLabel.isNullOrBlank() -> stringResource(
                 R.string.focus_home_guidance_recover_body_task,
-                state.taskLabel,
+                taskLabel,
             )
             else -> null
         }
@@ -321,6 +325,8 @@ internal fun FocusDailyScheduleCard(
     FocusSection(
         title = stringResource(R.string.focus_home_daily_schedule_title),
     ) {
+        val currentBlock = state.snapshot.currentBlock
+        val upcomingBlock = state.snapshot.upcomingBlock
         when {
             !state.enabled -> {
                 EmptyStateWithAction(
@@ -338,10 +344,10 @@ internal fun FocusDailyScheduleCard(
                 )
             }
 
-            state.snapshot.currentBlock != null -> {
+            currentBlock != null -> {
                 ScheduleStateBlock(
                     label = stringResource(R.string.focus_home_daily_schedule_now),
-                    block = state.snapshot.currentBlock,
+                    block = currentBlock,
                     countdownText = stringResource(
                         R.string.focus_home_daily_schedule_ends_in,
                         state.snapshot.minutesUntilCurrentBlockEnds,
@@ -352,10 +358,10 @@ internal fun FocusDailyScheduleCard(
                 )
             }
 
-            state.snapshot.upcomingBlock != null -> {
+            upcomingBlock != null -> {
                 ScheduleStateBlock(
                     label = stringResource(R.string.focus_home_daily_schedule_upcoming),
-                    block = state.snapshot.upcomingBlock,
+                    block = upcomingBlock,
                     countdownText = stringResource(
                         R.string.focus_home_daily_schedule_starts_in,
                         state.snapshot.minutesUntilUpcomingBlockStarts,
@@ -471,7 +477,8 @@ private fun ScheduleStateBlock(
 internal fun FocusTransitionWarningCard(
     state: TransitionWarningState,
 ) {
-    if (!state.show || state.nextBlockLabel == null) {
+    val nextBlockLabel = state.nextBlockLabel
+    if (!state.show || nextBlockLabel == null) {
         return
     }
 
@@ -479,7 +486,7 @@ internal fun FocusTransitionWarningCard(
         title = stringResource(R.string.focus_home_transition_title),
         supportingText = stringResource(
             R.string.focus_home_transition_body,
-            state.nextBlockLabel,
+            nextBlockLabel,
         ),
     ) {}
 }

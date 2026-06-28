@@ -1,4 +1,4 @@
-package de.mm20.launcher2.ui.launcher.focus
+package de.mm20.launcher2.services.focus
 
 import de.mm20.launcher2.database.entities.FocusEventEntity
 import de.mm20.launcher2.database.entities.FocusSessionEntity

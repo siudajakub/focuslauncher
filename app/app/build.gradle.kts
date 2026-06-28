@@ -142,6 +142,7 @@ dependencies {
     implementation(project(":services:global-actions"))
     implementation(project(":services:widgets"))
     implementation(project(":services:favorites"))
+    implementation(project(":services:focus"))
     implementation(project(":data:locations"))
     implementation(project(":services:plugins"))
     implementation(project(":core:devicepose"))

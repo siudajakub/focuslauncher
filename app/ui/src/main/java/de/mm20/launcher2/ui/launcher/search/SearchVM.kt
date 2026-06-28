@@ -33,8 +33,8 @@ import de.mm20.launcher2.search.isUnspecified
 import de.mm20.launcher2.searchable.SavableSearchableRepository
 import de.mm20.launcher2.searchable.VisibilityLevel
 import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
-import de.mm20.launcher2.ui.launcher.focus.FocusAppClassifier
-import de.mm20.launcher2.ui.launcher.focus.FocusAppType
+import de.mm20.launcher2.services.focus.FocusAppClassifier
+import de.mm20.launcher2.services.focus.FocusAppType
 import de.mm20.launcher2.services.favorites.FavoritesService
 import de.mm20.launcher2.ui.settings.SettingsActivity
 import de.mm20.launcher2.ui.launcher.LauncherActivity

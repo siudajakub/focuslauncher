@@ -492,7 +492,7 @@ fun AppItem(
                 }
             } else {
                 val deemphasize = fadeDistractingApps && hideFromBrowse
-                val textOnly = noIconsMode && appType != de.mm20.launcher2.ui.launcher.focus.FocusAppType.Essential
+                val textOnly = noIconsMode && appType != de.mm20.launcher2.services.focus.FocusAppType.Essential
                 Row(
                     modifier = Modifier
                         .padding(16.dp)

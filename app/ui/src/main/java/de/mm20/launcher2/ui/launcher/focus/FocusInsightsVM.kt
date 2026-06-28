@@ -1,5 +1,7 @@
 package de.mm20.launcher2.ui.launcher.focus
 
+import de.mm20.launcher2.services.focus.*
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.mm20.launcher2.applications.AppRepository
