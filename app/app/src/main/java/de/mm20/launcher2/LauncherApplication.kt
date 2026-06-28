@@ -37,6 +37,7 @@ import de.mm20.launcher2.services.tags.servicesTagsModule
 import de.mm20.launcher2.services.widgets.widgetsServiceModule
 import de.mm20.launcher2.themes.themesModule
 import de.mm20.launcher2.services.focus.FocusPolicyService
+import de.mm20.launcher2.services.focus.focusModule
 import de.mm20.launcher2.ui.launcher.focus.TimeBlindnessService
 import de.mm20.launcher2.weather.weatherModule
 import android.content.Intent
@@ -57,6 +58,7 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
         get() = Dispatchers.Main + SupervisorJob()
 
     private val searchUiSettings: SearchUiSettings by inject()
+    private val focusPolicyService: FocusPolicyService by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -101,12 +103,13 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     profilesModule,
                     i18nDataModule,
                     feedModule,
+                    focusModule,
                 )
             )
         }
 
         launch {
-            FocusPolicyService().reconcileFocusSession(this@LauncherApplication)
+            focusPolicyService.reconcileFocusSession(this@LauncherApplication)
 
             // Start the time-blindness foreground poller if the feature is enabled.
             // Previously the service was only ever started from BOOT_COMPLETED, so a

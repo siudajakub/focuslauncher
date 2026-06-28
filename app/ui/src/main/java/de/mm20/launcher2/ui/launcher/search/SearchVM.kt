@@ -56,7 +56,7 @@ import org.koin.core.component.inject
 
 class SearchVM : ViewModel(), KoinComponent {
     private val focusLaunchCoordinator = FocusLaunchCoordinator()
-    private val focusAppClassifier = FocusAppClassifier()
+    private val focusAppClassifier: FocusAppClassifier by inject()
 
     private val favoritesService: FavoritesService by inject()
     private val searchableRepository: SavableSearchableRepository by inject()

@@ -83,6 +83,7 @@ import de.mm20.launcher2.ui.overlays.OverlayHost
 import de.mm20.launcher2.ui.theme.LauncherTheme
 import de.mm20.launcher2.ui.theme.wallpaperColorsAsState
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 
 abstract class SharedLauncherActivity(
@@ -90,6 +91,7 @@ abstract class SharedLauncherActivity(
 ) : BaseActivity() {
 
     private val viewModel: LauncherScaffoldVM by viewModels()
+    private val focusPolicyService: FocusPolicyService by inject()
 
     internal val enterHomeTransitionManager = EnterHomeTransitionManager()
 
@@ -467,7 +469,7 @@ abstract class SharedLauncherActivity(
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
-            FocusPolicyService().reconcileFocusSession(this@SharedLauncherActivity)
+            focusPolicyService.reconcileFocusSession(this@SharedLauncherActivity)
         }
     }
 

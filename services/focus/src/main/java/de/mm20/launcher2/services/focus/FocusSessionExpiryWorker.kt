@@ -7,12 +7,16 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
 
 class FocusSessionExpiryWorker(
     appContext: Context,
     params: WorkerParameters,
-) : CoroutineWorker(appContext, params) {
+) : CoroutineWorker(appContext, params), KoinComponent {
+    private val focusPolicyService: FocusPolicyService by inject()
+
     override suspend fun doWork(): Result {
         val sessionId = inputData.getLong(INPUT_SESSION_ID, INVALID_SESSION_ID)
         val plannedEndsAt = inputData.getLong(INPUT_PLANNED_ENDS_AT, 0L)
@@ -20,7 +24,7 @@ class FocusSessionExpiryWorker(
             return Result.failure()
         }
 
-        FocusPolicyService().completeScheduledFocusSession(
+        focusPolicyService.completeScheduledFocusSession(
             context = applicationContext,
             expectedSessionId = sessionId,
             expectedPlannedEndsAt = plannedEndsAt,

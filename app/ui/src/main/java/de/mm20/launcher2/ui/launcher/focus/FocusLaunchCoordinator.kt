@@ -24,7 +24,7 @@ import org.koin.core.component.inject
 class FocusLaunchCoordinator : KoinComponent {
     private val favoritesService: FavoritesService by inject()
     private val searchUiSettings: SearchUiSettings by inject()
-    private val focusPolicyService = FocusPolicyService()
+    private val focusPolicyService: FocusPolicyService by inject()
 
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 

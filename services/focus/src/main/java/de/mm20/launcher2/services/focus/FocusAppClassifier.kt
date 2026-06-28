@@ -5,11 +5,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
-class FocusAppClassifier : KoinComponent {
-    private val searchUiSettings: SearchUiSettings by inject()
+class FocusAppClassifier(
+    private val searchUiSettings: SearchUiSettings,
+) {
 
     fun classify(key: String): Flow<FocusAppType> {
         return combine(

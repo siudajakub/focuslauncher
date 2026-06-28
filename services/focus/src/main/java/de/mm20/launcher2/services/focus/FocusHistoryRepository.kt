@@ -9,8 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -125,8 +123,9 @@ data class WeeklyFocusDelta(
     val topBreakerDelta: Int = 0,
 )
 
-class FocusHistoryRepository : KoinComponent {
-    private val database: AppDatabase by inject()
+class FocusHistoryRepository(
+    private val database: AppDatabase,
+) {
 
     suspend fun logEvent(event: FocusLogEvent) {
         database.focusEventDao().insert(

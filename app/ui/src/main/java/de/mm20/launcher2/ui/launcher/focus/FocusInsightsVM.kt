@@ -22,7 +22,7 @@ import org.koin.core.component.inject
 
 class FocusInsightsVM : ViewModel(), KoinComponent {
 
-    private val focusHistoryRepository = FocusHistoryRepository()
+    private val focusHistoryRepository: FocusHistoryRepository by inject()
     private val searchUiSettings: SearchUiSettings by inject()
     private val customAttributesRepository: CustomAttributesRepository by inject()
     private val appRepository: AppRepository by inject()

@@ -3,8 +3,6 @@ package de.mm20.launcher2.services.focus
 import de.mm20.launcher2.database.AppDatabase
 import de.mm20.launcher2.database.entities.FocusSessionEntity
 import kotlinx.coroutines.flow.Flow
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 enum class FocusSessionStatus {
     Active,
@@ -29,8 +27,9 @@ sealed interface FocusSessionEndResult {
     data object StaleSession : FocusSessionEndResult
 }
 
-class FocusSessionRepository : KoinComponent {
-    private val database: AppDatabase by inject()
+class FocusSessionRepository(
+    private val database: AppDatabase,
+) {
 
     suspend fun startSession(startedAt: Long, plannedEndsAt: Long): FocusSessionEntity {
         val session = FocusSessionEntity(
