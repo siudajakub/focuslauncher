@@ -168,16 +168,8 @@ data class LauncherSettingsData internal constructor(
 
     val shortcutSearchEnabled: Boolean = true,
 
-    val calculatorEnabled: Boolean = true,
-
     val unitConverterEnabled: Boolean = true,
     val unitConverterCurrencies: Boolean = true,
-
-    val wikipediaSearchEnabled: Boolean = false,
-    val wikipediaSearchImages: Boolean = true,
-    val wikipediaCustomUrl: String? = null,
-
-    val websiteSearchEnabled: Boolean = false,
 
     val badgesNotifications: Boolean = true,
     val badgesSuspendedApps: Boolean = true,
