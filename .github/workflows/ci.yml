@@ -68,10 +68,14 @@ jobs:
       - name: Report exported schema coverage
         shell: bash
         run: |
-          schema="data/database/schemas/de.mm20.launcher2.database.AppDatabase/36.json"
+          schema="data/database/schemas/de.mm20.launcher2.database.AppDatabase/37.json"
           if [[ ! -f "$schema" ]]; then
-            echo "::warning file=$schema::Room schema 35 is not exported yet. Runtime migration validation will run; exported-schema validation remains ignored."
+            echo "::warning file=$schema::Room schema 37 (the current AppDatabase version) is not exported. Runtime migration validation will still run; exported-schema validation for the current version is unavailable."
           fi
+          # Historical schemas 25-36 are not committed: Room only exports the current
+          # version's schema, so they cannot be regenerated from v37 source. Their absence
+          # is expected and non-fatal; migration correctness is covered by the instrumented
+          # AppDatabaseMigrationTest below rather than by exported-schema validation.
 
       - name: Enable KVM access
         run: |

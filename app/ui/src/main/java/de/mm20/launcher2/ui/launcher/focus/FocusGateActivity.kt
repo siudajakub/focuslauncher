@@ -238,8 +238,8 @@ private fun FocusGateScreen(
 ) {
     val context = LocalContext.current
     val launchCoordinator = remember { FocusLaunchCoordinator() }
-    val focusPolicyService = remember { FocusPolicyService() }
-    val historyRepository = remember { FocusHistoryRepository() }
+    val focusPolicyService: FocusPolicyService = koinInject()
+    val historyRepository: FocusHistoryRepository = koinInject()
     val calendarRepository: CalendarRepository = koinInject()
     val appRepository: AppRepository = koinInject()
     val iconService: IconService = koinInject()

@@ -598,9 +598,9 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
     private val searchUiSettings: SearchUiSettings by inject()
     private val context: Context by inject()
     private val focusLaunchCoordinator = FocusLaunchCoordinator()
-    private val historyRepository = FocusHistoryRepository()
-    private val sessionRepository = FocusSessionRepository()
-    private val focusPolicyService = FocusPolicyService()
+    private val historyRepository: FocusHistoryRepository by inject()
+    private val sessionRepository: FocusSessionRepository by inject()
+    private val focusPolicyService: FocusPolicyService by inject()
 
     // Cold ticking clock: only runs while a derived flow is actually being collected
     // (i.e. the Focus Home UI is on screen). It stops when the launcher is backgrounded,

@@ -38,7 +38,7 @@ adb shell am start -W -n de.mm20.launcher2.debug/de.mm20.launcher2.ui.launcher.L
 adb shell dumpsys activity exit-info de.mm20.launcher2.debug
 ```
 
-For focus changes, verify essential launch, distracting launch, gate continuation, active session lock, session expiry, temporary unlock, and launcher restart. Use `dumpsys dropbox --print ... data_app_crash` when startup failures disappear from logcat.
+For focus changes, verify essential launch, distracting launch, gate continuation, active session lock, session expiry, temporary unlock, and launcher restart. Use `dumpsys dropbox --print ... data_app_crash` when startup failures disappear from logcat. The full step-by-step device checklist lives in [pixel-smoke-test.md](pixel-smoke-test.md) — run it before any release.
 
 ## Reporting
 

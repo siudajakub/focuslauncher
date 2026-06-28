@@ -51,7 +51,7 @@ import kotlin.time.Duration.Companion.minutes
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchableItemVM : ListItemViewModel(), KoinComponent {
     private val focusLaunchCoordinator = FocusLaunchCoordinator()
-    private val focusAppClassifier = FocusAppClassifier()
+    private val focusAppClassifier: FocusAppClassifier by inject()
     private val favoritesService: FavoritesService by inject()
     private val customAttributesRepository: CustomAttributesRepository by inject()
     private val badgeService: BadgeService by inject()

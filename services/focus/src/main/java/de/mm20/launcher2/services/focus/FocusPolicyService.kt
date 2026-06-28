@@ -11,8 +11,6 @@ import de.mm20.launcher2.profiles.Profile
 import de.mm20.launcher2.profiles.ProfileManager
 import de.mm20.launcher2.search.Application
 import kotlinx.coroutines.flow.first
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -55,13 +53,14 @@ data class FocusPolicyDecision(
     val frictionResolution: FocusFrictionResolution,
 )
 
-class FocusPolicyService : KoinComponent {
-    private val customAttributesRepository: CustomAttributesRepository by inject()
-    private val searchUiSettings: SearchUiSettings by inject()
-    private val profileManager: ProfileManager by inject()
-    private val historyRepository = FocusHistoryRepository()
-    private val sessionRepository = FocusSessionRepository()
-    private val focusAppClassifier = FocusAppClassifier()
+class FocusPolicyService(
+    private val customAttributesRepository: CustomAttributesRepository,
+    private val searchUiSettings: SearchUiSettings,
+    private val profileManager: ProfileManager,
+    private val historyRepository: FocusHistoryRepository,
+    private val sessionRepository: FocusSessionRepository,
+    private val focusAppClassifier: FocusAppClassifier,
+) {
 
     suspend fun getProfile(app: Application): FocusTemporaryUnlock {
         return customAttributesRepository.getFocusTemporaryUnlock(app).first()

@@ -29,30 +29,29 @@ class AppDatabaseMigrationTest {
     @Test
     fun migrate35To36_preservesTemporaryUnlockAndDeletesLegacyFocusData() {
         withTestDatabase { database ->
-            database.execSQL(
-                """
-                CREATE TABLE `CustomAttributes` (
-                    `key` TEXT NOT NULL,
-                    `type` TEXT NOT NULL,
-                    `value` TEXT NOT NULL,
-                    `id` INTEGER PRIMARY KEY AUTOINCREMENT
-                )
-                """.trimIndent(),
-            )
-            database.execSQL(
-                "INSERT INTO CustomAttributes (`key`, `type`, `value`) VALUES (?, ?, ?)",
-                arrayOf("legacy-focus", "focus", "{\"focusMorningMode\":true}"),
-            )
-            database.execSQL(
-                "INSERT INTO CustomAttributes (`key`, `type`, `value`) VALUES (?, ?, ?)",
-                arrayOf("temporary-unlock", "focus", "{\"temporary_unlock_until_millis\":12345}"),
-            )
-            database.execSQL(
-                "INSERT INTO CustomAttributes (`key`, `type`, `value`) VALUES (?, ?, ?)",
-                arrayOf("unrelated", "tag", "{}"),
-            )
+            createCustomAttributesV35(database)
+            // Legacy FocusProfile payloads stored under the 'focus' type — must be dropped.
+            insertCustomAttribute(database, "legacy-focus", "focus", "{\"focusMorningMode\":true}")
+            insertCustomAttribute(database, "legacy-sleep", "focus", "{\"focusSleepMode\":true}")
+            // FocusTemporaryUnlock payload — produced by FocusTemporaryUnlock.toDatabaseEntity:
+            // type 'focus' with a 'temporary_unlock_until_millis' field — must be preserved.
+            insertCustomAttribute(database, "temporary-unlock", "focus", "{\"temporary_unlock_until_millis\":12345}")
+            // Non-focus attribute — out of scope of the migration, must be untouched.
+            insertCustomAttribute(database, "unrelated", "tag", "{}")
 
             Migration_35_36().migrate(database)
+
+            // (a) Legacy focus payloads removed.
+            assertFalse(rowExists(database, "legacy-focus"))
+            assertFalse(rowExists(database, "legacy-sleep"))
+            // (b) FocusTemporaryUnlock preserved, with its value intact.
+            assertTrue(rowExists(database, "temporary-unlock"))
+            assertEquals(
+                "{\"temporary_unlock_until_millis\":12345}",
+                valueOf(database, "temporary-unlock"),
+            )
+            // Non-focus row untouched.
+            assertTrue(rowExists(database, "unrelated"))
 
             database.query("SELECT `key` FROM CustomAttributes ORDER BY `key`").use { cursor ->
                 assertTrue(cursor.moveToFirst())
@@ -61,6 +60,28 @@ class AppDatabaseMigrationTest {
                 assertEquals("unrelated", cursor.getString(0))
                 assertFalse(cursor.moveToNext())
             }
+        }
+    }
+
+    @Test
+    fun migrate35To36_onlyDeletesFocusTypedRows() {
+        // The migration is gated on `type = 'focus'`; a non-focus row must survive even when its
+        // value coincidentally contains the temporary-unlock marker, and a focus row missing the
+        // marker must be deleted regardless of any other fields it carries.
+        withTestDatabase { database ->
+            createCustomAttributesV35(database)
+            insertCustomAttribute(database, "focus-no-marker", "focus", "{\"someOtherField\":1}")
+            insertCustomAttribute(
+                database,
+                "tag-with-marker-substring",
+                "tag",
+                "{\"temporary_unlock_until_millis\":42}",
+            )
+
+            Migration_35_36().migrate(database)
+
+            assertFalse(rowExists(database, "focus-no-marker"))
+            assertTrue(rowExists(database, "tag-with-marker-substring"))
         }
     }
 
@@ -119,6 +140,44 @@ class AppDatabaseMigrationTest {
             block(helper.writableDatabase)
         } finally {
             helper.close()
+        }
+    }
+
+    private fun createCustomAttributesV35(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            """
+            CREATE TABLE `CustomAttributes` (
+                `key` TEXT NOT NULL,
+                `type` TEXT NOT NULL,
+                `value` TEXT NOT NULL,
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT
+            )
+            """.trimIndent(),
+        )
+    }
+
+    private fun insertCustomAttribute(
+        database: SupportSQLiteDatabase,
+        key: String,
+        type: String,
+        value: String,
+    ) {
+        database.execSQL(
+            "INSERT INTO CustomAttributes (`key`, `type`, `value`) VALUES (?, ?, ?)",
+            arrayOf(key, type, value),
+        )
+    }
+
+    private fun rowExists(database: SupportSQLiteDatabase, key: String): Boolean {
+        database.query("SELECT 1 FROM CustomAttributes WHERE `key` = ?", arrayOf(key)).use { cursor ->
+            return cursor.moveToFirst()
+        }
+    }
+
+    private fun valueOf(database: SupportSQLiteDatabase, key: String): String {
+        database.query("SELECT `value` FROM CustomAttributes WHERE `key` = ?", arrayOf(key)).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            return cursor.getString(0)
         }
     }
 

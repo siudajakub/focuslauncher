@@ -338,10 +338,11 @@ private fun InsightRecommendationCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                if (recommendation.summaryRes != null) {
+                val summaryRes = recommendation.summaryRes
+                if (summaryRes != null) {
                     Text(
                         text = stringResource(
-                            recommendation.summaryRes,
+                            summaryRes,
                             *recommendation.summaryArgs.toTypedArray()
                         ),
                         style = MaterialTheme.typography.bodyMedium,
