@@ -108,14 +108,12 @@ dependencies {
 
     implementation(libs.koin.android)
 
-    implementation(project(":services:accounts"))
     implementation(project(":data:applications"))
     implementation(project(":data:appshortcuts"))
     implementation(project(":services:backup"))
     implementation(project(":services:badges"))
     implementation(project(":core:base"))
     implementation(project(":data:calendar"))
-    implementation(project(":data:contacts"))
     implementation(project(":core:crashreporter"))
     implementation(project(":data:currencies"))
     implementation(project(":data:customattrs"))
@@ -123,7 +121,6 @@ dependencies {
     implementation(project(":data:plugins"))
     implementation(project(":data:themes"))
     implementation(project(":data:i18n"))
-    implementation(project(":data:files"))
     implementation(project(":core:i18n"))
     implementation(project(":services:icons"))
     implementation(project(":core:ktx"))
@@ -143,10 +140,8 @@ dependencies {
     implementation(project(":services:widgets"))
     implementation(project(":services:favorites"))
     implementation(project(":services:focus"))
-    implementation(project(":data:locations"))
     implementation(project(":services:plugins"))
     implementation(project(":core:devicepose"))
-    implementation(project(":services:feed"))
 
     // Uncomment this if you want annoying notifications in your debug builds
     //debugImplementation(libs.leakcanary)

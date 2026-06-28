@@ -4,17 +4,14 @@ import android.app.Application
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
-import de.mm20.launcher2.accounts.accountsModule
 import de.mm20.launcher2.applications.applicationsModule
 import de.mm20.launcher2.appshortcuts.appShortcutsModule
 import de.mm20.launcher2.backup.backupModule
 import de.mm20.launcher2.badges.badgesModule
 import de.mm20.launcher2.calendar.calendarModule
-import de.mm20.launcher2.contacts.contactsModule
 import de.mm20.launcher2.data.customattrs.customAttrsModule
 import de.mm20.launcher2.data.i18nDataModule
 import de.mm20.launcher2.searchable.searchableModule
-import de.mm20.launcher2.files.filesModule
 import de.mm20.launcher2.icons.iconsModule
 import de.mm20.launcher2.music.musicModule
 import de.mm20.launcher2.search.searchModule
@@ -24,11 +21,9 @@ import de.mm20.launcher2.database.databaseModule
 import de.mm20.launcher2.debug.initDebugMode
 import de.mm20.launcher2.globalactions.globalActionsModule
 import de.mm20.launcher2.notifications.notificationsModule
-import de.mm20.launcher2.locations.locationsModule
 import de.mm20.launcher2.permissions.permissionsModule
 import de.mm20.launcher2.data.plugins.dataPluginsModule
 import de.mm20.launcher2.devicepose.devicePoseModule
-import de.mm20.launcher2.feed.feedModule
 import de.mm20.launcher2.plugins.servicesPluginsModule
 import de.mm20.launcher2.preferences.preferencesModule
 import de.mm20.launcher2.profiles.profilesModule
@@ -70,18 +65,15 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
             androidContext(this@LauncherApplication)
             modules(
                 listOf(
-                    accountsModule,
                     applicationsModule,
                     appShortcutsModule,
                     baseModule,
                     badgesModule,
                     calendarModule,
-                    contactsModule,
                     customAttrsModule,
                     databaseModule,
                     favoritesModule,
                     searchableModule,
-                    filesModule,
                     globalActionsModule,
                     iconsModule,
                     musicModule,
@@ -93,7 +85,6 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     unitConverterModule,
                     weatherModule,
                     widgetsModule,
-                    locationsModule,
                     servicesTagsModule,
                     widgetsServiceModule,
                     dataPluginsModule,
@@ -102,7 +93,6 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     devicePoseModule,
                     profilesModule,
                     i18nDataModule,
-                    feedModule,
                     focusModule,
                 )
             )
