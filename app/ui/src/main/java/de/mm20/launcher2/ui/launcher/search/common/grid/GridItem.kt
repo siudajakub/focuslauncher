@@ -55,7 +55,6 @@ import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.search.CalendarEvent
 import de.mm20.launcher2.search.Contact
 import de.mm20.launcher2.search.File
-import de.mm20.launcher2.search.Location
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.search.Searchable
 import de.mm20.launcher2.ui.component.LauncherCard
@@ -68,7 +67,6 @@ import de.mm20.launcher2.ui.launcher.search.common.SearchableItemVM
 import de.mm20.launcher2.ui.launcher.search.contacts.ContactItemGridPopup
 import de.mm20.launcher2.ui.launcher.search.files.FileItemGridPopup
 import de.mm20.launcher2.ui.launcher.search.listItemViewModel
-import de.mm20.launcher2.ui.launcher.search.location.LocationItemGridPopup
 import de.mm20.launcher2.ui.launcher.search.shortcut.ShortcutItemGridPopup
 import de.mm20.launcher2.ui.launcher.transitions.EnterHomeTransitionParams
 import de.mm20.launcher2.ui.launcher.transitions.HandleEnterHomeTransition
@@ -352,18 +350,6 @@ fun ItemPopup(origin: IntRect, searchable: Searchable, onDismissRequest: () -> U
                     is AppShortcut -> {
                         ShortcutItemGridPopup(
                             shortcut = searchable,
-                            show = show,
-                            animationProgress = p,
-                            origin = origin,
-                            onDismiss = {
-                                show.targetState = false
-                            }
-                        )
-                    }
-
-                    is Location -> {
-                        LocationItemGridPopup(
-                            location = searchable,
                             show = show,
                             animationProgress = p,
                             origin = origin,

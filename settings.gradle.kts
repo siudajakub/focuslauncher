@@ -58,7 +58,6 @@ include(":services:favorites")
 include(":services:focus")
 
 include(":plugins:sdk")
-include(":data:locations")
 include(":services:plugins")
 include(":core:devicepose")
 include(":core:profiles")
