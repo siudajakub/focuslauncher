@@ -25,13 +25,11 @@ import androidx.compose.ui.unit.roundToIntRect
 import de.mm20.launcher2.search.AppShortcut
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.search.CalendarEvent
-import de.mm20.launcher2.search.File
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.ui.ktx.toPixels
 import de.mm20.launcher2.ui.launcher.search.apps.AppItem
 import de.mm20.launcher2.ui.launcher.search.calendar.CalendarItem
 import de.mm20.launcher2.ui.launcher.search.common.SearchableItemVM
-import de.mm20.launcher2.ui.launcher.search.files.FileItem
 import de.mm20.launcher2.ui.launcher.search.listItemViewModel
 import de.mm20.launcher2.ui.launcher.search.shortcut.AppShortcutItem
 import de.mm20.launcher2.ui.locals.LocalGridSettings
@@ -90,24 +88,6 @@ fun ListItem(
                                 onLongClick = { onShowDetails(true) }
                             ),
                         app = item,
-                        showDetails = showDetails,
-                        onBack = { onShowDetails(false) }
-                    )
-                }
-                is File -> {
-                    FileItem(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                enabled = !showDetails,
-                                onClick = {
-                                    if (!viewModel.launch(context, bounds)) {
-                                        onShowDetails(true)
-                                    }
-                                },
-                                onLongClick = { onShowDetails(true) }
-                            ),
-                        file = item,
                         showDetails = showDetails,
                         onBack = { onShowDetails(false) }
                     )

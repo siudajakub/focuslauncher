@@ -20,7 +20,6 @@ import de.mm20.launcher2.permissions.PermissionsManager
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.search.AppShortcut
 import de.mm20.launcher2.search.Application
-import de.mm20.launcher2.search.File
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.search.UpdatableSearchable
 import de.mm20.launcher2.search.UpdateResult
@@ -197,11 +196,6 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
 
     fun delete(context: Context) {
         val searchable = searchable.value ?: return
-        if (searchable is File) {
-            viewModelScope.launch {
-                searchable.delete(context.applicationContext)
-            }
-        }
         if (searchable is AppShortcut) {
             viewModelScope.launch {
                 searchable.delete(context.applicationContext)

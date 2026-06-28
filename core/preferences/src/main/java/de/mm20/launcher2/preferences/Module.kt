@@ -4,7 +4,6 @@ import de.mm20.launcher2.backup.Backupable
 import de.mm20.launcher2.preferences.media.MediaSettings
 import de.mm20.launcher2.preferences.search.CalendarSearchSettings
 import de.mm20.launcher2.preferences.search.FavoritesSettings
-import de.mm20.launcher2.preferences.search.FileSearchSettings
 import de.mm20.launcher2.preferences.search.RankingSettings
 import de.mm20.launcher2.preferences.search.SearchFilterSettings
 import de.mm20.launcher2.preferences.search.ShortcutSearchSettings
@@ -27,7 +26,6 @@ val preferencesModule = module {
     single { LauncherDataStore(androidContext()) }
     factory<Backupable>(named<LauncherDataStore>()) { get<LauncherDataStore>() }
     factory { MediaSettings(get()) }
-    factory { FileSearchSettings(get()) }
     factory { UnitConverterSettings(get()) }
     factory { BadgeSettings(get()) }
     factory { UiSettings(get()) }
