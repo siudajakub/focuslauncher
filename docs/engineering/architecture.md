@@ -8,7 +8,7 @@ FocusLauncher is a multi-module Android application using Gradle Kotlin DSL, Jet
 - `app/ui`: launcher activities, Compose surfaces, settings, search orchestration, and focus UI.
 - `core`: shared search types, preferences, permissions, compatibility, profiles, i18n, and utilities.
 - `data`: low-level repositories and providers for applications, custom attributes, database, files, widgets, and other data sources.
-- `services`: higher-level APIs for search, icons, backup, favorites, widgets, and related orchestration.
+- `services`: higher-level APIs for search, icons, backup, favorites, focus, widgets, and related orchestration. `services/focus` owns focus classification, policy, sessions, history, and session-expiry scheduling; UI-coupled focus helpers and screens stay in `app/ui`.
 - `libs`: standalone or vendored libraries.
 - `plugins/sdk`: public plugin contracts retained from upstream.
 - `docs`: VitePress user and contributor documentation.
