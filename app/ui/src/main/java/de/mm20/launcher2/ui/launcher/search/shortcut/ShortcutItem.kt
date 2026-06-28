@@ -83,6 +83,8 @@ fun AppShortcutItem(
 
     val badge by viewModel.badge.collectAsState(null)
     val icon by viewModel.icon.collectAsStateWithLifecycle()
+    val appType by viewModel.appType.collectAsStateWithLifecycle()
+    val noIconsMode by viewModel.noIconsMode.collectAsStateWithLifecycle()
 
     var requestDelete by remember { mutableStateOf(false) }
 
@@ -275,19 +277,64 @@ fun AppShortcutItem(
                     )
                 }
             } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = 16.dp,
-                            top = 8.dp,
-                            bottom = 8.dp,
-                            end = 8.dp
-                        ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
+                val textOnly = noIconsMode &&
+                        appType != de.mm20.launcher2.services.focus.FocusAppType.Essential
+                val showIcon = LocalGridSettings.current.showListIcons && !textOnly
+                if (showIcon) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = 16.dp,
+                                top = 8.dp,
+                                bottom = 8.dp,
+                                end = 8.dp
+                            ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                modifier = Modifier.sharedBounds(
+                                    rememberSharedContentState("label"),
+                                    this@AnimatedContent,
+                                ),
+                                text = shortcut.labelOverride ?: shortcut.label,
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            shortcut.appName?.let {
+                                Text(
+                                    text = stringResource(R.string.shortcut_summary, it),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+                        }
+                        ShapedLauncherIcon(
+                            size = 48.dp,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .sharedElement(
+                                    rememberSharedContentState("icon"),
+                                    this@AnimatedContent,
+                                ),
+                            badge = { badge },
+                            icon = { icon },
+                        )
+                    }
+                } else {
+                    // No-icons / text-only mode: render as a plain text row, matching how
+                    // regular apps appear, instead of an icon with a browser badge.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             modifier = Modifier.sharedBounds(
@@ -295,31 +342,11 @@ fun AppShortcutItem(
                                 this@AnimatedContent,
                             ),
                             text = shortcut.labelOverride ?: shortcut.label,
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.titleMedium,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
-                        shortcut.appName?.let {
-                            Text(
-                                text = stringResource(R.string.shortcut_summary, it),
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                        }
                     }
-                    ShapedLauncherIcon(
-                        size = 48.dp,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .sharedElement(
-                                rememberSharedContentState("icon"),
-                                this@AnimatedContent,
-                            ),
-                        badge = { badge },
-                        icon = { icon },
-                    )
                 }
             }
         }
