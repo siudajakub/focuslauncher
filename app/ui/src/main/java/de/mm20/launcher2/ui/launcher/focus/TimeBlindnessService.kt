@@ -277,8 +277,8 @@ class TimeBlindnessService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Time Blindness Reminders"
-            val descriptionText = "Keeps time blindness reminders active"
+            val name = getString(R.string.time_blindness_channel_name)
+            val descriptionText = getString(R.string.time_blindness_channel_desc)
             val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
@@ -291,8 +291,8 @@ class TimeBlindnessService : Service() {
 
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Time Blindness Active")
-            .setContentText("You will receive gentle reminders of time passing.")
+            .setContentTitle(getString(R.string.time_blindness_notification_title))
+            .setContentText(getString(R.string.time_blindness_notification_text))
             .setSmallIcon(R.drawable.timer_24px)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()

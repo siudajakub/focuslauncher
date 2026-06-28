@@ -359,7 +359,7 @@ private fun StepSchedules(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(stringResource(R.string.preference_screen_integrations), style = MaterialTheme.typography.titleMedium)
-                    Text("Connect Todoist for daily planning", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.focus_system_quick_start_connect_todoist), style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -402,7 +402,7 @@ private fun StepFinish(
             onClick = onFinish,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Finish")
+            Text(stringResource(R.string.focus_system_quick_start_finish))
         }
     }
 }

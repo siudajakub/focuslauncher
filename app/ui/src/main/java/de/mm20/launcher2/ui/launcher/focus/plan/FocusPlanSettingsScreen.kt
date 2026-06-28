@@ -62,9 +62,9 @@ fun FocusPlanSettingsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
-            PreferenceCategory(title = "Timeline") {
+            PreferenceCategory(title = stringResource(R.string.focus_plan_settings_timeline_title)) {
                 SliderPreference(
-                    title = "Start hour",
+                    title = stringResource(R.string.focus_plan_settings_start_hour),
                     value = startHour,
                     onValueChanged = { searchUiSettings.setFocusPlanTimelineStartHour(it) },
                     min = 0,
@@ -73,7 +73,7 @@ fun FocusPlanSettingsScreen(
                 )
 
                 SliderPreference(
-                    title = "End hour",
+                    title = stringResource(R.string.focus_plan_settings_end_hour),
                     value = endHour,
                     onValueChanged = { searchUiSettings.setFocusPlanTimelineEndHour(it) },
                     min = 1,
@@ -82,9 +82,9 @@ fun FocusPlanSettingsScreen(
                 )
             }
 
-            PreferenceCategory(title = "Event durations") {
+            PreferenceCategory(title = stringResource(R.string.focus_plan_settings_durations_title)) {
                 TextPreference(
-                    title = "Default durations (minutes)",
+                    title = stringResource(R.string.focus_plan_settings_durations_default),
                     value = durations.joinToString(", "),
                     onValueChanged = { textValue ->
                         val newDurations = textValue.split(",")

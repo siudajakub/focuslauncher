@@ -123,7 +123,7 @@ fun FocusSettingsScreen() {
                     onClick = { backStack.add(DailyHabitsSettingsRoute) },
                 )
                 SliderPreference(
-                    title = "Timeline start hour",
+                    title = stringResource(R.string.focus_settings_timeline_start_hour),
                     value = startHour,
                     onValueChanged = { searchUiSettings.setFocusPlanTimelineStartHour(it) },
                     min = 0,
@@ -131,7 +131,7 @@ fun FocusSettingsScreen() {
                     label = { Text(String.format("%02d:00", it)) }
                 )
                 SliderPreference(
-                    title = "Timeline end hour",
+                    title = stringResource(R.string.focus_settings_timeline_end_hour),
                     value = endHour,
                     onValueChanged = { searchUiSettings.setFocusPlanTimelineEndHour(it) },
                     min = 1,
@@ -139,7 +139,7 @@ fun FocusSettingsScreen() {
                     label = { Text(String.format("%02d:00", it)) }
                 )
                 TextPreference(
-                    title = "Event durations (minutes)",
+                    title = stringResource(R.string.focus_settings_event_durations),
                     value = durations.joinToString(", "),
                     onValueChanged = { textValue ->
                         val newDurations = textValue.split(",")
