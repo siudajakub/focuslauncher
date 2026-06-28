@@ -1,7 +1,6 @@
 package de.mm20.launcher2.preferences
 
 import de.mm20.launcher2.backup.Backupable
-import de.mm20.launcher2.preferences.feed.FeedSettings
 import de.mm20.launcher2.preferences.media.MediaSettings
 import de.mm20.launcher2.preferences.search.CalendarSearchSettings
 import de.mm20.launcher2.preferences.search.FavoritesSettings
@@ -45,5 +44,4 @@ val preferencesModule = module {
     factory { ClockWidgetSettings(get()) }
     factory { SearchFilterSettings(get()) }
     factory { LocaleSettings(get()) }
-    factory { FeedSettings(get()) }
 }

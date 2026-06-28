@@ -152,7 +152,6 @@ dependencies {
     implementation(project(":services:widgets"))
     implementation(project(":services:favorites"))
     implementation(project(":services:focus"))
-    implementation(project(":services:feed"))
     implementation(project(":core:devicepose"))
 
     testImplementation(libs.bundles.tests)
