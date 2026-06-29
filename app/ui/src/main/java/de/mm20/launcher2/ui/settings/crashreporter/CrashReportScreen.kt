@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,11 +44,11 @@ fun CrashReportScreen(fileName: String) {
         },
         topBarActions = {
             IconButton(onClick = { crashReport?.let { viewModel.shareCrashReport(context, it) } }) {
-                Icon(painterResource(R.drawable.share_24px), contentDescription = null)
+                Icon(painterResource(R.drawable.share_24px), contentDescription = stringResource(R.string.menu_share))
             }
             if (crashReport?.type == CrashReportType.Crash) {
                 IconButton(onClick = { crashReport?.let { viewModel.createIssue(context, it) } }) {
-                    Icon(painterResource(R.drawable.bug_report_24px), contentDescription = null)
+                    Icon(painterResource(R.drawable.bug_report_24px), contentDescription = stringResource(R.string.menu_bugreport))
                 }
             }
         }
