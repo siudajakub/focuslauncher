@@ -63,10 +63,8 @@ data class FocusGuidanceState(
     val requiresSetup: Boolean = false,
 )
 
-private val WHITESPACE_REGEX = Regex("\\s+")
-
 fun normalizeScheduleEventName(name: String): String {
-    return name.trim().lowercase().replace(WHITESPACE_REGEX, " ")
+    return name.trim().lowercase().replace(Regex("\\s+"), " ")
 }
 
 fun resolveDailyScheduleSnapshot(

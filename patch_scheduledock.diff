@@ -1,0 +1,12 @@
+--- ./app/ui/src/main/java/de/mm20/launcher2/ui/settings/focusschedule/ScheduleDockSupport.kt
++++ ./app/ui/src/main/java/de/mm20/launcher2/ui/settings/focusschedule/ScheduleDockSupport.kt
+@@ -13,7 +13,9 @@
+     return ContextCompat.getColor(this, colorId)
+ }
+
++private val WHITESPACE_REGEX = Regex("\\s+")
++
+ private fun String.normalizeScheduleDockEventName(): String {
+-    return normalize().trim().replace(Regex("\\s+"), " ")
++    return normalize().trim().replace(WHITESPACE_REGEX, " ")
+ }

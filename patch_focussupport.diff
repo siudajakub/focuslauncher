@@ -1,0 +1,12 @@
+--- ./services/focus/src/main/java/de/mm20/launcher2/services/focus/FocusSupportModels.kt
++++ ./services/focus/src/main/java/de/mm20/launcher2/services/focus/FocusSupportModels.kt
+@@ -62,7 +62,9 @@
+     }
+ }
+
++private val WHITESPACE_REGEX = Regex("\\s+")
++
+ fun normalizeScheduleEventName(name: String): String {
+-    return name.trim().lowercase().replace(Regex("\\s+"), " ")
++    return name.trim().lowercase().replace(WHITESPACE_REGEX, " ")
+ }

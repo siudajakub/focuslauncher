@@ -1,0 +1,11 @@
+--- File.kt
++++ File.kt
+@@ -107,6 +107,8 @@
+     }
+ }
+
++private val FILE_EXTENSION_REGEX = Regex(".+\\..+")
++
+ fun File.fileTypeName(context: Context): String {
+     return if (isDir) {
+         context.getString(R.string.file_type_directory)

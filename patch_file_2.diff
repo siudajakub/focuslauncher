@@ -1,0 +1,20 @@
+--- ./core/base/src/main/java/de/mm20/launcher2/search/File.kt
++++ ./core/base/src/main/java/de/mm20/launcher2/search/File.kt
+@@ -107,6 +107,8 @@
+     }
+ }
+
++private val FILE_EXTENSION_REGEX = Regex(".+\\..+")
++
+ fun File.fileTypeName(context: Context): String {
+     return if (isDir) {
+         context.getString(R.string.file_type_directory)
+@@ -124,7 +126,7 @@
+                 else -> R.string.file_type_none
+             }
+         }
+-        if (resource == R.string.file_type_none && label.matches(Regex(".+\\..+"))) {
++        if (resource == R.string.file_type_none && label.matches(FILE_EXTENSION_REGEX)) {
+             val extension = label.substringAfterLast(".").uppercase(Locale.getDefault())
+             return context.getString(R.string.file_type_generic, extension)
+         }

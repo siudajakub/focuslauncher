@@ -13,10 +13,8 @@ fun findScheduleDockMapping(
     }
 }
 
-private val WHITESPACE_REGEX = Regex("\\s+")
-
 private fun String.normalizeScheduleDockEventName(): String {
-    return normalize().trim().replace(WHITESPACE_REGEX, " ")
+    return normalize().trim().replace(Regex("\\s+"), " ")
 }
 
 fun formatScheduleDockAppsSummary(appLabels: List<String>): String {
