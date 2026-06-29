@@ -139,11 +139,12 @@ internal class AppShortcutRepositoryImpl(
 
 
                     val shortcutQuery = LauncherApps.ShortcutQuery()
+                    // Focus launcher: only surface pinned shortcuts (incl. PWA / "add to home
+                    // screen" web links). Dynamic, manifest, and cached shortcuts surface app
+                    // activities ("New tweet", "Compose") and conversation/contact shortcuts,
+                    // which we deliberately keep out of an apps-first search.
                     shortcutQuery.setQueryFlags(
                         LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED or
-                                LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
-                                LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or
-                                LauncherApps.ShortcutQuery.FLAG_MATCH_CACHED or
                                 LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED_BY_ANY_LAUNCHER
                     )
                     val shortcuts = launcherApps.getShortcuts(shortcutQuery, Process.myUserHandle())
