@@ -27,7 +27,9 @@ import de.mm20.launcher2.services.favorites.FavoritesService
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.services.focus.FocusAppClassifier
 import de.mm20.launcher2.services.focus.FocusAppType
-import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
+import de.mm20.launcher2.services.focus.FocusLaunchCoordinator
+import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
+import de.mm20.launcher2.ui.launcher.focus.toLaunchBounds
 import de.mm20.launcher2.ui.launcher.search.ListItemViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -41,12 +43,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.koin.core.component.inject
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchableItemVM : ListItemViewModel(), KoinComponent {
-    private val focusLaunchCoordinator = FocusLaunchCoordinator()
+    private val focusLaunchCoordinator: FocusLaunchCoordinator = get { parametersOf(FocusGateLauncherImpl()) }
     private val focusAppClassifier: FocusAppClassifier by inject()
     private val favoritesService: FavoritesService by inject()
     private val customAttributesRepository: CustomAttributesRepository by inject()
@@ -164,7 +168,7 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
             ActivityOptionsCompat.makeBasic()
         }
         val bundle = options.toBundle()
-        if (focusLaunchCoordinator.launch(searchable, context, bundle, bounds)) {
+        if (focusLaunchCoordinator.launch(searchable, context, bundle, bounds?.toLaunchBounds())) {
             return true
         }
         return false

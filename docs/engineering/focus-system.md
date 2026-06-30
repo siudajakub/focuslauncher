@@ -13,7 +13,7 @@ The focus system uses global app classification plus session and policy state. D
 - Session reconciliation helpers: `FocusSessionRuntime.kt`.
 - Launch decision: `FocusPolicyService`.
 - Classification: `FocusAppClassifier`.
-- Launch routing: `FocusLaunchCoordinator` and launcher entry points.
+- Launch routing: `FocusLaunchCoordinator` (in `:services:focus`) and launcher entry points; it opens the focus gate through the `FocusGateLauncher` interface, implemented by `app/ui`'s `FocusGateLauncherImpl` and injected at construction (a parameterized `focusModule` factory) to keep `:services:focus` free of an `app/ui` compile dependency.
 - History and reports: `FocusHistoryRepository` and focus event DAO.
 
 ## Policy Inputs

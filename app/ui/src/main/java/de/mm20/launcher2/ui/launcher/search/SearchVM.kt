@@ -32,7 +32,8 @@ import de.mm20.launcher2.search.Searchable
 import de.mm20.launcher2.search.isUnspecified
 import de.mm20.launcher2.searchable.SavableSearchableRepository
 import de.mm20.launcher2.searchable.VisibilityLevel
-import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
+import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
+import de.mm20.launcher2.services.focus.FocusLaunchCoordinator
 import de.mm20.launcher2.services.focus.FocusAppClassifier
 import de.mm20.launcher2.services.focus.FocusAppType
 import de.mm20.launcher2.services.favorites.FavoritesService
@@ -52,10 +53,12 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.koin.core.component.inject
+import org.koin.core.parameter.parametersOf
 
 class SearchVM : ViewModel(), KoinComponent {
-    private val focusLaunchCoordinator = FocusLaunchCoordinator()
+    private val focusLaunchCoordinator: FocusLaunchCoordinator = get { parametersOf(FocusGateLauncherImpl()) }
     private val focusAppClassifier: FocusAppClassifier by inject()
 
     private val favoritesService: FavoritesService by inject()
