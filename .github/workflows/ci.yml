@@ -65,17 +65,27 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Report exported schema coverage
+      - name: Gate exported schema for current DB version
         shell: bash
         run: |
-          schema="data/database/schemas/de.mm20.launcher2.database.AppDatabase/37.json"
-          if [[ ! -f "$schema" ]]; then
-            echo "::warning file=$schema::Room schema 37 (the current AppDatabase version) is not exported. Runtime migration validation will still run; exported-schema validation for the current version is unavailable."
+          set -euo pipefail
+          db="data/database/src/main/java/de/mm20/launcher2/database/AppDatabase.kt"
+          # Derive the version from source so this gate never goes stale on a bump.
+          version="$(grep -oE 'version[[:space:]]*=[[:space:]]*[0-9]+' "$db" | grep -oE '[0-9]+')"
+          if [[ -z "$version" ]]; then
+            echo "::error file=$db::Could not parse AppDatabase version from source."
+            exit 1
           fi
-          # Historical schemas 25-36 are not committed: Room only exports the current
-          # version's schema, so they cannot be regenerated from v37 source. Their absence
-          # is expected and non-fatal; migration correctness is covered by the instrumented
-          # AppDatabaseMigrationTest below rather than by exported-schema validation.
+          schema="data/database/schemas/de.mm20.launcher2.database.AppDatabase/${version}.json"
+          if [[ ! -f "$schema" ]]; then
+            echo "::error file=$schema::Room schema $version (the current AppDatabase version) is not exported. Run a build to export it and commit ${version}.json before merging."
+            exit 1
+          fi
+          echo "Exported schema present for current AppDatabase version $version: $schema"
+          # Pre-37 schemas 25-36 are intentionally NOT backfilled: Room only exports the
+          # current version's schema, so they cannot be regenerated from v37 source. This
+          # gate covers the current version onward; runtime migration correctness for the
+          # 24->37 range is covered by the instrumented AppDatabaseMigrationTest below.
 
       - name: Enable KVM access
         run: |
