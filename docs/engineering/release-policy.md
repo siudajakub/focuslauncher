@@ -14,19 +14,20 @@ Each acceptance area mapped to the real workflow and job that covers it.
 | Docs (agent docs / skills) | `.github/workflows/ci.yml` job `agent-docs` ("Agent documentation and skills") | Runs `python3 tools/check_agent_docs.py`. Triggers on push/PR to `main` and `workflow_dispatch`. |
 | JVM tests | `.github/workflows/ci.yml` job `build-and-test` ("JVM tests and debug build") | Single step runs `./gradlew test :app:app:assembleDefaultDebug --stacktrace` on JDK 21. Also run by `build-nightly.yml` (`./gradlew test`). |
 | Debug build | `.github/workflows/ci.yml` job `build-and-test` ("JVM tests and debug build") | Same step assembles `:app:app:assembleDefaultDebug`; the APK is built but **not** uploaded as an artifact. |
-| Migration tests | `.github/workflows/ci.yml` job `migration-tests` ("Room migration tests") | Runs `:data:database:connectedDebugAndroidTest` on an API 35 x86_64 emulator (KVM enabled). Runtime migration validation runs; exported-schema validation is partial — see gap below. |
+| Migration tests | `.github/workflows/ci.yml` job `migration-tests` ("Room migration tests") | Runs `:data:database:connectedDebugAndroidTest` on an API 35 x86_64 emulator (KVM enabled). Runtime migration validation runs; a hard gate also fails the job if the exported schema for the current DB version (derived from `AppDatabase.kt`) is missing. |
 | Site/reference docs deploy | `.github/workflows/deploy-docs.yml` job `deploy` | Not an acceptance gate. Builds Dokka + VitePress and deploys GitHub Pages on push to `main` under `docs/**`, `plugins/sdk/**`, `core/shared/**`. Uses JDK 17, not 21. |
 
 Coverage summary: docs, JVM tests, debug build, and migration tests are **all covered** by `ci.yml`.
 
 Known gaps inside the covered areas:
 
-- **Exported-schema validation is incomplete.** `migration-tests` checks for
-  `data/database/schemas/de.mm20.launcher2.database.AppDatabase/36.json` and emits only a
-  non-failing `::warning` if it is missing. In the current tree the exported schemas jump from
-  `24.json` to `37.json` — versions 25–36 are not exported, and the database is at version 37
-  while the job references 36/35. The job never fails on this; runtime migration tests still run,
-  but exported-schema drift is not gated.
+- **Exported-schema gate covers the current version onward.** `migration-tests` derives the
+  current `AppDatabase` version from source (`AppDatabase.kt`, currently 37) and **fails the job**
+  (`::error` + non-zero exit) if `data/database/schemas/de.mm20.launcher2.database.AppDatabase/<version>.json`
+  is missing. `37.json` is present, so the gate passes today; a future version bump without an
+  exported schema will fail CI. Pre-37 schemas 25–36 are intentionally **not** backfilled — Room
+  only exports the current version's schema and cannot regenerate them from v37 source; runtime
+  migration correctness for the `24→37` range is covered by the instrumented `AppDatabaseMigrationTest`.
 - **No release/nightly build is exercised by `ci.yml`.** Only the debug variant is assembled on
   PR/push. The signed `nightly` path is exercised only by the scheduled `build-nightly.yml`.
 - **Lint is not gated.** `app/app` sets `lint { abortOnError = false }`; no workflow runs a lint
@@ -90,9 +91,9 @@ Gate before any public distribution build. Plain bullets; do not convert to stat
 
 - All required CI checks green on the release commit: `agent-docs`, `build-and-test`,
   `migration-tests` (see `docs/engineering/code-review.md` merge gate).
-- Exported Room schema for the current database version is committed and reviewed; resolve the
-  schema-export gap (versions 25–37) before a release that touches persistence. See
-  `docs/engineering/verification.md`.
+- Exported Room schema for the current database version is committed and reviewed; the
+  `migration-tests` gate enforces this for the current version (pre-37 schemas 25–36 are not
+  backfilled — see the gap note above). See `docs/engineering/verification.md`.
 - Version bump applied deliberately: confirm `versionName` and `versionCode` in
   `app/app/build.gradle.kts` are correct for the release channel (not left at the nightly
   date-based override or the upstream `1.39.3` default).
@@ -113,9 +114,9 @@ Gate before any public distribution build. Plain bullets; do not convert to stat
 
 Recommendations only. Not applied. Each is optional and an owner decision.
 
-- **Gate exported-schema drift.** Have `migration-tests` fail (not warn) when the exported schema
-  for the current `AppDatabase` version is missing, and export versions 25–37 so the check is
-  meaningful. Today the missing-schema branch only emits `::warning`.
+- **Gate exported-schema drift.** Done. `migration-tests` derives the current `AppDatabase`
+  version from source and fails (not warns) when the matching exported schema is missing. Pre-37
+  schemas 25–36 are intentionally not backfilled; the gate covers the current version onward.
 - **Upload the debug APK artifact.** `build-and-test` builds `app-default-debug.apk` but discards
   it; uploading it (as `build-nightly.yml` does for the nightly APK) would give reviewers an
   installable build per PR.
