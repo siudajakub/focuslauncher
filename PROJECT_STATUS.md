@@ -1,8 +1,8 @@
 # Project Status
 
-Last reviewed: 2026-06-28
-Branch reviewed: `stabilize/focus-launcher`
-Status: active stabilization. A backlog-clearing wave is committed on `stabilize/focus-launcher` (Koin DI for `:services:focus`, `FocusReviewModels` extraction, focus session-lifecycle tests, migration-test hardening, dead search-preference removal, focus-copy i18n, and four new engineering docs). Not yet pushed or merged to `main`.
+Last reviewed: 2026-06-30
+Branch reviewed: `dist/prep-1.0` (off `main`)
+Status: distribution preparation. The stabilization and integrations-removal work (including issue #49) is merged to `main`. Distribution prep for a first public GitHub Releases build — own app identity, version 1.0.0, release signing, tagged-release CI, rebranded privacy/store docs, and a hard exported-schema CI gate — is committed on `dist/prep-1.0`, not yet merged.
 
 ## Current Product State
 
@@ -26,6 +26,18 @@ Status: active stabilization. A backlog-clearing wave is committed on `stabilize
 - Session lifecycle (`:services:focus`): `FocusSessionRepository`, `FocusSessionRuntime`, `FocusSessionExpiryWorker` scheduling, and `FocusPolicyService`.
 - Launch policy: `FocusPolicyService` (`:services:focus`), coordinated from `FocusLaunchCoordinator` (`:services:focus`), which opens the gate through the `FocusGateLauncher` interface implemented in `app/ui`.
 
+## Distribution Readiness
+
+First public channel is GitHub Releases (signed APK); not Google Play or F-Droid.
+
+- App identity: `applicationId = com.siudajakub.focuslauncher` (own identity; was upstream `de.mm20.launcher2`). The `.release` applicationId suffix is dropped so the public package is clean; `.debug`/`.nightly` still coexist with an installed release.
+- Version: `versionName = 1.0.0`, default `versionCode = 10000`; the nightly workflow keeps its date-based `VERSION_CODE_OVERRIDE`.
+- Signing: the `release` build type now uses the env-based `gh-actions` signing config (was inheriting the debug key). The keystore and secrets (`KEYSTORE`, `KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`) are owner-held in CI.
+- Release CI: `.github/workflows/release.yml` runs tests, then builds, signs, and publishes `assembleDefaultRelease` to a generated GitHub Release on a `v*` tag.
+- Exported-schema drift is now a hard CI gate derived from the live `AppDatabase` version (currently 37); pre-37 schemas are intentionally not backfilled (runtime migration tests cover 24→37).
+- Product docs rebranded to FocusLauncher: `docs/privacy-policy.md` rewritten for the local-only focus feature set, fastlane store descriptions updated, and the readme install section reflects the GitHub Releases channel. Kvaesitso fork attribution is retained.
+- Still owner/pre-release: the keystore identity for public signing; R8/minify is off (`isMinifyEnabled = false`); a fresh Pixel smoke test (last run 2026-06-14); the app icon is still the upstream asset; and the VitePress docs site under `docs/` still describes the upstream feature set (not rebranded — out of scope here).
+
 ## Verification Snapshot
 
 Refreshed on 2026-06-28 with JDK 21 on `stabilize/focus-launcher`, after the backlog-clearing wave (Koin DI, `FocusReviewModels` move, focus lifecycle tests, migration hardening, dead-preference removal, focus-copy i18n).
@@ -36,6 +48,7 @@ Refreshed on 2026-06-28 with JDK 21 on `stabilize/focus-launcher`, after the bac
 - `./gradlew :services:focus:testDebugUnitTest`: BUILD SUCCESSFUL; 73 focus tests pass (59 prior + 14 new session-lifecycle tests covering start, manual end, scheduled expiry, idempotent stale-worker runs, and restart recovery).
 - Pixel smoke test: not re-run in this wave; the last recorded run was 2026-06-14. The step-by-step checklist now lives in `docs/engineering/pixel-smoke-test.md`.
 - `:data:database:connectedDebugAndroidTest`: not run locally (needs an Android emulator); the hardened `Migration_35_36`/`Migration_36_37` tests compile and are covered by CI.
+- Distribution wave (2026-06-30, `dist/prep-1.0`): `./gradlew test :app:app:assembleDefaultDebug` BUILD SUCCESSFUL (all module unit tests pass, APK produced); `:app:app:assembleDefaultRelease --dry-run` configures cleanly with the `gh-actions` release signing config; `python3 tools/check_agent_docs.py` passes. A real signed release build is exercised only in CI (needs the owner-held keystore secrets).
 
 The working tree is clean and the stabilization work is committed, but the branch is not yet merged to `main` and has not had a full release verification, so this snapshot does not mean the branch is release-ready.
 
