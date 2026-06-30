@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
+import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
 import androidx.lifecycle.viewModelScope
 import androidx.core.content.getSystemService
 import de.mm20.launcher2.applications.AppRepository
@@ -98,7 +98,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.koin.core.component.inject
+import org.koin.core.parameter.parametersOf
 import org.koin.compose.koinInject
 import java.time.LocalDate
 import java.time.ZoneId
@@ -597,7 +599,7 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
     private val permissionsManager: PermissionsManager by inject()
     private val searchUiSettings: SearchUiSettings by inject()
     private val context: Context by inject()
-    private val focusLaunchCoordinator = FocusLaunchCoordinator()
+    private val focusLaunchCoordinator: FocusLaunchCoordinator = get { parametersOf(FocusGateLauncherImpl()) }
     private val historyRepository: FocusHistoryRepository by inject()
     private val sessionRepository: FocusSessionRepository by inject()
     private val focusPolicyService: FocusPolicyService by inject()

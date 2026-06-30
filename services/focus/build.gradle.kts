@@ -48,6 +48,7 @@ dependencies {
     implementation(project(":core:profiles"))
     implementation(project(":data:database"))
     implementation(project(":data:customattrs"))
+    implementation(project(":services:favorites"))
 
     testImplementation(libs.junit)
 }

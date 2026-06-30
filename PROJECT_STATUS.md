@@ -16,7 +16,7 @@ Status: active stabilization. A backlog-clearing wave is committed on `stabilize
 - Calculator, website search, Wikipedia, Nextcloud, and Owncloud modules are removed from the active Gradle graph in the current tree. Their dead preference wrappers (`CalculatorSearchSettings`, `WebsiteSearchSettings`, `WikipediaSearchSettings`) and five orphaned persisted fields are now also removed; the DataStore serializer's `ignoreUnknownKeys = true` makes this safe for existing installs.
 - The integrations decision (#4) is made: the **Feed, Contacts, Files, and Locations** subsystems are now physically removed, including the `:data:files`, `:data:contacts`, `:data:locations`, `:services:feed`, `:services:accounts`, and `:libs:webdav` modules and their WebDAV/account backends. The core `File`/`Contact`/`Location` searchable interfaces and the plugin SDK contract are kept (no producers remain); the live Integrations settings screen (Tasks/Todoist), storage permissions, and `GenericFileProvider` are kept for sharing/backup.
 - Retained per the decision: Calendar and Widgets (core); Weather, Music, and Unit conversion (advanced-only / opt-in); the Plugin SDK (developer-only). Rationale recorded in `docs/engineering/integrations-decision.md`.
-- Focus data and services — classification, policy, sessions, history, session runtime, and the session-expiry worker — live in the `:services:focus` module and are now wired through a Koin `focusModule` with constructor injection (no `KoinComponent` self-injection). `FocusReviewModels` has been moved into `:services:focus` (decoupled from `app/ui`'s `R` via `core/i18n`). `FocusLaunchCoordinator` still resides in `app/ui`: its move is blocked by a circular dependency on the `app/ui` `FocusGateActivity` and needs a gate-launcher interface inversion (follow-up on #49).
+- Focus data and services — classification, policy, sessions, history, session runtime, and the session-expiry worker — live in the `:services:focus` module and are now wired through a Koin `focusModule` with constructor injection (no `KoinComponent` self-injection). `FocusReviewModels` has been moved into `:services:focus` (decoupled from `app/ui`'s `R` via `core/i18n`). `FocusLaunchCoordinator` now also lives in `:services:focus`: the former circular dependency on `app/ui`'s `FocusGateActivity` was inverted via a `FocusGateLauncher` interface (with a platform-free `LaunchBounds` type) implemented by `app/ui`'s `FocusGateLauncherImpl` and supplied at the construction boundary through a parameterized `focusModule` factory; `:services:focus` now depends on `:services:favorites` (acyclic). Issue #49 is complete.
 
 ## Architecture Snapshot
 
@@ -24,7 +24,7 @@ Status: active stabilization. A backlog-clearing wave is committed on `stabilize
 - App classification source of truth: `focusEssentialAppKeys` and `focusDistractingAppKeys`.
 - Temporary access source of truth: `FocusTemporaryUnlock` in custom attributes.
 - Session lifecycle (`:services:focus`): `FocusSessionRepository`, `FocusSessionRuntime`, `FocusSessionExpiryWorker` scheduling, and `FocusPolicyService`.
-- Launch policy: `FocusPolicyService` (`:services:focus`), coordinated from `FocusLaunchCoordinator` (still in `app/ui`).
+- Launch policy: `FocusPolicyService` (`:services:focus`), coordinated from `FocusLaunchCoordinator` (`:services:focus`), which opens the gate through the `FocusGateLauncher` interface implemented in `app/ui`.
 
 ## Verification Snapshot
 

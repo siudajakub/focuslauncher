@@ -94,6 +94,7 @@ import java.time.ZoneId
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 
 class FocusGateActivity : BaseActivity() {
     private val searchableRepository: SavableSearchableRepository by inject()
@@ -132,7 +133,7 @@ class FocusGateActivity : BaseActivity() {
         fun intent(
             context: android.content.Context,
             searchable: Application,
-            launchBounds: IntRect? = null,
+            launchBounds: LaunchBounds? = null,
         ): Intent {
             return Intent(context, FocusGateActivity::class.java)
                 .putExtra(EXTRA_SEARCHABLE_KEY, searchable.key)
@@ -237,7 +238,7 @@ private fun FocusGateScreen(
     onFinish: () -> Unit,
 ) {
     val context = LocalContext.current
-    val launchCoordinator = remember { FocusLaunchCoordinator() }
+    val launchCoordinator: FocusLaunchCoordinator = koinInject { parametersOf(FocusGateLauncherImpl()) }
     val focusPolicyService: FocusPolicyService = koinInject()
     val historyRepository: FocusHistoryRepository = koinInject()
     val calendarRepository: CalendarRepository = koinInject()

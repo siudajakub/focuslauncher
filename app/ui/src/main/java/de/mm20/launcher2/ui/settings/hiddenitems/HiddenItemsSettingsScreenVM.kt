@@ -13,7 +13,8 @@ import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.searchable.VisibilityLevel
-import de.mm20.launcher2.ui.launcher.focus.FocusLaunchCoordinator
+import de.mm20.launcher2.services.focus.FocusLaunchCoordinator
+import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,10 +25,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.koin.core.component.inject
+import org.koin.core.parameter.parametersOf
 
 class HiddenItemsSettingsScreenVM : ViewModel(), KoinComponent {
-    private val focusLaunchCoordinator = FocusLaunchCoordinator()
+    private val focusLaunchCoordinator: FocusLaunchCoordinator = get { parametersOf(FocusGateLauncherImpl()) }
     private val appRepository: AppRepository by inject()
     private val searchableRepository: SavableSearchableRepository by inject()
     private val iconService: IconService by inject()

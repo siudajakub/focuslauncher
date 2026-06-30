@@ -8,4 +8,7 @@ val focusModule = module {
     factory { FocusSessionRepository(get<AppDatabase>()) }
     factory { FocusHistoryRepository(get()) }
     factory { FocusPolicyService(get(), get(), get(), get(), get(), get()) }
+    factory { (gateLauncher: FocusGateLauncher) ->
+        FocusLaunchCoordinator(get(), get(), get(), gateLauncher)
+    }
 }
