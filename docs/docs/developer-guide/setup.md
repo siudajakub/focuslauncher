@@ -7,5 +7,5 @@ sidebar_position: 1
 ## Setup the build environment
 
 - Download and install the latest canary version of Android Studio and the Android SDK: https://developer.android.com/studio/preview.
-- Clone the Git repository: `git clone https://github.com/MM2-0/Kvaesitso`
+- Clone the Git repository: `git clone https://github.com/siudajakub/focuslauncher`
 - Open the project in Android Studio

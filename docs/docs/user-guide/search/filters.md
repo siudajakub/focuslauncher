@@ -14,12 +14,13 @@ Filters are reset when the search bar is cleared.
 
 ## Available filters
 
-- **Online results:** Allows the launcher to search online services like Wikipedia. This filter is
-  disabled by default, to protect your privacy.
-- **Type filters:**: Filter by result type (e.g., apps, contacts, files, places …). Neither of these
-  filters imply an online search. You need to enable the online results filter as well if
-  you want to search Wikipedia, for example.
+- **Type filters:** Filter by result type. FocusLauncher's search is local and apps-first, so
+  these narrow the results to the kinds of items the launcher indexes (e.g., apps, shortcuts).
 - **Hidden results**: Show search results that were hidden by the user.
+
+> [!NOTE]
+> FocusLauncher does not search the web. There is no online-results, Wikipedia, or
+> website search — all search is performed locally on the device.
 
 ## Customization
 

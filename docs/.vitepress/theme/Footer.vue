@@ -16,15 +16,15 @@
         </div>
         <div class="column">
           <h4>Links</h4>
-          <a href="https://github.com/MM2-0/Kvaesitso" target="_blank"
+          <a href="https://github.com/siudajakub/focuslauncher" target="_blank"
             >Github</a
           >
-          <a href="https://t.me/Kvaesitso" target="_blank">Telegram</a>
         </div>
       </div>
       <p class="copyright">
-        Copyright © 2026 MM2-0 and the Kvaesitso contributors. Built with
-        VitePress.
+        Copyright © 2026 FocusLauncher contributors. FocusLauncher is a fork of
+        <a href="https://github.com/MM2-0/Kvaesitso" target="_blank">Kvaesitso</a>
+        by MM2-0 and the Kvaesitso contributors. Built with VitePress.
       </p>
     </div>
   </footer>

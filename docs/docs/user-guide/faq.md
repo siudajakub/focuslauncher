@@ -64,27 +64,14 @@ blur](https://source.android.com/docs/core/display/window-blurs). This is a flag
 be enabled by the device manufacturer to indicate that their implementation of the render engine
 supports blur effects and that the GPU is powerful enough to handle them.
 
-## How can I set up the nightly version?
+## Where do I download FocusLauncher?
 
-### Using an F-Droid client
+FocusLauncher is distributed as a signed APK on
+[GitHub Releases](https://github.com/siudajakub/focuslauncher/releases). Download the latest
+release and install it on your device. See the [Get Started](/docs/user-guide/) page for
+details.
 
-1. Add the MM20 repo to your F-Droid client: `https://fdroid.mm20.de/repo`
-2. After a refresh, you should be able to find Kvaesitso Nightly using the search
+## Will FocusLauncher ever be available on the Play Store?
 
-### Using Obtainium
-
-1. In Obtainium, select "Add an app"
-2. Enter the URL : [https://fdroid.mm20.de/](https://fdroid.mm20.de/)
-3. Change the source as "Third Party F-Droid Repos"
-4. In ID/Name of the app, enter : ```nightly```
-5. Then, click Add !
-
-You can now enjoy the daily update in Obtainium :)
-
-### Manual download
-
-[Here](https://fdroid.mm20.de/app/de.mm20.launcher2.nightly)
-
-## Will Kvaesitso ever be available on the Play Store?
-
-No, probably not. It's not worth the hassle of dealing with Google's policies and restrictions.
+No. FocusLauncher is distributed only through GitHub Releases, not the Google Play Store or
+F-Droid.

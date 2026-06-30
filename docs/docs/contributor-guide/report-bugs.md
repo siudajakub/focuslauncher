@@ -1,6 +1,6 @@
 # Report Bugs
 
-The easiest way to get involved is to report bugs on the [issue tracker](https://github.com/MM2-0/Kvaesitso/issues). Before you open a new issue, please make sure you have searched for existing issues to avoid duplications and that you are running the latest release version of the launcher.
+The easiest way to get involved is to report bugs on the [issue tracker](https://github.com/siudajakub/focuslauncher/issues). Before you open a new issue, please make sure you have searched for existing issues to avoid duplications and that you are running the latest release version of the launcher.
 
 Please include all relevant information such as:
 
