@@ -1,9 +1,13 @@
 # Privacy Policy
 
 This policy explains what data FocusLauncher processes, how it is used, and the measures taken to
-protect it. FocusLauncher is a focus-first Android launcher. It has no servers and no analytics: all
-data described below is stored locally on your device, in an app-private directory that other apps
-and users cannot access. Nothing is transmitted to us.
+protect it. FocusLauncher is a focus-first Android launcher. It runs no servers of its own and
+performs no analytics or tracking: by default all data described below stays on your device, in an
+app-private directory that other apps and users cannot access, and nothing is sent to us.
+
+The exception is optional features you explicitly enable that contact a third party — most notably
+the Weather feature, which sends your location to a third-party weather provider to fetch a
+forecast. These are described in "Data Protection and Network Access" below.
 
 ## 1. Data FocusLauncher Processes
 
@@ -23,6 +27,9 @@ To provide search and focus features, FocusLauncher reads and stores the followi
   only when you explicitly choose to share a note.
 - **Calendar events (optional):** If you grant calendar access, event details (such as title, time,
   location, and description) are read locally to show them in search.
+- **Location (only for Weather):** If you enable the optional Weather feature with automatic
+  location, FocusLauncher uses your device location to request a forecast. It is used only for that
+  purpose; see "Data Protection and Network Access".
 - **Crash and diagnostic reports:** Technical details about crashes and errors, used for debugging.
   These are stored locally and are never sent automatically.
 
@@ -36,15 +43,24 @@ To provide search and focus features, FocusLauncher reads and stores the followi
 - **Crash reporting:** Crash and diagnostic reports are stored locally and shared only if you choose
   to do so (for example, by attaching them to a GitHub issue).
 
-## 3. Data Protection
+## 3. Data Protection and Network Access
 
-- **Local storage:** All data is stored on your device in a secure, app-specific directory that
-  other apps cannot read.
-- **No transmission:** FocusLauncher does not send your data to us or to any third party. The only
-  network access is the normal launching of other apps and any web links you choose to open in your
-  browser.
+- **Local storage:** All on-device data is stored in a secure, app-specific directory that other
+  apps cannot read.
+- **No backend or analytics of ours:** FocusLauncher has no server and collects no analytics or
+  telemetry. We receive nothing.
+- **Network and third-party services:** Some optional features reach the network only when you turn
+  them on:
+    - **Weather (optional):** When enabled, FocusLauncher sends your location (approximate or
+      precise, per your choice) to a third-party weather provider to fetch a forecast. That request
+      is handled by the provider under its own privacy policy. Disabling Weather stops it.
+    - **Any integration you connect** (for example a tasks/to-do provider) communicates with that
+      service using credentials you supply, and only while it is connected.
+
+  Apart from these, the only network activity is the normal launching of other apps and any web
+  links you choose to open in your browser.
 - **Your control:** You can remove all stored data at any time by clearing the app's storage or
-  uninstalling FocusLauncher.
+  uninstalling FocusLauncher, and you can disable any optional networked feature in settings.
 
 ## 4. Permissions
 
@@ -53,8 +69,13 @@ required for core launcher behavior:
 
 - **Usage access:** Required for app-usage ranking and the Time Awareness feature.
 - **Notifications:** Used to deliver time-awareness reminders and focus-related notifications.
-- **Calendar:** Optional; only used if you want calendar events in search.
-- **Storage:** Used for sharing and backup of your local launcher data.
+- **Location:** Optional; used only by the Weather feature, and only if you enable it with automatic
+  location.
+- **Calendar:** Optional; only used if you want calendar events in focus scheduling and search.
+- **Query installed apps:** Used to list and search the apps on your device — a launcher's core
+  function.
+- **Storage:** Used for sharing notes and logs and for backup and restore of your local launcher
+  data.
 
 You can grant or revoke these permissions at any time in your device settings; revoking a permission
 disables the feature that depends on it.

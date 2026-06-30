@@ -36,7 +36,9 @@ First public channel is GitHub Releases (signed APK); not Google Play or F-Droid
 - Release CI: `.github/workflows/release.yml` runs tests, then builds, signs, and publishes `assembleDefaultRelease` to a generated GitHub Release on a `v*` tag.
 - Exported-schema drift is now a hard CI gate derived from the live `AppDatabase` version (currently 37); pre-37 schemas are intentionally not backfilled (runtime migration tests cover 24→37).
 - Product docs rebranded to FocusLauncher: `docs/privacy-policy.md` rewritten for the local-only focus feature set, fastlane store descriptions updated, and the readme install section reflects the GitHub Releases channel. Kvaesitso fork attribution is retained.
-- Still owner/pre-release: the keystore identity for public signing; R8/minify is off (`isMinifyEnabled = false`); a fresh Pixel smoke test (last run 2026-06-14); the app icon is still the upstream asset; and the VitePress docs site under `docs/` still describes the upstream feature set (not rebranded — out of scope here).
+- The launcher icon is already a custom Focus Launcher adaptive mark (navy home/dock motif in `core/base/src/main/res`, `minSdk = 26` so adaptive-only), not the upstream search icon.
+- R8/minify is intentionally off for 1.0.0: `proguard-rules.pro` has no keep rules for Koin/kotlinx.serialization/Room/Compose, so enabling it needs a vetted rule set plus on-device testing (post-1.0 follow-up).
+- Still owner/pre-release: the keystore identity for public signing; a fresh Pixel smoke test (last run 2026-06-14); and a release-readiness review pass (in progress).
 
 ## Verification Snapshot
 

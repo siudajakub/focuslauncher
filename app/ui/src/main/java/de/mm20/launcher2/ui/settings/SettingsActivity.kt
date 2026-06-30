@@ -338,11 +338,7 @@ class SettingsActivity : BaseActivity() {
     }
 
     private fun getStartRoute(intent: Intent): NavKey? {
-        val routeName = if (intent.data?.host == "kvaesitso.mm20.de") {
-            intent.data?.getQueryParameter("route") ?: return null
-        } else {
-            intent.getStringExtra(EXTRA_ROUTE) ?: return null
-        }
+        val routeName = intent.getStringExtra(EXTRA_ROUTE) ?: return null
         return when(routeName) {
             ROUTE_FOCUS_SYSTEM -> FocusSettingsRoute
             ROUTE_FOCUS_APPS -> FocusAppsSettingsRoute

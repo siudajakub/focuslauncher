@@ -46,6 +46,9 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("gh-actions")
+            // R8 / resource shrinking is intentionally off for 1.0.0: no keep rules exist
+            // for Koin / kotlinx.serialization / Room / Compose / the plugin AIDL, so enabling
+            // it needs a vetted rule set plus on-device testing (post-1.0 follow-up).
             isMinifyEnabled = false
             isShrinkResources = false
         }

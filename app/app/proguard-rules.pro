@@ -1,6 +1,9 @@
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.kts.
+# proguardFiles setting in build.gradle.kts.
+#
+# NOTE: R8/minification is intentionally disabled for the release build type
+# (see app/app/build.gradle.kts). These rules are not currently applied.
 #
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
