@@ -304,3 +304,7 @@ fabric.properties
 # Transient ANR / crash dumps pulled from devices for debugging.
 anr_log.txt
 *.anr
+
+# Patch/merge detritus from automated edits (must never be committed).
+*.orig
+*.rej
