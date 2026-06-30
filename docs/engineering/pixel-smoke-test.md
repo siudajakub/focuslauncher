@@ -83,8 +83,8 @@ Reuse these exact commands; do not invent package names or paths.
 ```bash
 adb devices -l
 adb install -r app/app/build/outputs/apk/default/debug/app-default-debug.apk
-adb shell am start -W -n de.mm20.launcher2.debug/de.mm20.launcher2.ui.launcher.LauncherActivity
-adb shell dumpsys activity exit-info de.mm20.launcher2.debug
+adb shell am start -W -n com.siudajakub.focuslauncher.debug/de.mm20.launcher2.ui.launcher.LauncherActivity
+adb shell dumpsys activity exit-info com.siudajakub.focuslauncher.debug
 ```
 
 When a startup failure disappears from logcat, read the crash record:
