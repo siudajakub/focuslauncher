@@ -26,11 +26,11 @@ android {
 
     compileSdk = libs.versions.compileSdk.get().toInt()
     defaultConfig {
-        applicationId = "de.mm20.launcher2"
+        applicationId = "com.siudajakub.focuslauncher"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = System.getenv("VERSION_CODE_OVERRIDE")?.toIntOrNull() ?: 2026012400
-        versionName = "1.39.3"
+        versionCode = System.getenv("VERSION_CODE_OVERRIDE")?.toIntOrNull() ?: 10000
+        versionName = "1.0.0"
         signingConfig = signingConfigs.getByName("debug")
     }
 
@@ -45,7 +45,7 @@ android {
 
     buildTypes {
         release {
-            applicationIdSuffix = ".release"
+            signingConfig = signingConfigs.findByName("gh-actions")
             isMinifyEnabled = false
             isShrinkResources = false
         }
