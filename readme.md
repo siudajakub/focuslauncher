@@ -19,8 +19,11 @@ The current direction is focused on turning the launcher into a more intentional
 
 ## Installation
 
-There is no public distribution channel configured yet.
-For now, the project is intended to be built locally from source or shared through GitHub releases later.
+FocusLauncher is distributed as a signed APK through GitHub Releases. Download the latest release
+from [github.com/siudajakub/focuslauncher/releases](https://github.com/siudajakub/focuslauncher/releases)
+and install it on your device. It is not published on Google Play or F-Droid.
+
+You can also build it locally from source (see Development below).
 
 ## Development
 

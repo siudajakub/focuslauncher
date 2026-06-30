@@ -1,1 +1,12 @@
-<p><i>Kvaesitso</i> is a launcher application for Android which replaces the device's default home screen. It has been built from scratch, meaning it is not based on the AOSP launcher (like many other third party launchers) nor does it try to recreate this launcher. Instead, <i>Kvæsitso</i> follows its own concepts.</i><p>The main feature is a global search which does not only let you search on device for apps, contacts, and calendar events, but also on web services like Wikipedia or your Nextcloud Instance. Additionally it includes some useful tools, for example a calculator and a unit converter. You are looking for a document or an information? Just search for it and <i>Kvæsitso</i> shows you the fastest way to it.</p>
+<p><i>FocusLauncher</i> is a focus-first launcher that replaces your device's home screen and helps you use your phone more deliberately. It is a fork of <i>Kvaesitso</i>, reshaped around calmer surfaces, intentional app launches, and less impulsive screen time.</p>
+<p>Instead of a busy, distraction-heavy home screen, FocusLauncher keeps things apps-first: a fast, on-device search centered on the apps you actually use, with no global web search or feeds pulling your attention away.</p>
+<p>To support focus, you can:</p>
+<ul>
+<li>Separate essential apps from distracting ones with simple app classification.</li>
+<li>Add explainable launch friction in front of distracting apps, so opening them is a choice rather than a reflex.</li>
+<li>Run focus sessions with temporary unlocks and daily limits to keep distracting apps in check.</li>
+<li>Review your focus history and weekly focus insights to see how your habits change over time.</li>
+<li>Stay grounded with Time Awareness, which surfaces periodic reminders of how long you have been on your device.</li>
+<li>Jot things down instantly with Quick Capture notes, kept locally and shared only when you choose.</li>
+</ul>
+<p>FocusLauncher is local-first and privacy-respecting: your app list, usage data, focus state, and notes stay on your device. There are no accounts and no analytics.</p>
