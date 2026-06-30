@@ -29,7 +29,6 @@ This is a factual inventory of legacy surface still present in the current tree.
 - Orphaned persisted fields for removed search providers (`fileSearchProviders`, `contactSearch*`, `locationSearch*`, `feedProviderPackage`) — kept; some are read by historical DataStore migrations and the serializer ignores unknown keys.
 - Some settings routes, strings, serializers, and provider abstractions inherited from upstream
 - Unreachable orphaned settings routes and screens (e.g., smartspacer, apps search settings).
-- Stale routes in SettingsActivity (ROUTE_WEATHER_INTEGRATION, ROUTE_MEDIA_INTEGRATION) that will crash if invoked by widgets.
 - Serialization-coupled enum/sealed cases left for compatibility: `KeyboardFilterBarItem.Contacts`, `GestureAction.Feed` (no longer writable; dispatch is a no-op).
 - Hardcoded Wikipedia/Websites strings in KeyboardFilterBarItem.
 
@@ -41,6 +40,7 @@ Presence in this list does not mean a feature is reachable from the main UX. Che
 - `FocusTemporaryUnlock` remains intentionally as temporary per-app access state.
 - Migration `35 -> 36` removes legacy custom attributes that used the old focus payload.
 - Global classification remains in `focusEssentialAppKeys` and `focusDistractingAppKeys`.
+- Focus settings live in a single `FocusSettingsScreen` hub; the legacy `FocusSystemSettingsScreen` and its `FocusSystemSettingsRoute`/`FocusSystemBasicsRoute` were removed. The `ROUTE_FOCUS_SYSTEM` deep link still resolves to the hub for back-compat.
 
 ## Search Legacy State
 

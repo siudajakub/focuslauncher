@@ -687,7 +687,6 @@
     <string name="focus_settings_status_title">Status</string>
     <string name="focus_settings_status_focus_enabled">Focus mode is on</string>
     <string name="focus_settings_status_focus_off">Focus mode is off</string>
-    <string name="focus_settings_quick_start_card_not_started">Not started</string>
     <string name="focus_settings_quick_start_card_partly_configured">Partly configured</string>
     <string name="focus_settings_quick_start_card_ready">Ready</string>
     <string name="focus_settings_quick_start_card_description">Quick guided setup for focus mode, app rules, and daily planning</string>
@@ -698,6 +697,7 @@
     <string name="focus_settings_visibility_summary">Hide or fade distracting apps, icon modes</string>
     <string name="focus_settings_friction_title">Friction and blocking</string>
     <string name="focus_settings_friction_summary">Launch delays, adaptive friction, daily limits</string>
+    <string name="focus_settings_modes_friction_title">Modes and friction</string>
     <string name="focus_settings_schedules_title">Schedules and day</string>
     <string name="focus_settings_schedules_summary">Daily schedule, habits, time rules</string>
     <string name="focus_settings_reports_title">Reports</string>
@@ -737,9 +737,6 @@
     <string name="focus_system_preset_hard_summary">Stronger delay, shorter unlocks, and stricter protection for deep work</string>
     <string name="focus_system_preset_minimal_title">Preset: Minimal</string>
     <string name="focus_system_preset_minimal_summary">Keep the launcher calm with lighter rules and fewer prompts</string>
-    <string name="focus_system_core_title">Core rules</string>
-    <string name="focus_system_rules_title">Advanced focus rules</string>
-    <string name="focus_system_rules_summary">Delays, unlock duration, productivity windows, and search behavior</string>
     <string name="focus_system_adaptive_friction_title">Adaptive friction</string>
     <string name="focus_system_adaptive_friction_auto">Auto</string>
     <string name="focus_system_adaptive_friction_light">Light</string>

@@ -70,16 +70,12 @@ import de.mm20.launcher2.ui.settings.debug.StringNormalizerTestRoute
 import de.mm20.launcher2.ui.settings.debug.StringNormalizerTestScreen
 import de.mm20.launcher2.ui.settings.easteregg.EasterEggSettingsRoute
 import de.mm20.launcher2.ui.settings.easteregg.EasterEggSettingsScreen
-import de.mm20.launcher2.ui.settings.favorites.FavoritesSettingsRoute
-import de.mm20.launcher2.ui.settings.favorites.FavoritesSettingsScreen
 import de.mm20.launcher2.ui.settings.focushabits.DailyHabitsSettingsRoute
 import de.mm20.launcher2.ui.settings.focushabits.DailyHabitsSettingsScreen
 import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsRoute
 import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsScreen
 import de.mm20.launcher2.ui.settings.focussystem.FocusQuickStartRoute
 import de.mm20.launcher2.ui.settings.focussystem.FocusSystemQuickStartScreen
-import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsRoute
-import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsScreen
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsRoute
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsScreen
 import de.mm20.launcher2.ui.settings.focusschedule.ScheduleDockSettingsRoute
@@ -201,9 +197,6 @@ class SettingsActivity : BaseActivity() {
             entry<SearchSettingsRoute> {
                 SearchSettingsScreen()
             }
-            entry<FocusSystemSettingsRoute> {
-                FocusSystemSettingsScreen()
-            }
             entry<FocusQuickStartRoute> {
                 FocusSystemQuickStartScreen()
             }
@@ -228,9 +221,6 @@ class SettingsActivity : BaseActivity() {
             }
             entry<HiddenItemsSettingsRoute> {
                 HiddenItemsSettingsScreen()
-            }
-            entry<FavoritesSettingsRoute> {
-                FavoritesSettingsScreen()
             }
             entry<IntegrationsSettingsRoute> {
                 IntegrationsSettingsScreen()
@@ -376,8 +366,6 @@ class SettingsActivity : BaseActivity() {
         const val ROUTE_FOCUS_APPS = "settings/focus/apps"
         const val ROUTE_FOCUS_REPORT = "settings/focus/report"
         const val ROUTE_FOCUS_INTEGRATIONS = "settings/focus/integrations"
-        const val ROUTE_WEATHER_INTEGRATION = "settings/integrations/weather"
-        const val ROUTE_MEDIA_INTEGRATION = "settings/integrations/media"
         const val ROUTE_HIDDEN_ITEMS = "settings/search/hiddenitems"
         const val ROUTE_CRASH_REPORT = "settings/debug/crashreport"
         const val EXTRA_CRASH_REPORT_PATH = "crash_report_path"

@@ -54,12 +54,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.NavKey
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.locals.LocalBackStack
 import de.mm20.launcher2.ui.settings.focusapps.FocusAppsSettingsRoute
 import de.mm20.launcher2.ui.settings.focushabits.DailyHabitsSettingsRoute
 import de.mm20.launcher2.ui.settings.focusschedule.DailyScheduleSettingsRoute
 import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsScreenVM
+import kotlinx.serialization.Serializable
+
+@Serializable
+data object FocusQuickStartRoute : NavKey
 
 enum class PresetSelection {
     None, Balanced, Hard, Minimal
