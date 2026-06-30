@@ -38,7 +38,8 @@ First public channel is GitHub Releases (signed APK); not Google Play or F-Droid
 - Product docs rebranded to FocusLauncher: `docs/privacy-policy.md` rewritten for the local-only focus feature set, fastlane store descriptions updated, and the readme install section reflects the GitHub Releases channel. Kvaesitso fork attribution is retained.
 - The launcher icon is already a custom Focus Launcher adaptive mark (navy home/dock motif in `core/base/src/main/res`, `minSdk = 26` so adaptive-only), not the upstream search icon.
 - R8/minify is intentionally off for 1.0.0: `proguard-rules.pro` has no keep rules for Koin/kotlinx.serialization/Room/Compose, so enabling it needs a vetted rule set plus on-device testing (post-1.0 follow-up).
-- Still owner/pre-release: the keystore identity for public signing; a fresh Pixel smoke test (last run 2026-06-14); and a release-readiness review pass (in progress).
+- The release-readiness review pass is complete (independent code + build/release review): no code blockers. Follow-ups it surfaced are addressed — the privacy policy now accurately discloses Weather/location/network and the real permission set, a dead upstream `kvaesitso.mm20.de` deep link was removed, unused declared permissions (accounts, call, external-storage family, media-location) were pruned from the manifest, and the release-CI GitHub Actions are pinned to commit SHAs.
+- Still owner/pre-release: confirm the keystore identity/secrets for public signing (a `release.yml` `workflow_dispatch` dry run validates wiring) and run a fresh Pixel smoke test (last run 2026-06-14).
 
 ## Verification Snapshot
 

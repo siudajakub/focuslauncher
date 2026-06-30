@@ -74,8 +74,9 @@ required for core launcher behavior:
 - **Calendar:** Optional; only used if you want calendar events in focus scheduling and search.
 - **Query installed apps:** Used to list and search the apps on your device — a launcher's core
   function.
-- **Storage:** Used for sharing notes and logs and for backup and restore of your local launcher
-  data.
+
+Sharing notes or logs and backing up your data use the Android system file picker and share sheet,
+so they need no storage permission.
 
 You can grant or revoke these permissions at any time in your device settings; revoking a permission
 disables the feature that depends on it.
