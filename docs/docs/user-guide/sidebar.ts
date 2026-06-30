@@ -54,19 +54,11 @@ export const UserGuideSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Weather',
         link: '/docs/user-guide/integrations/weather',
       },
-      {
-        text: 'Feed',
-        link: '/docs/user-guide/integrations/feed',
-      },
     ],
   },
   {
     text: 'Search',
     items: [
-      {
-        text: 'Calculator',
-        link: '/docs/user-guide/search/calculator',
-      },
       {
         text: 'Unit Converter',
         link: '/docs/user-guide/search/unit-converter',
@@ -74,10 +66,6 @@ export const UserGuideSidebar: DefaultTheme.SidebarItem[] = [
       {
         text: 'Quick Actions',
         link: '/docs/user-guide/search/quickactions',
-      },
-      {
-        text: 'Online Results',
-        link: '/docs/user-guide/search/online-results',
       },
       {
         text: 'Filters',

@@ -1,11 +1,13 @@
 # Plugins
 
-Plugins are a way to extend the launcher's functionality. Plugins act as data providers for several
+Plugins are a way to extend the launcher's functionality. Plugins act as data providers for
 launcher components.
 
-As of now, only weather provider plugins and file search plugins are supported, but in the long
-term,
-support for all search categories is planned.
+> [!NOTE]
+> The plugin system is inherited from upstream Kvaesitso and is an advanced, developer-oriented
+> surface in FocusLauncher. FocusLauncher removed several upstream search subsystems (file,
+> contact, and location/places search), so plugins that provide those result types no longer have
+> anything to plug into. The weather provider plugin contract still works as an opt-in feature.
 
 ## Usage
 
@@ -37,22 +39,24 @@ settings are available on the plugin's settings page.
 
 ## Available plugins
 
-As of now, the following plugins are available:
+Weather provider plugins remain usable as an opt-in feature. The following weather plugins were
+published for upstream Kvaesitso and use the same SDK:
 
-- **OneDrive plugin**: adds OneDrive file
-  search [[GitHub]](https://github.com/Kvaesitso/Plugin-OneDrive) [[Download]](https://fdroid.mm20.de/app/de.mm20.launcher2.plugin.onedrive)
-- **OpenWeatherMap plugin**: adds OpenWeatherMap weather
-  provider [[GitHub]](https://github.com/Kvaesitso/Plugin-OpenWeatherMap) [[Download]](https://fdroid.mm20.de/app/de.mm20.launcher2.plugin.openweathermap)
-- **Breezy Weather plugin**: forwards weather data from Breezy Weather to
-  Kvaesitso [[GitHub]](https://github.com/Kvaesitso/Plugin-BreezyWeather) [[Download]](https://fdroid.mm20.de/app/de.mm20.launcher2.plugin.breezyweather)
-- **HERE plugin**: weather data, places, and departure times from
-  HERE [[GitHub]](https://github.com/Kvaesitso/Plugin-HERE) [[Download]](https://fdroid.mm20.de/app/de.mm20.launcher2.plugin.here)
-- **Foursquare plugin**: weather data, places, and departure times from
-  Foursquare [[GitHub]](https://github.com/Kvaesitso/Plugin-Foursquare) [[Download]](https://fdroid.mm20.de/app/de.mm20.launcher2.plugin.foursquare)
-- **Tasks.org plugin**: tasks from the Tasks.org app [[GitHub]](https://github.com/Kvaesitso/Plugin-TasksOrg) [[Download]](https://fdroid.mm20.de/app/de.mm20.launcher2.plugin.tasks)
-- **Public transport plugin**: public transport data from several sources, based on
-  [schildbach/public-transport-enabler](https://github.com/schildbach/public-transport-enabler) [[GitHub]](https://github.com/shtrophic/KvaesitsoPlugin-PublicTransport) [[Download]](https://github.com/shtrophic/KvaesitsoPlugin-PublicTransport/releases)
-- **Meteo.lt**: weather data from [meteo.lt](https://meteo.lt), for Lithuania [[GitHub]](https://github.com/leekleak/KvaesitsoMeteoLT) [[Download]](https://github.com/leekleak/KvaesitsoMeteoLT/releases)
+- **OpenWeatherMap plugin**: adds the OpenWeatherMap weather
+  provider [[GitHub]](https://github.com/Kvaesitso/Plugin-OpenWeatherMap)
+- **Breezy Weather plugin**: forwards weather data from Breezy
+  Weather [[GitHub]](https://github.com/Kvaesitso/Plugin-BreezyWeather)
+- **Meteo.lt**: weather data from [meteo.lt](https://meteo.lt), for
+  Lithuania [[GitHub]](https://github.com/leekleak/KvaesitsoMeteoLT) [[Download]](https://github.com/leekleak/KvaesitsoMeteoLT/releases)
+
+> [!WARNING]
+> Upstream also publishes file-search and places/transport plugins (OneDrive, HERE, Foursquare,
+> public transport) and a Tasks.org plugin. FocusLauncher removed the file, contact, and
+> location/places search subsystems, so those plugins are not useful here. They are intentionally
+> not listed.
+>
+> TODO: confirm which of these weather plugins are verified against the current FocusLauncher
+> build before promoting them as officially supported.
 
 ## Plugin development
 

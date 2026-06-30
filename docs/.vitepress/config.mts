@@ -5,8 +5,8 @@ import { ContributorGuideSidebar } from '../docs/contributor-guide/sidebar.ts'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: 'Kvaesitso',
-  description: 'A search-focused, free and open source launcher for Android',
+  title: 'FocusLauncher',
+  description: 'A minimal, focus-first, free and open source launcher for Android',
   themeConfig: {
     logo: '/icon.png',
     // https://vitepress.dev/reference/default-theme-config
@@ -23,13 +23,13 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/MM2-0/Kvaesitso' },
+      { icon: 'github', link: 'https://github.com/siudajakub/focuslauncher' },
     ],
     search: {
       provider: 'local',
     },
     editLink: {
-      pattern: 'https://github.com/MM2-0/Kvaesitso/edit/main/docs/:path',
+      pattern: 'https://github.com/siudajakub/focuslauncher/edit/main/docs/:path',
     },
   },
   head: [['link', { rel: 'icon', href: '/icon.png' }]],

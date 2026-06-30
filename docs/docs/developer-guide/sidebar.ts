@@ -25,10 +25,6 @@ export const DeveloperGuideSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Weather Services',
         link: '/docs/developer-guide/external-apis/weather',
       },
-      {
-        text: 'Wikipedia',
-        link: '/docs/developer-guide/external-apis/wikipedia',
-      },
     ],
   },
   {
