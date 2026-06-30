@@ -12,11 +12,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.zip.GZIPInputStream
+import de.mm20.launcher2.ktx.readTextLimited
 
 class BreezyWeatherReceiver : BroadcastReceiver(), KoinComponent {
 
@@ -36,8 +36,8 @@ class BreezyWeatherReceiver : BroadcastReceiver(), KoinComponent {
 
                 val json = try {
                     val inputStream = GZIPInputStream(gz.inputStream())
-                    inputStream.bufferedReader().use { it.readText() }
-                } catch (e: IOException) {
+                    inputStream.use { it.readTextLimited(2 * 1024 * 1024) }
+                } catch (e: Exception) {
                     CrashReporter.logException(e)
                     return@launch
                 }
