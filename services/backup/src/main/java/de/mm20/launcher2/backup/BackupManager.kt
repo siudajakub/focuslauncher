@@ -115,8 +115,13 @@ class BackupManager(
     private suspend fun extractArchive(inputStream: InputStream, outDir: File) = withContext(Dispatchers.IO) {
         val zipStream = ZipInputStream(inputStream)
         var entry = zipStream.nextEntry
+        val canonicalOutDir = outDir.canonicalPath + File.separator
         while(entry != null) {
             val file = File(outDir, entry.name)
+            if (!file.canonicalPath.startsWith(canonicalOutDir)) {
+                zipStream.closeEntry()
+                throw SecurityException("Zip Slip vulnerability detected: file paths must be strictly within the target directory.")
+            }
             file.outputStream().use {
                 zipStream.copyTo(it)
             }
