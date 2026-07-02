@@ -38,6 +38,11 @@ internal class UnitConverterRepositoryImpl(
 
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
+    companion object {
+        // Performance optimization: Hoist regex compilation to avoid recompiling on every query
+        private val UNIT_REGEX = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
+    }
+
     init {
         scope.launch {
             settings.map { it.enabled && it.currencies }
@@ -76,9 +81,7 @@ internal class UnitConverterRepositoryImpl(
         query: String,
         includeCurrencies: Boolean
     ): UnitConverter? {
-        val regex = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
-
-        val matches = regex.findAll(query)
+        val matches = UNIT_REGEX.findAll(query)
 
         var inputStr: String? = null
         var inputValue: Double? = null
