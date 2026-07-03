@@ -365,7 +365,7 @@ fun SearchBarStylePreference(
                                         if (style == value) R.drawable.check_circle_24px_filled
                                         else R.drawable.circle_24px
                                     ),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.action_select),
                                     tint = if (style == value) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                 )
                             }
