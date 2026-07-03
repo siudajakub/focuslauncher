@@ -115,8 +115,16 @@ class BackupManager(
     private suspend fun extractArchive(inputStream: InputStream, outDir: File) = withContext(Dispatchers.IO) {
         val zipStream = ZipInputStream(inputStream)
         var entry = zipStream.nextEntry
+        val canonicalOutDir = outDir.canonicalPath
         while(entry != null) {
             val file = File(outDir, entry.name)
+            if (!file.canonicalPath.startsWith(canonicalOutDir + File.separator)) {
+                throw SecurityException("Path traversal vulnerability: ${entry.name}")
+            }
+
+            // Ensure parent directories exist
+            file.parentFile?.mkdirs()
+
             file.outputStream().use {
                 zipStream.copyTo(it)
             }
