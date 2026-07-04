@@ -38,6 +38,21 @@ internal fun shouldRestorePreviousDndFilter(
         currentFilter == launcherFilter
 }
 
+/**
+ * True if [nowMinutesOfDay] (0..1439) falls in the daily window `[startMinutes, endMinutes)`.
+ * Windows that wrap past midnight (start >= end, e.g. an evening wind-down 20:00–08:00) are handled.
+ * A zero-length window (start == end) is treated as "off". Pure so callers on any thread/module can
+ * evaluate a schedule without pulling in `LocalDateTime`.
+ */
+fun isWithinDailyWindow(startMinutes: Int, endMinutes: Int, nowMinutesOfDay: Int): Boolean {
+    if (startMinutes == endMinutes) return false
+    return if (startMinutes < endMinutes) {
+        nowMinutesOfDay in startMinutes until endMinutes
+    } else {
+        nowMinutesOfDay >= startMinutes || nowMinutesOfDay < endMinutes
+    }
+}
+
 /** Settings.Secure `accessibility_display_daltonizer` value for full monochrome (grayscale). */
 internal const val DALTONIZER_MONOCHROMACY = 0
 

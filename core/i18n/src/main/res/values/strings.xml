@@ -809,6 +809,8 @@
     <string name="focus_settings_grayscale_focus_summary">Drain the colour from the launcher while a focus session is running. Colour is a strong pull toward distraction; grey is calmer.</string>
     <string name="focus_settings_grayscale_always">Always grayscale the launcher</string>
     <string name="focus_settings_grayscale_always_summary">Keep the home screen greyscale at all times for a calmer, less stimulating surface.</string>
+    <string name="focus_settings_grayscale_winddown">Grayscale in the evening</string>
+    <string name="focus_settings_grayscale_winddown_summary">Automatically drain the launcher\'s colour during your evening wind-down (8pm–8am) — the highest-leverage window for winding down phone use before sleep.</string>
     <string name="focus_settings_system_grayscale">Grayscale the whole phone during focus</string>
     <string name="focus_settings_system_grayscale_summary">Drain colour from every app — not just the launcher — while a focus session runs, then restore it automatically when the session ends. This is where grayscale does the most: colourless apps are far less tempting.</string>
     <string name="focus_settings_system_grayscale_adb">One-time setup: this needs a permission Android only grants over ADB. With the phone connected to a computer, run:\n\nadb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS\n\nUntil then it stays off and changes nothing.</string>

@@ -809,6 +809,19 @@ class SearchUiSettings internal constructor(
         launcherDataStore.update { it.copy(focusSystemGrayscalePreviousMode = value) }
     }
 
+    val focusWindDownGrayscaleEnabled
+        get() = launcherDataStore.data.map { it.focusWindDownGrayscaleEnabled }.distinctUntilChanged()
+
+    fun setFocusWindDownGrayscaleEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusWindDownGrayscaleEnabled = enabled) }
+    }
+
+    val focusQuietHoursStartMinutes
+        get() = launcherDataStore.data.map { it.focusQuietHoursStartMinutes }.distinctUntilChanged()
+
+    val focusQuietHoursEndMinutes
+        get() = launcherDataStore.data.map { it.focusQuietHoursEndMinutes }.distinctUntilChanged()
+
     val focusQuickCaptures
         get() = launcherDataStore.data.map { it.focusQuickCaptures }.distinctUntilChanged()
 

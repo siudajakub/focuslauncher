@@ -158,6 +158,9 @@ data class LauncherSettingsData internal constructor(
     val focusSystemGrayscaleDuringFocus: Boolean = false,
     val focusSystemGrayscalePreviousEnabled: Int = -1,
     val focusSystemGrayscalePreviousMode: Int = -1,
+    // Wind-down: grayscale the launcher during the evening quiet-hours window (opt-in). Reuses the
+    // existing focusQuietHours*Minutes window bounds (default 20:00–08:00).
+    val focusWindDownGrayscaleEnabled: Boolean = false,
     val focusQuickCaptures: List<String> = emptyList(),
 
     val searchAllApps: Boolean = false,

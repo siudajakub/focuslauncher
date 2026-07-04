@@ -72,9 +72,12 @@ DESIGN_SYSTEM.md, verification.md, code-review.md, local-build-env memory.
 - F1a launcher-surface grayscale (wired the dead prefs + settings toggles) — commit 576d1e7d.
 - F1b system-wide grayscale during focus (Settings.Secure daltonizer, ADB-gated, DND-style
   store/restore, unit-tested helpers) — commit ccc6d0f8.
-- F4 gate "opened N times today" self-monitoring counter — pending commit.
+- F4 gate "opened N times today" self-monitoring counter — commit ff2b58e2.
+- Review fixes (one-sec cancel turn-away wiring + Continue hasLaunched guard) — commit 34c15465.
+- F3 wind-down: opt-in evening (8pm–8am) launcher grayscale via minute-ticker + `isWithinDailyWindow`
+  (unit-tested) — pending commit.
 - Docs: `docs/research/anti-distraction-landscape.md` (evidence base + competitive teardown +
-  prioritised backlog); PROJECT_STATUS updated.
+  prioritised backlog); PROJECT_STATUS updated; session report Artifact published.
 
 ## Next Step
 

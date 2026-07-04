@@ -57,6 +57,9 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
     val systemGrayscaleDuringFocus = searchUiSettings.focusSystemGrayscaleDuringFocus
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
+    val windDownGrayscale = searchUiSettings.focusWindDownGrayscaleEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
     val commuteModeEnabled = searchUiSettings.focusCommuteModeEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
@@ -218,6 +221,10 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
 
     fun setSystemGrayscaleDuringFocus(enabled: Boolean) {
         searchUiSettings.setFocusSystemGrayscaleDuringFocus(enabled)
+    }
+
+    fun setWindDownGrayscale(enabled: Boolean) {
+        searchUiSettings.setFocusWindDownGrayscaleEnabled(enabled)
     }
 
     fun setCommuteModeEnabled(enabled: Boolean) {

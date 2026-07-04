@@ -100,14 +100,15 @@ zero-telemetry + open-source. The gaps were mostly *unwired* good ideas.
 - Turn-away tracking + gentle positive reinforcement (evidence #1, #4). Gate + weekly insight.
 - Grayscale that actually works: launcher-surface (always / during focus) + system-wide during
   focus via the ADB-granted daltonizer (evidence #3).
+- Gate "opened N times today" counter (self-monitoring #4) — pairs with turn-aways.
+- Wind-down: opt-in evening (8pm–8am) launcher grayscale — bedtime is the highest-leverage
+  reduction window. (System-wide grayscale during wind-down is a follow-up; kept to the safe
+  launcher-surface layer for now since it has no session lifecycle to hang restore on.)
 - Correctness: daily-budget & escalation no longer miscount non-launch events; gate DB write off the
   main thread; DND restore on the stale-session edge.
 
 **High-value next (not yet built):**
-1. **Gate "opened N times today" counter** (self-monitoring #4) — cheap, pairs with turn-aways.
-2. **Wind-down schedule** — a nightly window that auto-applies grayscale + tighter friction (wire the
-   dead quiet-hours setting; keep opt-in). Bedtime is the highest-leverage reduction window.
-3. **Capped/high-cost emergency override** — raise the cost of the "off switch" (the #1 defeat path);
+1. **Capped/high-cost emergency override** — raise the cost of the "off switch" (the #1 defeat path);
    the app already has an unused emergency-bypass field to build on.
 4. **Notification triage** — Before Launcher's differentiator; allow-list + low-urgency inbox
    (larger: needs a NotificationListenerService).
