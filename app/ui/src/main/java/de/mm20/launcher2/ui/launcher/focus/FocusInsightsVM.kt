@@ -2,7 +2,6 @@ package de.mm20.launcher2.ui.launcher.focus
 
 import de.mm20.launcher2.services.focus.*
 
-import android.app.usage.UsageStatsManager
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,8 +22,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.time.LocalDate
-import java.time.ZoneId
 
 class FocusInsightsVM : ViewModel(), KoinComponent {
 
@@ -65,24 +62,10 @@ class FocusInsightsVM : ViewModel(), KoinComponent {
             DistractingUsageSummary()
         } else {
             withContext(Dispatchers.IO) {
-                summarizeDistractingUsage(queryTodayForegroundUsage(), distracting)
+                summarizeDistractingUsage(queryTodayForegroundUsage(context), distracting)
             }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), DistractingUsageSummary())
-
-    private fun queryTodayForegroundUsage(): Map<String, Long> {
-        val usageStatsManager =
-            context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return emptyMap()
-        val zone = ZoneId.systemDefault()
-        val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
-        val now = System.currentTimeMillis()
-        return try {
-            usageStatsManager.queryAndAggregateUsageStats(startOfDay, now)
-                .mapValues { it.value.totalTimeInForeground }
-        } catch (e: Exception) {
-            emptyMap()
-        }
-    }
 
     val recommendations = combine(
         nonNullReport,

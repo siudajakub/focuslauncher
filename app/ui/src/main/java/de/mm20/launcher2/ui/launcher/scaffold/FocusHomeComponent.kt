@@ -36,6 +36,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
+import de.mm20.launcher2.ui.launcher.focus.queryTodayForegroundUsage
+import de.mm20.launcher2.search.Application
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.lifecycle.viewModelScope
 import androidx.core.content.getSystemService
 import de.mm20.launcher2.applications.AppRepository
@@ -784,10 +788,33 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), HabitPanelState())
 
-    val insightsState = historyRepository.getWeeklyReport().map { report ->
+    // Today's real foreground time on distracting apps (platform UsageStats), for a daily glance on
+    // the home. Empty (0) without Usage Access; queried off-main. Distinct from the gate log.
+    private val todayDistractingSummary = combine(
+        appRepository.findMany(),
+        searchUiSettings.focusDistractingAppKeys,
+    ) { apps, distractingKeys ->
+        val distracting = apps
+            .filterIsInstance<Application>()
+            .filter { it.key in distractingKeys }
+            .map { it.componentName.packageName to (it.labelOverride ?: it.label) }
+        if (distracting.isEmpty()) {
+            DistractingUsageSummary()
+        } else {
+            withContext(Dispatchers.IO) {
+                summarizeDistractingUsage(queryTodayForegroundUsage(context), distracting)
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), DistractingUsageSummary())
+
+    val insightsState = combine(
+        historyRepository.getWeeklyReport(),
+        todayDistractingSummary,
+    ) { report, todayUsage ->
         FocusInsightsPanelState(
             streakDays = report.streakDays,
             resistedCount = report.resistedCount,
+            todayDistractingMinutes = todayUsage.totalMinutes,
             show = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), FocusInsightsPanelState())

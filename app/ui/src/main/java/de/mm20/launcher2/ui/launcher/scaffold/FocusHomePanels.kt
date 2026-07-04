@@ -49,8 +49,19 @@ data class HabitPanelState(
 data class FocusInsightsPanelState(
     val streakDays: Int = 0,
     val resistedCount: Int = 0,
+    val todayDistractingMinutes: Int = 0,
     val show: Boolean = true,
 )
+
+private fun formatMinutesShort(minutes: Int): String {
+    val hours = minutes / 60
+    val mins = minutes % 60
+    return when {
+        hours > 0 && mins > 0 -> "${hours}h ${mins}m"
+        hours > 0 -> "${hours}h"
+        else -> "${mins}m"
+    }
+}
 
 @Composable
 internal fun FocusInsightsCard(
@@ -59,6 +70,12 @@ internal fun FocusInsightsCard(
 ) {
     if (!state.show) return
 
+    val todayText = if (state.todayDistractingMinutes > 0) {
+        stringResource(
+            R.string.focus_home_today_distracting,
+            formatMinutesShort(state.todayDistractingMinutes),
+        )
+    } else null
     val streakText = if (state.streakDays > 0) {
         stringResource(R.string.focus_insights_streak) + ": ${state.streakDays}"
     } else null
@@ -68,7 +85,7 @@ internal fun FocusInsightsCard(
 
     FocusSection(
         title = stringResource(R.string.focus_insights_title),
-        supportingText = listOfNotNull(streakText, turnAwayText)
+        supportingText = listOfNotNull(todayText, streakText, turnAwayText)
             .joinToString("  ·  ")
             .ifBlank { null },
         emphasis = false,

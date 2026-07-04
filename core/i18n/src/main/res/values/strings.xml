@@ -1239,6 +1239,7 @@
     <string name="focus_insights_turnaways">Turn-aways</string>
     <string name="focus_insights_turnaways_subtitle">Times you opened the gate and chose not to continue</string>
     <string name="focus_insights_today_usage_title">Today on distracting apps</string>
+    <string name="focus_home_today_distracting">Today: %1$s on distractions</string>
     <plurals name="focus_insights_today_usage_apps">
         <item quantity="one">across %1$d app</item>
         <item quantity="other">across %1$d apps</item>
