@@ -787,6 +787,7 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
     val insightsState = historyRepository.getWeeklyReport().map { report ->
         FocusInsightsPanelState(
             streakDays = report.streakDays,
+            resistedCount = report.resistedCount,
             show = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), FocusInsightsPanelState())

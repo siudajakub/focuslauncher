@@ -48,6 +48,7 @@ data class HabitPanelState(
 
 data class FocusInsightsPanelState(
     val streakDays: Int = 0,
+    val resistedCount: Int = 0,
     val show: Boolean = true,
 )
 
@@ -58,11 +59,18 @@ internal fun FocusInsightsCard(
 ) {
     if (!state.show) return
 
+    val streakText = if (state.streakDays > 0) {
+        stringResource(R.string.focus_insights_streak) + ": ${state.streakDays}"
+    } else null
+    val turnAwayText = if (state.resistedCount > 0) {
+        stringResource(R.string.focus_insights_turnaways) + ": ${state.resistedCount}"
+    } else null
+
     FocusSection(
         title = stringResource(R.string.focus_insights_title),
-        supportingText = if (state.streakDays > 0) {
-            stringResource(R.string.focus_insights_streak) + ": ${state.streakDays}"
-        } else null,
+        supportingText = listOfNotNull(streakText, turnAwayText)
+            .joinToString("  ·  ")
+            .ifBlank { null },
         emphasis = false,
     ) {
         OutlinedButton(
