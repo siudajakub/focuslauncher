@@ -790,10 +790,13 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
 
     // Today's real foreground time on distracting apps (platform UsageStats), for a daily glance on
     // the home. Empty (0) without Usage Access; queried off-main. Distinct from the gate log.
+    // currentDay is folded in so the number re-queries and the window rolls over at midnight even if
+    // the home stays subscribed; returning to the home also re-subscribes and refreshes it.
     private val todayDistractingSummary = combine(
         appRepository.findMany(),
         searchUiSettings.focusDistractingAppKeys,
-    ) { apps, distractingKeys ->
+        currentDay,
+    ) { apps, distractingKeys, _ ->
         val distracting = apps
             .filterIsInstance<Application>()
             .filter { it.key in distractingKeys }

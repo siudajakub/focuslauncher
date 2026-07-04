@@ -75,7 +75,14 @@ DESIGN_SYSTEM.md, verification.md, code-review.md, local-build-env memory.
 - F4 gate "opened N times today" self-monitoring counter — commit ff2b58e2.
 - Review fixes (one-sec cancel turn-away wiring + Continue hasLaunched guard) — commit 34c15465.
 - F3 wind-down: opt-in evening (8pm–8am) launcher grayscale via minute-ticker + `isWithinDailyWindow`
-  (unit-tested) — pending commit.
+  (unit-tested) — commit d703cc7f.
+- Home insights card now shows weekly turn-aways — commit fb523734.
+- F5 real "Today on distracting apps" screen-time reflection (UsageStats): Insights card + home
+  glance; pure `summarizeDistractingUsage` (unit-tested), shared `queryTodayForegroundUsage` helper —
+  commits 95bbadf3, [home-glance].
+- 9 commits total, ~1,300 lines, 14 new unit tests across 4 files (turn-away, system-grayscale,
+  daily-window, usage-summary). Full `./gradlew test :app:app:assembleDefaultDebug` green;
+  two independent fresh-context reviews (one wiring gap found + fixed).
 - Docs: `docs/research/anti-distraction-landscape.md` (evidence base + competitive teardown +
   prioritised backlog); PROJECT_STATUS updated; session report Artifact published.
 
