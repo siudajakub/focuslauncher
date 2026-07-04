@@ -56,17 +56,20 @@ internal class UnitConverterRepositoryImpl(
         }
     }
 
+    // Cache stateless converters to avoid instantiation on every search query
+    private val staticConverters = listOf(
+        MassConverter(context),
+        LengthConverter(context),
+        DataConverter(context),
+        TimeConverter(context),
+        VelocityConverter(context),
+        AreaConverter(context),
+        TemperatureConverter(context),
+        VolumeConverter(context),
+    )
+
     override suspend fun getAvailableConverters(includeCurrencies: Boolean): List<Converter> {
-        val converters = mutableListOf(
-            MassConverter(context),
-            LengthConverter(context),
-            DataConverter(context),
-            TimeConverter(context),
-            VelocityConverter(context),
-            AreaConverter(context),
-            TemperatureConverter(context),
-            VolumeConverter(context),
-        )
+        val converters = staticConverters.toMutableList()
         if (includeCurrencies) converters.add(CurrencyConverter(currencyRepository))
 
         return converters
@@ -76,9 +79,7 @@ internal class UnitConverterRepositoryImpl(
         query: String,
         includeCurrencies: Boolean
     ): UnitConverter? {
-        val regex = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
-
-        val matches = regex.findAll(query)
+        val matches = QUERY_REGEX.findAll(query)
 
         var inputStr: String? = null
         var inputValue: Double? = null
@@ -123,5 +124,10 @@ internal class UnitConverterRepositoryImpl(
             return converter.convert(context, inputUnit, inputValue, outputUnit)
         }
         return null
+    }
+
+    companion object {
+        // Hoist Regex compilation to companion object to avoid recompiling on every query evaluation
+        private val QUERY_REGEX = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
     }
 }
