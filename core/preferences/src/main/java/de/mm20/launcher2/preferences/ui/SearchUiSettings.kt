@@ -788,6 +788,27 @@ class SearchUiSettings internal constructor(
         launcherDataStore.update { it.copy(focusGrayscaleDuringFocusBlocks = enabled) }
     }
 
+    val focusSystemGrayscaleDuringFocus
+        get() = launcherDataStore.data.map { it.focusSystemGrayscaleDuringFocus }.distinctUntilChanged()
+
+    fun setFocusSystemGrayscaleDuringFocus(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusSystemGrayscaleDuringFocus = enabled) }
+    }
+
+    val focusSystemGrayscalePreviousEnabled
+        get() = launcherDataStore.data.map { it.focusSystemGrayscalePreviousEnabled }.distinctUntilChanged()
+
+    fun setFocusSystemGrayscalePreviousEnabled(value: Int) {
+        launcherDataStore.update { it.copy(focusSystemGrayscalePreviousEnabled = value) }
+    }
+
+    val focusSystemGrayscalePreviousMode
+        get() = launcherDataStore.data.map { it.focusSystemGrayscalePreviousMode }.distinctUntilChanged()
+
+    fun setFocusSystemGrayscalePreviousMode(value: Int) {
+        launcherDataStore.update { it.copy(focusSystemGrayscalePreviousMode = value) }
+    }
+
     val focusQuickCaptures
         get() = launcherDataStore.data.map { it.focusQuickCaptures }.distinctUntilChanged()
 

@@ -152,6 +152,12 @@ data class LauncherSettingsData internal constructor(
     val focusDailyIntentionDate: String = "",
     val focusGrayscaleModeEnabled: Boolean = false,
     val focusGrayscaleDuringFocusBlocks: Boolean = false,
+    // System-wide grayscale (whole device, via Settings.Secure daltonizer) during focus sessions.
+    // Opt-in and requires the ADB-granted WRITE_SECURE_SETTINGS. The Previous* fields snapshot the
+    // pre-session daltonizer state so it can be restored on session end (-1 = nothing stored).
+    val focusSystemGrayscaleDuringFocus: Boolean = false,
+    val focusSystemGrayscalePreviousEnabled: Int = -1,
+    val focusSystemGrayscalePreviousMode: Int = -1,
     val focusQuickCaptures: List<String> = emptyList(),
 
     val searchAllApps: Boolean = false,

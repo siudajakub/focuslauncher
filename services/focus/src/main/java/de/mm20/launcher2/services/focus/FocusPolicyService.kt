@@ -14,6 +14,11 @@ import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+// Hidden Settings.Secure keys for the system colour-correction (daltonizer) that we drive to give
+// the whole device a grayscale look during a focus session. Not in the public SDK, hence literals.
+private const val SECURE_DALTONIZER_ENABLED = "accessibility_display_daltonizer_enabled"
+private const val SECURE_DALTONIZER = "accessibility_display_daltonizer"
+
 enum class FocusBlockReason {
     None,
     HardBlockWindow,
@@ -259,6 +264,7 @@ class FocusPolicyService(
             val startedAt = System.currentTimeMillis()
             val until = startedAt + minutes.coerceIn(5, 180) * 60_000L
             applySessionDndStart(context)
+            applySystemGrayscaleStart(context)
             val session = sessionRepository.startSession(startedAt, until)
             searchUiSettings.setFocusSessionEndsAt(session.plannedEndsAt)
             FocusSessionScheduler(context).schedule(
@@ -286,6 +292,7 @@ class FocusPolicyService(
                 FocusSessionEndResult.NoActiveSession,
                 FocusSessionEndResult.StaleSession -> {
                     restoreSessionDndIfLauncherStillControls(context)
+                    restoreSystemGrayscaleIfLauncherStillControls(context)
                     searchUiSettings.setFocusSessionEndsAt(0L)
                 }
             }
@@ -308,6 +315,7 @@ class FocusPolicyService(
             )
             if (result is FocusSessionEndResult.Finished) {
                 restoreSessionDndIfLauncherStillControls(context)
+                restoreSystemGrayscaleIfLauncherStillControls(context)
                 searchUiSettings.setFocusSessionEndsAt(0L)
             }
         } finally {
@@ -342,11 +350,13 @@ class FocusPolicyService(
                         endedAt = now,
                     )
                     restoreSessionDndIfLauncherStillControls(context)
+                    restoreSystemGrayscaleIfLauncherStillControls(context)
                     searchUiSettings.setFocusSessionEndsAt(0L)
                     FocusSessionScheduler(context).cancel()
                 }
                 FocusSessionReconciliation.NoActiveSession -> {
                     restoreSessionDndIfLauncherStillControls(context)
+                    restoreSystemGrayscaleIfLauncherStillControls(context)
                     searchUiSettings.setFocusSessionEndsAt(0L)
                     FocusSessionScheduler(context).cancel()
                 }
@@ -392,6 +402,51 @@ class FocusPolicyService(
     fun getDndSettingsIntent(): android.content.Intent {
         return android.content.Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
             .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    private fun hasWriteSecureSettings(context: Context): Boolean {
+        return context.checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    private suspend fun applySystemGrayscaleStart(context: Context) {
+        val resolver = context.contentResolver
+        val decision = resolveSystemGrayscaleStart(
+            grayscaleEnabled = searchUiSettings.focusSystemGrayscaleDuringFocus.first(),
+            canWriteSecureSettings = hasWriteSecureSettings(context),
+            storedPreviousEnabled = searchUiSettings.focusSystemGrayscalePreviousEnabled.first(),
+            currentEnabled = Settings.Secure.getInt(resolver, SECURE_DALTONIZER_ENABLED, 0),
+            currentMode = Settings.Secure.getInt(resolver, SECURE_DALTONIZER, -1),
+        )
+        decision.previousEnabledToStore?.let { searchUiSettings.setFocusSystemGrayscalePreviousEnabled(it) }
+        decision.previousModeToStore?.let { searchUiSettings.setFocusSystemGrayscalePreviousMode(it) }
+        if (decision.shouldEnableGrayscale) {
+            runCatching {
+                Settings.Secure.putInt(resolver, SECURE_DALTONIZER, DALTONIZER_MONOCHROMACY)
+                Settings.Secure.putInt(resolver, SECURE_DALTONIZER_ENABLED, 1)
+            }
+        }
+    }
+
+    private suspend fun restoreSystemGrayscaleIfLauncherStillControls(context: Context) {
+        val resolver = context.contentResolver
+        val storedEnabled = searchUiSettings.focusSystemGrayscalePreviousEnabled.first()
+        val storedMode = searchUiSettings.focusSystemGrayscalePreviousMode.first()
+        if (
+            shouldRestoreSystemGrayscale(
+                canWriteSecureSettings = hasWriteSecureSettings(context),
+                storedPreviousEnabled = storedEnabled,
+                currentEnabled = Settings.Secure.getInt(resolver, SECURE_DALTONIZER_ENABLED, 0),
+                currentMode = Settings.Secure.getInt(resolver, SECURE_DALTONIZER, -1),
+            )
+        ) {
+            runCatching {
+                Settings.Secure.putInt(resolver, SECURE_DALTONIZER, storedMode)
+                Settings.Secure.putInt(resolver, SECURE_DALTONIZER_ENABLED, storedEnabled)
+            }
+        }
+        searchUiSettings.setFocusSystemGrayscalePreviousEnabled(-1)
+        searchUiSettings.setFocusSystemGrayscalePreviousMode(-1)
     }
 
     private suspend fun shouldApplyToProfile(app: Application): Boolean {
