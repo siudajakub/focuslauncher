@@ -183,6 +183,11 @@ class FocusHistoryRepository internal constructor(
         return getEventsSince(since).count { it.eventKind == FocusEventKind.Resisted.value }
     }
 
+    /** Real opens ([FocusEventKind.Unlock]) of [appKey] since [since] — for at-the-gate awareness. */
+    suspend fun getAppUnlockCountSince(appKey: String, since: Long): Int {
+        return getEventsForAppSince(appKey, since).count { it.eventKind == FocusEventKind.Unlock.value }
+    }
+
     suspend fun getEventsForAppSince(appKey: String, since: Long): List<FocusEventEntity> {
         return focusEventDao.getEventsForAppSince(appKey, since)
     }

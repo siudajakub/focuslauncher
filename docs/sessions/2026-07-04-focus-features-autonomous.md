@@ -66,17 +66,33 @@ DESIGN_SYSTEM.md, verification.md, code-review.md, local-build-env memory.
 - `FocusInsightsScreen`: "Turn-aways" weekly stat card.
 - New test `FocusHistoryTurnAwayTest` (3 tests, green).
 
+## Shipped (all committed on this branch)
+
+- F2 turn-away tracking + H1/H2/M1/M2 correctness fixes — commit 57cdd269.
+- F1a launcher-surface grayscale (wired the dead prefs + settings toggles) — commit 576d1e7d.
+- F1b system-wide grayscale during focus (Settings.Secure daltonizer, ADB-gated, DND-style
+  store/restore, unit-tested helpers) — commit ccc6d0f8.
+- F4 gate "opened N times today" self-monitoring counter — pending commit.
+- Docs: `docs/research/anti-distraction-landscape.md` (evidence base + competitive teardown +
+  prioritised backlog); PROJECT_STATUS updated.
+
 ## Next Step
 
-Confirm app build green, commit F2, then implement F1 (grayscale).
+Merge decision + Pixel smoke test (`docs/engineering/pixel-smoke-test.md`) covering gate counters,
+launcher + system grayscale apply/restore, session expiry/reboot restore, WRITE_SECURE_SETTINGS
+grant/deny. Backlog for a follow-up session in the research doc (wind-down, capped override,
+notification triage, usage-stats reflection, extension friction).
 
 ## Verification
 
-- `:services:focus:testDebugUnitTest`: BUILD SUCCESSFUL (turn-away tests pass).
-- `:app:app:assembleDefaultDebug`: green pre-F2; rebuild in progress after UI changes.
+- `:services:focus:testDebugUnitTest`: BUILD SUCCESSFUL — all focus tests pass, incl. new
+  `FocusHistoryTurnAwayTest` (3) and `FocusSystemGrayscaleTest` (4).
+- `:app:app:assembleDefaultDebug`: BUILD SUCCESSFUL (APK produced) after each feature.
+- `python3 tools/check_agent_docs.py`: passed.
 - Build env: JAVA_HOME=/opt/homebrew/opt/openjdk@21,
   ANDROID_HOME=/opt/homebrew/share/android-commandlinetools, GRADLE_USER_HOME=$PWD/.gradle-home.
-- No device: on-device gate/insights behavior not runtime-verified (needs Pixel smoke test).
+- NOT device-verified: gate counters, grayscale apply/restore, WRITE_SECURE_SETTINGS path — needs
+  a Pixel smoke test before merge.
 
 ## Handoff / Notes
 

@@ -315,6 +315,7 @@ private fun FocusGateScreen(
     var hasLaunched by remember { mutableStateOf(false) }
     var hasLoggedTurnAway by remember(app.key) { mutableStateOf(false) }
     var resistedToday by remember(app.key) { mutableIntStateOf(0) }
+    var openedTodayForApp by remember(app.key) { mutableIntStateOf(0) }
     var stage by remember { mutableStateOf(FocusGateStage.Entry) }
     var countdownSeconds by remember { mutableIntStateOf(0) }
     val fillProgress = remember { Animatable(0f) }
@@ -414,6 +415,7 @@ private fun FocusGateScreen(
         val zone = ZoneId.systemDefault()
         val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
         resistedToday = historyRepository.getResistedCountSince(startOfDay)
+        openedTodayForApp = historyRepository.getAppUnlockCountSince(app.key, startOfDay)
     }
 
     // Backing out of a distracting-app gate is a "turn-away": log it once (positive reinforcement,
@@ -809,6 +811,18 @@ private fun FocusGateScreen(
                                         text = it,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.secondary,
+                                    )
+                                }
+                                if (openedTodayForApp > 0) {
+                                    Text(
+                                        text = pluralStringResource(
+                                            R.plurals.focus_gate_opened_today,
+                                            openedTodayForApp,
+                                            app.labelOverride ?: app.label,
+                                            openedTodayForApp,
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                                 if (resistedToday > 0) {

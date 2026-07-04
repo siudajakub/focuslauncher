@@ -932,6 +932,10 @@
         <item quantity="one">You\'ve turned away %1$d time today. Nice.</item>
         <item quantity="other">You\'ve turned away %1$d times today. Nice.</item>
     </plurals>
+    <plurals name="focus_gate_opened_today">
+        <item quantity="one">You\'ve already opened %1$s %2$d time today.</item>
+        <item quantity="other">You\'ve already opened %1$s %2$d times today.</item>
+    </plurals>
     <string name="focus_gate_blocked_title">This app is blocked right now</string>
     <string name="focus_gate_message_budget">This app has exhausted its daily budget.</string>
     <string name="focus_gate_message_hard_block">This app is blocked during your current productivity time.</string>
