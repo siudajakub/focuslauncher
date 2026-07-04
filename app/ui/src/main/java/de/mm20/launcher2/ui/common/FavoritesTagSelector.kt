@@ -138,7 +138,7 @@ fun FavoritesTagSelector(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.edit_24px),
-                            contentDescription = null
+                            contentDescription = stringResource(R.string.menu_item_edit_favs)
                         )
                     }
                 }
@@ -220,7 +220,7 @@ fun FavoritesTagSelector(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.edit_24px),
-                                contentDescription = null
+                                contentDescription = stringResource(R.string.menu_item_edit_favs)
                             )
                         }
                     }
