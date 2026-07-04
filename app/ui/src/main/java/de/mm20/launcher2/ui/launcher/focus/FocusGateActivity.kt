@@ -681,7 +681,7 @@ private fun FocusGateScreen(
                             }
 
                             FilledTonalButton(
-                                onClick = onGoBack,
+                                onClick = { turnAwayAndGoBack() },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(56.dp),
@@ -948,6 +948,9 @@ private fun FocusGateScreen(
                                                     (!microStepPromptEnabled || microStep.isNotBlank())
                                                 ),
                                             onClick = {
+                                                // Mark launched up front so a stray back-press can't
+                                                // race a turn-away log against this intentional open.
+                                                hasLaunched = true
                                                 val unlockUntil = System.currentTimeMillis() + sessionMinutes * 60_000L
                                                 customAttributesRepository.setFocusTemporaryUnlock(
                                                     app,
