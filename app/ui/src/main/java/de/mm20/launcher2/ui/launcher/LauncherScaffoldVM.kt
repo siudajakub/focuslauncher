@@ -89,8 +89,18 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
     val searchBarStyle = uiSettings.searchBarStyle
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), SearchBarStyle.Transparent)
 
-    val grayscaleMode = searchUiSettings.focusGrayscaleModeEnabled
-    val grayscaleDuringFocus = searchUiSettings.focusGrayscaleDuringFocusBlocks
+    // Desaturate the whole launcher window when the user asks for it — always ("grayscale mode"),
+    // or only while a focus session is running ("grayscale during focus blocks"). Applied at the
+    // Activity decor view (see SharedLauncherActivity). Grayscale is the single most
+    // evidence-backed calm-down cue for reducing session length; this wires the previously
+    // inert preferences to real rendering.
+    val grayscaleActive: StateFlow<Boolean> = combine(
+        searchUiSettings.focusGrayscaleModeEnabled,
+        searchUiSettings.focusGrayscaleDuringFocusBlocks,
+        searchUiSettings.focusSessionEndsAt,
+    ) { always, duringFocus, sessionEndsAt ->
+        always || (duringFocus && sessionEndsAt > System.currentTimeMillis())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
     val gestureState: StateFlow<GestureState?> = gestureSettings.map { settings ->
             val swipeLeftAction = settings.swipeLeft

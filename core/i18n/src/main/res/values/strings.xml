@@ -805,6 +805,10 @@
     <string name="focus_settings_fade_distracting_summary">Render distracting apps with reduced visual weight in search results</string>
     <string name="focus_settings_no_icons">Text-first app list</string>
     <string name="focus_settings_no_icons_summary">Hide icons for non-essential apps to reduce visual temptation</string>
+    <string name="focus_settings_grayscale_focus">Grayscale during focus</string>
+    <string name="focus_settings_grayscale_focus_summary">Drain the colour from the launcher while a focus session is running. Colour is a strong pull toward distraction; grey is calmer.</string>
+    <string name="focus_settings_grayscale_always">Always grayscale the launcher</string>
+    <string name="focus_settings_grayscale_always_summary">Keep the home screen greyscale at all times for a calmer, less stimulating surface.</string>
     <string name="focus_settings_enable_dnd">Enable Do Not Disturb during focus session</string>
     <string name="focus_settings_enable_dnd_summary">If permission is granted, focus sessions will switch the phone into Do Not Disturb</string>
     <string name="focus_settings_productivity_time">Productivity time</string>

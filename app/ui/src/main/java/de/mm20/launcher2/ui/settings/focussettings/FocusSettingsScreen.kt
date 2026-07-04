@@ -79,6 +79,8 @@ fun FocusSettingsScreen() {
     val focusEnableDnd = viewModel.focusEnableDnd.collectAsStateWithLifecycle().value
     val fadeDistractingApps = viewModel.fadeDistractingApps.collectAsStateWithLifecycle().value
     val noIconsMode = viewModel.noIconsMode.collectAsStateWithLifecycle().value
+    val grayscaleDuringFocus = viewModel.grayscaleDuringFocus.collectAsStateWithLifecycle().value
+    val grayscaleAlways = viewModel.grayscaleAlways.collectAsStateWithLifecycle().value
     val adaptiveFrictionMode = viewModel.adaptiveFrictionMode.collectAsStateWithLifecycle().value
     val commuteModeEnabled = viewModel.commuteModeEnabled.collectAsStateWithLifecycle().value
     val atAGlanceEnabled = viewModel.atAGlanceEnabled.collectAsStateWithLifecycle().value
@@ -149,6 +151,20 @@ fun FocusSettingsScreen() {
                     icon = R.drawable.text_fields_24px,
                     value = noIconsMode,
                     onValueChanged = viewModel::setNoIconsMode,
+                )
+                SwitchPreference(
+                    title = stringResource(R.string.focus_settings_grayscale_focus),
+                    summary = stringResource(R.string.focus_settings_grayscale_focus_summary),
+                    icon = R.drawable.palette_24px,
+                    value = grayscaleDuringFocus,
+                    onValueChanged = viewModel::setGrayscaleDuringFocus,
+                )
+                SwitchPreference(
+                    title = stringResource(R.string.focus_settings_grayscale_always),
+                    summary = stringResource(R.string.focus_settings_grayscale_always_summary),
+                    icon = R.drawable.palette_24px,
+                    value = grayscaleAlways,
+                    onValueChanged = viewModel::setGrayscaleAlways,
                 )
                 SwitchPreference(
                     title = stringResource(R.string.focus_settings_enable_dnd),

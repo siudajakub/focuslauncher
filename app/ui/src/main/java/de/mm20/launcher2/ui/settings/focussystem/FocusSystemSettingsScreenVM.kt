@@ -48,6 +48,12 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
     val noIconsMode = searchUiSettings.focusNoIconsMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
+    val grayscaleDuringFocus = searchUiSettings.focusGrayscaleDuringFocusBlocks
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    val grayscaleAlways = searchUiSettings.focusGrayscaleModeEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
     val commuteModeEnabled = searchUiSettings.focusCommuteModeEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
@@ -197,6 +203,14 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
 
     fun setNoIconsMode(enabled: Boolean) {
         searchUiSettings.setFocusNoIconsMode(enabled)
+    }
+
+    fun setGrayscaleDuringFocus(enabled: Boolean) {
+        searchUiSettings.setFocusGrayscaleDuringFocusBlocks(enabled)
+    }
+
+    fun setGrayscaleAlways(enabled: Boolean) {
+        searchUiSettings.setFocusGrayscaleModeEnabled(enabled)
     }
 
     fun setCommuteModeEnabled(enabled: Boolean) {
