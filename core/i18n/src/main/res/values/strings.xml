@@ -1238,6 +1238,11 @@
     <string name="focus_insights_distractions_time">Totalling %1$d minutes</string>
     <string name="focus_insights_turnaways">Turn-aways</string>
     <string name="focus_insights_turnaways_subtitle">Times you opened the gate and chose not to continue</string>
+    <string name="focus_insights_today_usage_title">Today on distracting apps</string>
+    <plurals name="focus_insights_today_usage_apps">
+        <item quantity="one">across %1$d app</item>
+        <item quantity="other">across %1$d apps</item>
+    </plurals>
     <string name="focus_insights_top_breakers">Top Distractions</string>
     <string name="focus_plan_title">Plan for tomorrow</string>
     <string name="focus_plan_navigate_back">Go back</string>

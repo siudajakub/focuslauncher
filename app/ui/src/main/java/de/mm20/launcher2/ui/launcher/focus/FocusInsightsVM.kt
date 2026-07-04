@@ -2,6 +2,8 @@ package de.mm20.launcher2.ui.launcher.focus
 
 import de.mm20.launcher2.services.focus.*
 
+import android.app.usage.UsageStatsManager
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.mm20.launcher2.applications.AppRepository
@@ -10,6 +12,7 @@ import de.mm20.launcher2.preferences.FocusHabit
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.search.Application
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,8 +20,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.time.LocalDate
+import java.time.ZoneId
 
 class FocusInsightsVM : ViewModel(), KoinComponent {
 
@@ -26,6 +32,7 @@ class FocusInsightsVM : ViewModel(), KoinComponent {
     private val searchUiSettings: SearchUiSettings by inject()
     private val customAttributesRepository: CustomAttributesRepository by inject()
     private val appRepository: AppRepository by inject()
+    private val context: Context by inject()
 
     private val actionSummary = MutableStateFlow<String?>(null)
     val lastActionSummary: StateFlow<String?> = actionSummary
@@ -42,6 +49,40 @@ class FocusInsightsVM : ViewModel(), KoinComponent {
 
     private val apps = appRepository.findMany()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), persistentListOf())
+
+    // Today's real screen time on distracting apps, from the platform UsageStats. Returns an empty
+    // summary (card hides itself) when Usage Access is not granted — the Time Awareness setup already
+    // requests that permission, so there's no separate prompt here.
+    val todayDistractingUsage: StateFlow<DistractingUsageSummary> = combine(
+        apps,
+        searchUiSettings.focusDistractingAppKeys,
+    ) { allApps, distractingKeys ->
+        val distracting = allApps
+            .filterIsInstance<Application>()
+            .filter { it.key in distractingKeys }
+            .map { it.componentName.packageName to (it.labelOverride ?: it.label) }
+        if (distracting.isEmpty()) {
+            DistractingUsageSummary()
+        } else {
+            withContext(Dispatchers.IO) {
+                summarizeDistractingUsage(queryTodayForegroundUsage(), distracting)
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), DistractingUsageSummary())
+
+    private fun queryTodayForegroundUsage(): Map<String, Long> {
+        val usageStatsManager =
+            context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return emptyMap()
+        val zone = ZoneId.systemDefault()
+        val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+        val now = System.currentTimeMillis()
+        return try {
+            usageStatsManager.queryAndAggregateUsageStats(startOfDay, now)
+                .mapValues { it.value.totalTimeInForeground }
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
 
     val recommendations = combine(
         nonNullReport,

@@ -104,17 +104,21 @@ zero-telemetry + open-source. The gaps were mostly *unwired* good ideas.
 - Wind-down: opt-in evening (8pm–8am) launcher grayscale — bedtime is the highest-leverage
   reduction window. (System-wide grayscale during wind-down is a follow-up; kept to the safe
   launcher-surface layer for now since it has no session lifecycle to hang restore on.)
+- Real usage-stats reflection: a "Today on distracting apps" card in Focus Insights showing actual
+  foreground time + top offenders from the platform UsageStats (self-monitoring #4). Read-only;
+  hides itself without Usage Access.
 - Correctness: daily-budget & escalation no longer miscount non-launch events; gate DB write off the
   main thread; DND restore on the stale-session edge.
 
 **High-value next (not yet built):**
 1. **Capped/high-cost emergency override** — raise the cost of the "off switch" (the #1 defeat path);
-   the app already has an unused emergency-bypass field to build on.
-4. **Notification triage** — Before Launcher's differentiator; allow-list + low-urgency inbox
+   the app already has an unused emergency-bypass field to build on. Left for a session that can
+   device-test the launch-critical path.
+2. **System-wide grayscale during wind-down** — extend evening grayscale to every app (needs a
+   lifecycle to safely restore the global daltonizer for a passive window).
+3. **Notification triage** — Before Launcher's differentiator; allow-list + low-urgency inbox
    (larger: needs a NotificationListenerService).
-5. **Real usage-stats reflection** — today's actual time-on-distracting-apps via UsageStats (already
-   permissioned for time-blindness), shown as goal-anchored feedback.
-6. **Escalating extension friction** — extra friction specifically on repeat "just 5 more minutes"
+4. **Escalating extension friction** — extra friction specifically on repeat "just 5 more minutes"
    unlocks (closes the loophole Screen Time/One Sec leave open).
 
 **Deliberately avoided:** punitive streaks / heavy gamification (backfire evidence); cloud/accounts
