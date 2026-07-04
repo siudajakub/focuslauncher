@@ -199,8 +199,11 @@ class FocusPolicyService(
             val eventsToday = historyRepository.getEventsSince(startOfDay)
             val essentialKeys = searchUiSettings.focusEssentialAppKeys.first()
             val distractingKeys = searchUiSettings.focusDistractingAppKeys.first()
+            // Only real launches (Unlock) count against the daily budget. Resume/dismiss/turn-away
+            // events are not launches; counting them would exhaust the budget without an app opening.
             val distractingLaunchesToday = eventsToday.count {
-                focusAppClassifier.classifyWith(it.appKey, essentialKeys, distractingKeys) == FocusAppType.Distracting
+                it.eventKind == FocusEventKind.Unlock.value &&
+                    focusAppClassifier.classifyWith(it.appKey, essentialKeys, distractingKeys) == FocusAppType.Distracting
             }
             distractingLaunchesToday >= dailyLaunchLimit
         } else {
@@ -273,9 +276,18 @@ class FocusPolicyService(
         try {
             FocusSessionScheduler(context).cancel()
             val result = sessionRepository.endActiveSession(System.currentTimeMillis())
-            if (result is FocusSessionEndResult.Finished || result is FocusSessionEndResult.NoActiveSession) {
-                restoreSessionDndIfLauncherStillControls(context)
-                searchUiSettings.setFocusSessionEndsAt(0L)
+            // Manual end runs under the mutation mutex and never starts a newer session, so no other
+            // session can legitimately own DND here. Clean up on every outcome — including the narrow
+            // StaleSession race — so the projection and DND filter can't get stuck on after the user
+            // explicitly ended the session. (The scheduled path below deliberately only cleans up on
+            // Finished, because a newer session may already own DND when a stale worker fires.)
+            when (result) {
+                is FocusSessionEndResult.Finished,
+                FocusSessionEndResult.NoActiveSession,
+                FocusSessionEndResult.StaleSession -> {
+                    restoreSessionDndIfLauncherStillControls(context)
+                    searchUiSettings.setFocusSessionEndsAt(0L)
+                }
             }
         } finally {
             focusSessionMutationMutex.unlock()

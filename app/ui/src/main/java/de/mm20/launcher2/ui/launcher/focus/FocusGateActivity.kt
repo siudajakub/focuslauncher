@@ -62,6 +62,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -312,6 +313,8 @@ private fun FocusGateScreen(
     var showBlockSetupSheet by remember { mutableStateOf(false) }
     var decision by remember(app.key, temporaryUnlock) { mutableStateOf<FocusPolicyDecision?>(null) }
     var hasLaunched by remember { mutableStateOf(false) }
+    var hasLoggedTurnAway by remember(app.key) { mutableStateOf(false) }
+    var resistedToday by remember(app.key) { mutableIntStateOf(0) }
     var stage by remember { mutableStateOf(FocusGateStage.Entry) }
     var countdownSeconds by remember { mutableIntStateOf(0) }
     val fillProgress = remember { Animatable(0f) }
@@ -407,8 +410,45 @@ private fun FocusGateScreen(
         }
     }
 
-    BackHandler {
+    LaunchedEffect(app.key) {
+        val zone = ZoneId.systemDefault()
+        val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+        resistedToday = historyRepository.getResistedCountSince(startOfDay)
+    }
+
+    // Backing out of a distracting-app gate is a "turn-away": log it once (positive reinforcement,
+    // never a distraction signal) and return home. Runs for every back-out path (back gesture,
+    // one-sec cancel, breathing cancel, intent/blocked go-back).
+    fun turnAwayAndGoBack() {
+        val policy = decision
+        if (!hasLaunched && !hasLoggedTurnAway && policy != null &&
+            policy.requiresGate && policy.appType == FocusAppType.Distracting
+        ) {
+            hasLoggedTurnAway = true
+            resistedToday += 1
+            historyRepository.logEventAsync(
+                FocusLogEvent(
+                    appKey = app.key,
+                    appLabel = app.labelOverride ?: app.label,
+                    reason = "",
+                    eventKind = FocusEventKind.Resisted.value,
+                    scheduleBlockLabel = currentScheduleBlockLabel,
+                    microStep = null,
+                    unlockDurationMinutes = 0,
+                    usedEmergencyBypass = false,
+                    duringFocusSession = focusSessionActive,
+                    // Block flags stay false so a turn-away never inflates the drift/attention signals.
+                    budgetBlocked = false,
+                    scheduleBlocked = false,
+                    effectiveDelaySeconds = policy.effectiveDelaySeconds,
+                )
+            )
+        }
         onGoBack()
+    }
+
+    BackHandler {
+        turnAwayAndGoBack()
     }
 
     LaunchedEffect(stage, decision?.effectiveDelaySeconds, decision?.hardBlocked) {
@@ -705,7 +745,7 @@ private fun FocusGateScreen(
                                 )
                                 OutlinedButton(
                                     modifier = Modifier.fillMaxWidth(),
-                                    onClick = onGoBack,
+                                    onClick = { turnAwayAndGoBack() },
                                 ) {
                                     Text(stringResource(R.string.focus_gate_go_back))
                                 }
@@ -769,6 +809,17 @@ private fun FocusGateScreen(
                                         text = it,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.secondary,
+                                    )
+                                }
+                                if (resistedToday > 0) {
+                                    Text(
+                                        text = pluralStringResource(
+                                            R.plurals.focus_gate_resisted_today,
+                                            resistedToday,
+                                            resistedToday,
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.primary,
                                     )
                                 }
 
@@ -905,23 +956,21 @@ private fun FocusGateScreen(
                                                         interruptedAtMillis = System.currentTimeMillis(),
                                                     )
                                                 )
-                                                kotlinx.coroutines.runBlocking {
-                                                    historyRepository.logEvent(
-                                                        FocusLogEvent(
-                                                            appKey = app.key,
-                                                            appLabel = app.labelOverride ?: app.label,
-                                                            reason = reason,
-                                                            scheduleBlockLabel = currentScheduleBlockLabel,
-                                                            microStep = microStep.takeIf { it.isNotBlank() },
-                                                            unlockDurationMinutes = sessionMinutes,
-                                                            usedEmergencyBypass = false,
-                                                            duringFocusSession = focusSessionActive,
-                                                            budgetBlocked = decision?.budgetBlocked == true,
-                                                            scheduleBlocked = decision?.blockReason == FocusBlockReason.HardBlockWindow,
-                                                            effectiveDelaySeconds = decision?.effectiveDelaySeconds ?: 0,
-                                                        )
+                                                historyRepository.logEventAsync(
+                                                    FocusLogEvent(
+                                                        appKey = app.key,
+                                                        appLabel = app.labelOverride ?: app.label,
+                                                        reason = reason,
+                                                        scheduleBlockLabel = currentScheduleBlockLabel,
+                                                        microStep = microStep.takeIf { it.isNotBlank() },
+                                                        unlockDurationMinutes = sessionMinutes,
+                                                        usedEmergencyBypass = false,
+                                                        duringFocusSession = focusSessionActive,
+                                                        budgetBlocked = decision?.budgetBlocked == true,
+                                                        scheduleBlocked = decision?.blockReason == FocusBlockReason.HardBlockWindow,
+                                                        effectiveDelaySeconds = decision?.effectiveDelaySeconds ?: 0,
                                                     )
-                                                }
+                                                )
                                                 launchCoordinator.launchDirect(app, context)
                                                 onFinish()
                                             },
@@ -932,7 +981,7 @@ private fun FocusGateScreen(
 
                                     OutlinedButton(
                                         modifier = Modifier.fillMaxWidth(),
-                                        onClick = onGoBack,
+                                        onClick = { turnAwayAndGoBack() },
                                     ) {
                                         Text(stringResource(R.string.focus_gate_go_back))
                                     }

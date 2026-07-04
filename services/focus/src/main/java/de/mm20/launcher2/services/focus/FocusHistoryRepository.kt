@@ -1,14 +1,19 @@
 package de.mm20.launcher2.services.focus
 
 import de.mm20.launcher2.database.AppDatabase
+import de.mm20.launcher2.database.FocusEventDao
+import de.mm20.launcher2.database.FocusSessionDao
 import de.mm20.launcher2.database.entities.FocusEventEntity
 import de.mm20.launcher2.database.entities.FocusSessionEntity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -93,6 +98,14 @@ enum class FocusEventKind(val value: String) {
     Unlock("unlock"),
     ResumeAccepted("resume_accepted"),
     ResumeDismissed("resume_dismissed"),
+    /**
+     * The user opened the focus gate for a distracting app and then deliberately backed out
+     * without launching it — a "turn-away". Tracked so the launcher can reflect turn-aways back
+     * to the user as gentle, positive reinforcement (see One Sec's PNAS-2023 self-nudge model:
+     * ~36% of interstitials ended in the user abandoning the open). Logged with all block flags
+     * cleared so it never inflates the distraction/drift signals in [getAttentionStateForApp].
+     */
+    Resisted("resisted"),
 }
 
 data class WeeklyFocusReport(
@@ -113,6 +126,8 @@ data class WeeklyFocusReport(
     val topInterruptedBlocks: List<Pair<String, Int>> = emptyList(),
     val recoveryAcceptedCount: Int = 0,
     val recoveryDismissedCount: Int = 0,
+    /** Turn-aways this week: gate opens where the user backed out instead of launching. */
+    val resistedCount: Int = 0,
     val delta: WeeklyFocusDelta = WeeklyFocusDelta(),
 )
 
@@ -123,12 +138,19 @@ data class WeeklyFocusDelta(
     val topBreakerDelta: Int = 0,
 )
 
-class FocusHistoryRepository(
-    private val database: AppDatabase,
+class FocusHistoryRepository internal constructor(
+    private val focusEventDao: FocusEventDao,
+    private val focusSessionDao: FocusSessionDao,
 ) {
 
+    constructor(database: AppDatabase) : this(database.focusEventDao(), database.focusSessionDao())
+
+    // Survives the caller's lifecycle so a fire-and-forget log from a finishing Activity is not
+    // cancelled mid-insert. Used by [logEventAsync]; keeps focus-event writes off the main thread.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     suspend fun logEvent(event: FocusLogEvent) {
-        database.focusEventDao().insert(
+        focusEventDao.insert(
             FocusEventEntity(
                 timestamp = event.timestamp,
                 appKey = event.appKey,
@@ -146,16 +168,35 @@ class FocusHistoryRepository(
         )
     }
 
+    /**
+     * Fire-and-forget [logEvent] on a repository-owned IO scope. Prefer this over blocking the
+     * caller's thread (e.g. the gate's launch/turn-away handlers finish the Activity immediately
+     * after logging, so a composition- or main-thread-bound coroutine could be cancelled or stall
+     * the UI).
+     */
+    fun logEventAsync(event: FocusLogEvent) {
+        scope.launch { logEvent(event) }
+    }
+
+    /** Count of turn-aways ([FocusEventKind.Resisted]) since [since] — used for gentle reflection. */
+    suspend fun getResistedCountSince(since: Long): Int {
+        return getEventsSince(since).count { it.eventKind == FocusEventKind.Resisted.value }
+    }
+
     suspend fun getEventsForAppSince(appKey: String, since: Long): List<FocusEventEntity> {
-        return database.focusEventDao().getEventsForAppSince(appKey, since)
+        return focusEventDao.getEventsForAppSince(appKey, since)
     }
 
     suspend fun getEventsSince(since: Long): List<FocusEventEntity> {
-        return database.focusEventDao().getEventsSinceSuspend(since)
+        return focusEventDao.getEventsSinceSuspend(since)
     }
 
     suspend fun getRecentAppLaunchTimestamps(appKey: String, sinceMillis: Long): List<Long> {
-        return getEventsForAppSince(appKey, sinceMillis).map { it.timestamp }
+        // Only real launches (Unlock) drive escalating friction. Resume/dismiss/turn-away events
+        // are not launches and must not inflate the recent-attempt count (would add unearned delay).
+        return getEventsForAppSince(appKey, sinceMillis)
+            .filter { it.eventKind == FocusEventKind.Unlock.value }
+            .map { it.timestamp }
     }
 
     suspend fun getAttentionStateForApp(
@@ -164,7 +205,7 @@ class FocusHistoryRepository(
         nowMillis: Long = System.currentTimeMillis(),
     ): FocusAttentionState {
         val events = getEventsForAppSince(appKey, sinceMillis).sortedBy { it.timestamp }
-        val sessions = database.focusSessionDao().getSessionsSince(sinceMillis).first()
+        val sessions = focusSessionDao.getSessionsSince(sinceMillis).first()
         if (events.isEmpty() && sessions.isEmpty()) {
             return FocusAttentionState.idle(
                 appKey = appKey,
@@ -256,7 +297,7 @@ class FocusHistoryRepository(
     }
 
     fun getRecentEvents(limit: Int = 50): Flow<List<FocusEventEntity>> {
-        return database.focusEventDao().getRecent(limit)
+        return focusEventDao.getRecent(limit)
     }
 
     fun getWeeklyReport(): Flow<WeeklyFocusReport> {
@@ -265,22 +306,27 @@ class FocusHistoryRepository(
         val previousSince = now - weekMillis * 2
         val currentSince = now - weekMillis
         return combine(
-            database.focusEventDao().getEventsSince(previousSince),
-            database.focusSessionDao().getSessionsSince(previousSince),
+            focusEventDao.getEventsSince(previousSince),
+            focusSessionDao.getSessionsSince(previousSince),
         ) { events, sessions ->
             val zone = ZoneId.systemDefault()
             val currentEvents = events.filter { it.timestamp >= currentSince }
             val previousEvents = events.filter { it.timestamp in previousSince until currentSince }
+            // Unlock-style metrics (totals, breakers, reasons, per-day) must exclude turn-aways so
+            // a resisted open never reads as a distraction. Turn-aways are surfaced separately.
+            val currentUnlockLike = currentEvents.filterNot { it.eventKind == FocusEventKind.Resisted.value }
+            val previousUnlockLike = previousEvents.filterNot { it.eventKind == FocusEventKind.Resisted.value }
+            val resistedCount = currentEvents.count { it.eventKind == FocusEventKind.Resisted.value }
             val currentSessions = sessions.filter { it.startedAt >= currentSince }
             val previousSessions = sessions.filter { it.startedAt in previousSince until currentSince }
-            val groupedByDay = currentEvents.groupBy {
+            val groupedByDay = currentUnlockLike.groupBy {
                 Instant.ofEpochMilli(it.timestamp).atZone(zone).toLocalDate()
             }.toSortedMap(compareByDescending { it })
-            val breakers = currentEvents.groupingBy { it.appLabel }.eachCount()
+            val breakers = currentUnlockLike.groupingBy { it.appLabel }.eachCount()
                 .entries.sortedByDescending { it.value }
                 .take(5)
                 .map { it.key to it.value }
-            val reasons = currentEvents
+            val reasons = currentUnlockLike
                 .mapNotNull { it.reason.trim().takeIf(String::isNotBlank) }
                 .groupingBy { it }
                 .eachCount()
@@ -288,8 +334,8 @@ class FocusHistoryRepository(
                 .sortedByDescending { it.value }
                 .take(5)
                 .map { it.key to it.value }
-            val totalUnlockMinutes = currentEvents.sumOf { it.unlockDurationMinutes }
-            val averageDelaySeconds = currentEvents
+            val totalUnlockMinutes = currentUnlockLike.sumOf { it.unlockDurationMinutes }
+            val averageDelaySeconds = currentUnlockLike
                 .map { it.effectiveDelaySeconds }
                 .takeIf { it.isNotEmpty() }
                 ?.average()
@@ -315,21 +361,21 @@ class FocusHistoryRepository(
                 .take(5)
                 .map { it.key to it.value }
             val delta = computeWeeklyDelta(
-                currentEvents = currentEvents,
-                previousEvents = previousEvents,
+                currentEvents = currentUnlockLike,
+                previousEvents = previousUnlockLike,
                 currentSessionMinutes = normalizedCurrentSessions.sumOf { it.second },
                 previousSessionMinutes = normalizedPreviousSessions.sumOf { it.second },
             )
             WeeklyFocusReport(
-                totalUnlocks = currentEvents.size,
+                totalUnlocks = currentUnlockLike.size,
                 totalUnlockMinutes = totalUnlockMinutes,
                 averageDelaySeconds = averageDelaySeconds,
                 streakDays = calculateFocusStreakDays(currentSessions, zone),
                 topFocusBreakers = breakers,
                 topUnlockReasons = reasons,
-                inSessionUnlocks = currentEvents.count { it.duringFocusSession },
+                inSessionUnlocks = currentUnlockLike.count { it.duringFocusSession },
                 unlocksPerDay = groupedByDay.map { it.key to it.value.size },
-                recentEvents = currentEvents.take(20),
+                recentEvents = currentUnlockLike.take(20),
                 totalSessions = currentSessions.size,
                 totalSessionMinutes = normalizedCurrentSessions.sumOf { it.second },
                 sessionDays = currentSessions.map {
@@ -340,6 +386,7 @@ class FocusHistoryRepository(
                 topInterruptedBlocks = interruptedBlocks,
                 recoveryAcceptedCount = currentEvents.count { it.eventKind == FocusEventKind.ResumeAccepted.value },
                 recoveryDismissedCount = currentEvents.count { it.eventKind == FocusEventKind.ResumeDismissed.value },
+                resistedCount = resistedCount,
                 delta = delta,
             )
         }

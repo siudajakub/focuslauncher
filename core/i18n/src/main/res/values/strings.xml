@@ -921,6 +921,10 @@
     <string name="focus_gate_message_distracting">Pause before opening this app. If you still want it, choose a short session and continue intentionally.</string>
     <string name="focus_gate_message_blocked">This app is currently blocked. If you still need it, unlock a short session intentionally.</string>
     <string name="focus_gate_intentional_title">Open with intention</string>
+    <plurals name="focus_gate_resisted_today">
+        <item quantity="one">You\'ve turned away %1$d time today. Nice.</item>
+        <item quantity="other">You\'ve turned away %1$d times today. Nice.</item>
+    </plurals>
     <string name="focus_gate_blocked_title">This app is blocked right now</string>
     <string name="focus_gate_message_budget">This app has exhausted its daily budget.</string>
     <string name="focus_gate_message_hard_block">This app is blocked during your current productivity time.</string>
@@ -1219,6 +1223,8 @@
     <string name="focus_insights_sessions">Focus Sessions</string>
     <string name="focus_insights_distractions">Distractions Allowed</string>
     <string name="focus_insights_distractions_time">Totalling %1$d minutes</string>
+    <string name="focus_insights_turnaways">Turn-aways</string>
+    <string name="focus_insights_turnaways_subtitle">Times you opened the gate and chose not to continue</string>
     <string name="focus_insights_top_breakers">Top Distractions</string>
     <string name="focus_plan_title">Plan for tomorrow</string>
     <string name="focus_plan_navigate_back">Go back</string>

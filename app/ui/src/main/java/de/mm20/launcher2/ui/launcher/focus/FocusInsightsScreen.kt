@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Star
@@ -146,6 +147,18 @@ fun FocusInsightsScreen(
                         subtitle = stringResource(R.string.focus_insights_distractions_time, currentReport.totalUnlockMinutes),
                         icon = Icons.Default.Warning,
                     )
+                }
+
+                if (currentReport.resistedCount > 0) {
+                    item {
+                        InsightStatCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            title = stringResource(R.string.focus_insights_turnaways),
+                            value = currentReport.resistedCount.toString(),
+                            subtitle = stringResource(R.string.focus_insights_turnaways_subtitle),
+                            icon = Icons.Default.Check,
+                        )
+                    }
                 }
 
                 if (currentReport.topFocusBreakers.isNotEmpty()) {
