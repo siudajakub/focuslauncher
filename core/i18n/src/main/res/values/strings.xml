@@ -765,7 +765,6 @@
     <string name="focus_settings_mode_enabled_summary">Intercept distracting app launches and reduce casual browsing surfaces</string>
     <string name="focus_settings_strict_search">Strict search</string>
     <string name="focus_settings_strict_search_summary">Launcher search stays limited to apps only</string>
-    <string name="search_apps_only_message">Main launcher search now returns only applications. Shortcuts, contacts, events, files, websites and other result types are excluded.</string>
     <string name="focus_settings_hide_distracting">Hide distracting apps from browsing</string>
     <string name="focus_settings_hide_distracting_summary">Keep distracting apps out of the empty search/all apps surface</string>
     <string name="focus_apps_title">Essential &amp; Distracting Apps</string>

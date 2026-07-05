@@ -19,7 +19,6 @@ import de.mm20.launcher2.permissions.PermissionsManager
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.profiles.Profile
 import de.mm20.launcher2.profiles.ProfileManager
-import de.mm20.launcher2.search.AppShortcut
 import de.mm20.launcher2.search.Application
 
 import de.mm20.launcher2.search.ResultScore
@@ -30,6 +29,7 @@ import de.mm20.launcher2.search.SearchService
 import de.mm20.launcher2.search.Searchable
 
 import de.mm20.launcher2.search.isUnspecified
+import de.mm20.launcher2.searchable.PinnedLevel
 import de.mm20.launcher2.searchable.SavableSearchableRepository
 import de.mm20.launcher2.searchable.VisibilityLevel
 import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
@@ -47,7 +47,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -73,15 +72,10 @@ class SearchVM : ViewModel(), KoinComponent {
     val launchOnEnter = searchUiSettings.launchOnEnter
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    val strictAppsOnly = flowOf(true)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
-
     private val searchService: SearchService by inject()
 
     val searchQuery = mutableStateOf("")
     val isSearchEmpty = mutableStateOf(true)
-
-    val expandedCategory = mutableStateOf<SearchCategory?>(null)
 
     val profiles = profileManager.profiles.shareIn(
         viewModelScope,
@@ -148,7 +142,6 @@ class SearchVM : ViewModel(), KoinComponent {
         if (searchQuery.value == query && !forceRestart) return
         searchQuery.value = query
         isSearchEmpty.value = query.isEmpty()
-        expandedCategory.value = null
 
         if (isSearchEmpty.value)
             bestMatch.value = null
@@ -240,31 +233,38 @@ class SearchVM : ViewModel(), KoinComponent {
                 val hiddenItemKeys = searchableRepository.getKeys(
                     maxVisibility = VisibilityLevel.Hidden,
                 )
-                searchService.search(
-                    query,
-                    filters = launcherSearchFilters(),
-                    previousResults,
+                // Installed PWAs / web apps the user pinned (same set the Focus Home "Web apps"
+                // section shows). Surfaced in search in place of the disabled live shortcut search.
+                val pinnedWebApps = favoritesService.getFavorites(
+                    includeTypes = listOf("shortcut", "legacyshortcut"),
+                    minPinnedLevel = PinnedLevel.AutomaticallySorted,
+                    limit = 50,
                 )
-                    .combine(hiddenItemKeys) { results, hiddenKeys ->
-                        SearchContext(results = results, hiddenKeys = hiddenKeys)
-                    }
+                combine(
+                    searchService.search(
+                        query,
+                        filters = launcherSearchFilters(),
+                        previousResults,
+                    ),
+                    hiddenItemKeys,
+                    pinnedWebApps,
+                ) { results, hiddenKeys, webApps ->
+                    SearchContext(results = results, hiddenKeys = hiddenKeys, webApps = webApps)
+                }
                     .flatMapLatest { context ->
-                        combine(
-                            customAttributesRepository.getFocusTemporaryUnlocks(context.results.collectSavableSearchables()),
-                            focusAppClassifier.classify((context.results.apps ?: emptyList()).map { it.key }),
-                        ) { temporaryUnlocks, appTypes ->
-                            SearchWithFocusContext(
-                                results = context.results,
-                                hiddenKeys = context.hiddenKeys,
-                                temporaryUnlocks = temporaryUnlocks,
-                                appTypes = appTypes,
-                            )
-                        }
+                        focusAppClassifier.classify((context.results.apps ?: emptyList()).map { it.key })
+                            .map { appTypes ->
+                                SearchWithFocusContext(
+                                    results = context.results,
+                                    hiddenKeys = context.hiddenKeys,
+                                    webApps = context.webApps,
+                                    appTypes = appTypes,
+                                )
+                            }
                     }
                     .collectLatest { context ->
                         val results = context.results
                         val hiddenKeys = context.hiddenKeys
-                        val temporaryUnlocks = context.temporaryUnlocks
                         val appTypes = context.appTypes
                         previousResults = results
 
@@ -278,9 +278,14 @@ class SearchVM : ViewModel(), KoinComponent {
                             ?.applyRanking(query, appTypes, focusModeEnabled)
                         )
 
+                        val normalizedQuery = query.trim().lowercase()
                         shortcutResults.updateItems(
-                            results.shortcuts
-                            ?.filterNot { hiddenKeys.contains(it.key) }
+                            context.webApps.filter { webApp ->
+                                !hiddenKeys.contains(webApp.key) &&
+                                    (webApp.labelOverride ?: webApp.label)
+                                        .lowercase()
+                                        .contains(normalizedQuery)
+                            }
                         )
 
                         if (launchOnEnter.value) {
@@ -297,10 +302,6 @@ class SearchVM : ViewModel(), KoinComponent {
     }
 
 
-
-    fun expandCategory(category: SearchCategory) {
-        expandedCategory.value = null
-    }
 
     private suspend fun <T : SavableSearchable> List<T>.applyRanking(
         query: String,
@@ -337,13 +338,6 @@ class SearchVM : ViewModel(), KoinComponent {
         return sorted.distinctBy { it.key }.toList()
     }
 
-    private fun SearchResults.collectSavableSearchables(): List<SavableSearchable> {
-        return buildList {
-            addAll(apps ?: emptyList())
-            addAll(shortcuts ?: emptyList())
-        }
-    }
-
     private fun FocusAppType?.focusAdjustment(): Float {
         return when (this) {
             FocusAppType.Essential -> 0.08f
@@ -353,11 +347,14 @@ class SearchVM : ViewModel(), KoinComponent {
     }
 
     private fun launcherSearchFilters(): SearchFilters {
+        // Launcher search returns only apps (plus installed PWAs, surfaced separately from pinned
+        // web-app favorites). The live ShortcutManager search is intentionally off so app-provided
+        // dynamic/conversation shortcuts (e.g. messaging "contacts") never leak into results.
         return SearchFilters(
             allowNetwork = false,
             hiddenItems = false,
             apps = true,
-            shortcuts = true,
+            shortcuts = false,
             tools = false,
         )
     }
@@ -377,11 +374,6 @@ class SearchVM : ViewModel(), KoinComponent {
 }
 
 
-enum class SearchCategory {
-    Apps,
-    Shortcuts,
-}
-
 private data class AllAppsContext(
     val results: de.mm20.launcher2.search.AllAppsResults,
     val hiddenKeys: List<String>,
@@ -390,12 +382,13 @@ private data class AllAppsContext(
 private data class SearchContext(
     val results: SearchResults,
     val hiddenKeys: List<String>,
+    val webApps: List<SavableSearchable>,
 )
 
 private data class SearchWithFocusContext(
     val results: SearchResults,
     val hiddenKeys: List<String>,
-    val temporaryUnlocks: Map<String, FocusTemporaryUnlock>,
+    val webApps: List<SavableSearchable>,
     val appTypes: Map<String, FocusAppType>,
 )
 
