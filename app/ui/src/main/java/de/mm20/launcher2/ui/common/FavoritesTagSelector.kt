@@ -126,7 +126,7 @@ fun FavoritesTagSelector(
                             modifier = Modifier
                                 .rotate(rot),
                             onClick = { onExpand(true) }) {
-                            Icon(painterResource(R.drawable.arrow_drop_down_24px), null)
+                            Icon(painterResource(R.drawable.arrow_drop_down_24px), stringResource(R.string.expand))
                         }
                     }
 
@@ -211,7 +211,7 @@ fun FavoritesTagSelector(
                             .rotate(rot),
                         onClick = { onExpand(false) }
                     ) {
-                        Icon(painterResource(R.drawable.arrow_drop_up_24px), null)
+                        Icon(painterResource(R.drawable.arrow_drop_up_24px), stringResource(R.string.collapse))
                     }
 
                     if (editButton) {

@@ -529,7 +529,7 @@ fun SelectableNoteContent(
             ) {
                 Icon(
                     painterResource(if (expanded) R.drawable.keyboard_arrow_up_24px else R.drawable.keyboard_arrow_down_24px),
-                    contentDescription = null
+                    contentDescription = stringResource(if (expanded) R.string.collapse else R.string.expand)
                 )
             }
         }

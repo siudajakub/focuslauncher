@@ -1,0 +1,3 @@
+## 2024-07-10 - Screen Reader Labels for Icon-Only Buttons
+**Learning:** Found multiple instances where `contentDescription = null` was explicitly set on `Icon` elements within `IconButton` and `FilledTonalIconButton`, making these interactive buttons completely silent to screen readers (e.g. TalkBack). This occurs in various modules, meaning this codebase has a pattern of forgetting to add contextual labels to custom icon buttons.
+**Action:** Always ensure that icon-only interactive elements (like `IconButton`, `FilterChip` containing only an icon, or custom clickable items) provide a descriptive `contentDescription` via `stringResource()` instead of `null` or `""`.

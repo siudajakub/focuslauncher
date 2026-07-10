@@ -434,7 +434,7 @@ fun CustomActions(
                 IconButton(onClick = { showOverflowMenu = true }) {
                     Icon(
                         painterResource(R.drawable.more_vert_24px),
-                        contentDescription = null
+                        contentDescription = stringResource(R.string.action_more_actions)
                     )
                 }
             }
