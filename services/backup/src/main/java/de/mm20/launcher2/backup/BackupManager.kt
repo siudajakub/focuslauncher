@@ -100,7 +100,7 @@ class BackupManager(
     private suspend fun createArchive(dir: File, outputStream: OutputStream) = withContext(Dispatchers.IO){
         val zipStream = ZipOutputStream(outputStream)
 
-        val fileList = dir.listFiles()
+        val fileList = dir.listFiles() ?: return@withContext
 
         for (file in fileList) {
             zipStream.putNextEntry(ZipEntry(file.name))
@@ -114,9 +114,14 @@ class BackupManager(
 
     private suspend fun extractArchive(inputStream: InputStream, outDir: File) = withContext(Dispatchers.IO) {
         val zipStream = ZipInputStream(inputStream)
+        val canonicalOutDir = outDir.canonicalPath
         var entry = zipStream.nextEntry
         while(entry != null) {
             val file = File(outDir, entry.name)
+            val canonicalFilePath = file.canonicalPath
+            if (!canonicalFilePath.startsWith(canonicalOutDir + File.separator)) {
+                throw SecurityException("Path traversal vulnerability detected in zip entry: ${entry.name}")
+            }
             file.outputStream().use {
                 zipStream.copyTo(it)
             }
