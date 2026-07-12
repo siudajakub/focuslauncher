@@ -90,3 +90,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 ```
 
 The plugin SDK modules (`plugins/sdk` and `core/shared`) remain licensed under the Apache License 2.0.
+
+## Author
+
+FocusLauncher is developed by [Jakub Siuda](https://www.siuda.dev/about/).
+
+[Portfolio](https://www.siuda.dev/) · [GitHub profile](https://github.com/siudajakub)
