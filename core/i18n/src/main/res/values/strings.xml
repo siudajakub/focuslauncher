@@ -1300,4 +1300,6 @@
     <string name="focus_system_rules_category_title">Rules &amp; Apps</string>
     <string name="focus_system_time_title">Time Management</string>
     <string name="focus_system_integrations_title">Integrations</string>
+    <string name="expand">Expand</string>
+    <string name="collapse">Collapse</string>
 </resources>
