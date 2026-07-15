@@ -204,7 +204,7 @@ fun ShapeSchemeSettingsScreen(themeId: UUID) {
                         ) {
                             DropdownMenuItem(
                                 leadingIcon = {
-                                    Icon(painterResource(R.drawable.more_vert_24px), null)
+                                    Icon(painterResource(R.drawable.more_vert_24px), stringResource(R.string.action_more_actions))
                                 },
                                 text = { Text("Menu") },
                                 onClick = { })
