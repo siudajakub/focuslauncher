@@ -1,0 +1,4 @@
+## 2025-05-18 - Zip Slip (Path Traversal) Vulnerability in BackupManager
+**Vulnerability:** Path traversal (Zip Slip) vulnerability in the `extractArchive` method of `BackupManager.kt`.
+**Learning:** The code used `ZipInputStream` to extract files from a backup archive without validating that the extracted file paths remained within the intended destination directory. This could allow an attacker to craft a malicious ZIP archive with `../` sequences in file names, potentially overwriting arbitrary files outside the app's cache directory during the backup restoration process.
+**Prevention:** When extracting archives, always resolve the canonical path of the intended destination directory and ensure that the canonical path of each extracted file starts with the destination directory's canonical path plus a file separator (`File.separator`). This ensures the file is written within the intended boundary.
