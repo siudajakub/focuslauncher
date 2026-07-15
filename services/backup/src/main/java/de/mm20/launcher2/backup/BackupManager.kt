@@ -117,6 +117,12 @@ class BackupManager(
         var entry = zipStream.nextEntry
         while(entry != null) {
             val file = File(outDir, entry.name)
+            val canonicalTargetFile = file.canonicalPath
+            val canonicalDestDir = outDir.canonicalPath
+            if (!canonicalTargetFile.startsWith(canonicalDestDir + File.separator)) {
+                throw SecurityException("Entry is outside of the target directory: ${entry.name}")
+            }
+            file.parentFile?.mkdirs()
             file.outputStream().use {
                 zipStream.copyTo(it)
             }
