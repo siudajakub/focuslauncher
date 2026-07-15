@@ -327,7 +327,7 @@ fun ReorderFavoritesGrid(viewModel: EditFavoritesSheetVM, paddingValues: Padding
                                     }) {
                                     Icon(
                                         painterResource(R.drawable.add_24px),
-                                        contentDescription = null
+                                        contentDescription = stringResource(R.string.edit_favorites_dialog_new_tag)
                                     )
                                 }
                             }
@@ -490,7 +490,7 @@ fun ReorderFavoritesGrid(viewModel: EditFavoritesSheetVM, paddingValues: Padding
                                     }) {
                                     Icon(
                                         painterResource(R.drawable.add_24px),
-                                        contentDescription = null
+                                        contentDescription = stringResource(R.string.edit_favorites_dialog_new_tag)
                                     )
                                 }
                                 DropdownMenuPopup(
