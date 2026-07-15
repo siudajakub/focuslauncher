@@ -280,7 +280,7 @@ private fun ThemePreview(
             readOnly = true,
             menu = {
                 IconButton(onClick = {}) {
-                    Icon(painterResource(R.drawable.more_vert_24px), null)
+                    Icon(painterResource(R.drawable.more_vert_24px), stringResource(R.string.action_more_actions))
                 }
             }
         )
