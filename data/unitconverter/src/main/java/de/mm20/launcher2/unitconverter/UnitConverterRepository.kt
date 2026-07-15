@@ -36,6 +36,9 @@ internal class UnitConverterRepositoryImpl(
     private val settings: UnitConverterSettings,
 ) : UnitConverterRepository, KoinComponent {
 
+    // Hoist regex compilation to avoid recompiling it on every query
+    private val queryRegex = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
+
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
     init {
@@ -76,9 +79,8 @@ internal class UnitConverterRepositoryImpl(
         query: String,
         includeCurrencies: Boolean
     ): UnitConverter? {
-        val regex = Regex("""([+\-]?[\d+\-e,.]+|[^\d>\-]+)""")
 
-        val matches = regex.findAll(query)
+        val matches = queryRegex.findAll(query)
 
         var inputStr: String? = null
         var inputValue: Double? = null
