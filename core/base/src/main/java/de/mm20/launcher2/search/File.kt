@@ -11,6 +11,7 @@ import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.Locale
+private val EXTENSION_REGEX = Regex(".+\\..+")
 
 interface File : SavableSearchable {
     val path: String?
@@ -124,7 +125,7 @@ interface File : SavableSearchable {
                 else -> R.string.file_type_none
             }
         }
-        if (resource == R.string.file_type_none && label.matches(Regex(".+\\..+"))) {
+        if (resource == R.string.file_type_none && label.matches(EXTENSION_REGEX)) {
             val extension = label.substringAfterLast(".").uppercase(Locale.getDefault())
             return context.getString(R.string.file_type_generic, extension)
         }
