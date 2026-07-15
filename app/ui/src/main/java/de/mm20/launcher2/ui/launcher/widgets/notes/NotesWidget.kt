@@ -520,7 +520,7 @@ fun SelectableNoteContent(
                 Icon(
                     painterResource(if (selected) R.drawable.check_circle_24px_filled else R.drawable.circle_24px),
                     tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    contentDescription = null
+                    contentDescription = stringResource(if (selected) R.string.action_deselect else R.string.action_select)
                 )
             }
             IconButton(
@@ -529,7 +529,7 @@ fun SelectableNoteContent(
             ) {
                 Icon(
                     painterResource(if (expanded) R.drawable.keyboard_arrow_up_24px else R.drawable.keyboard_arrow_down_24px),
-                    contentDescription = null
+                    contentDescription = stringResource(if (expanded) R.string.action_collapse else R.string.action_expand)
                 )
             }
         }
