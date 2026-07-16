@@ -57,16 +57,14 @@ fun FocusSettingsScreen() {
     val context = LocalContext.current
     val searchUiSettings = koinInject<SearchUiSettings>()
 
-    var notificationsGranted by remember { mutableStateOf(hasNotificationPermission(context)) }
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted -> notificationsGranted = granted }
+    ) { }
 
-    // Usage Access (and POST_NOTIFICATIONS, if granted from the system dialog) are
-    // resolved outside this composition, so re-check them whenever the screen resumes.
+    // Usage Access is granted in system settings, outside this composition, so re-check it
+    // whenever the screen resumes.
     LifecycleResumeEffect(Unit) {
         viewModel.refreshUsageAccess()
-        notificationsGranted = hasNotificationPermission(context)
         onPauseOrDispose { }
     }
 
@@ -79,10 +77,6 @@ fun FocusSettingsScreen() {
     val focusEnableDnd = viewModel.focusEnableDnd.collectAsStateWithLifecycle().value
     val fadeDistractingApps = viewModel.fadeDistractingApps.collectAsStateWithLifecycle().value
     val noIconsMode = viewModel.noIconsMode.collectAsStateWithLifecycle().value
-    val grayscaleDuringFocus = viewModel.grayscaleDuringFocus.collectAsStateWithLifecycle().value
-    val grayscaleAlways = viewModel.grayscaleAlways.collectAsStateWithLifecycle().value
-    val systemGrayscaleDuringFocus = viewModel.systemGrayscaleDuringFocus.collectAsStateWithLifecycle().value
-    val windDownGrayscale = viewModel.windDownGrayscale.collectAsStateWithLifecycle().value
     val adaptiveFrictionMode = viewModel.adaptiveFrictionMode.collectAsStateWithLifecycle().value
     val commuteModeEnabled = viewModel.commuteModeEnabled.collectAsStateWithLifecycle().value
     val atAGlanceEnabled = viewModel.atAGlanceEnabled.collectAsStateWithLifecycle().value
@@ -95,8 +89,6 @@ fun FocusSettingsScreen() {
     val applyToPrivateProfile = viewModel.applyToPrivateProfile.collectAsStateWithLifecycle().value
     val dailyScheduleEnabled = viewModel.dailyScheduleEnabled.collectAsStateWithLifecycle().value
     val selectedDailyScheduleCalendar = viewModel.selectedDailyScheduleCalendar.collectAsStateWithLifecycle().value
-    val timeBlindnessEnabled = viewModel.focusTimeBlindnessRemindersEnabled.collectAsStateWithLifecycle().value
-    val timeBlindnessIntervalMinutes = viewModel.focusTimeBlindnessIntervalMinutes.collectAsStateWithLifecycle().value
     val usageAccessGranted = viewModel.usageAccessGranted.collectAsStateWithLifecycle().value
 
     PreferenceScreen(title = stringResource(R.string.focus_settings_title)) {
@@ -154,44 +146,6 @@ fun FocusSettingsScreen() {
                     value = noIconsMode,
                     onValueChanged = viewModel::setNoIconsMode,
                 )
-                SwitchPreference(
-                    title = stringResource(R.string.focus_settings_grayscale_focus),
-                    summary = stringResource(R.string.focus_settings_grayscale_focus_summary),
-                    icon = R.drawable.palette_24px,
-                    value = grayscaleDuringFocus,
-                    onValueChanged = viewModel::setGrayscaleDuringFocus,
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.focus_settings_grayscale_always),
-                    summary = stringResource(R.string.focus_settings_grayscale_always_summary),
-                    icon = R.drawable.palette_24px,
-                    value = grayscaleAlways,
-                    onValueChanged = viewModel::setGrayscaleAlways,
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.focus_settings_grayscale_winddown),
-                    summary = stringResource(R.string.focus_settings_grayscale_winddown_summary),
-                    icon = R.drawable.dark_mode_24px,
-                    value = windDownGrayscale,
-                    onValueChanged = viewModel::setWindDownGrayscale,
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.focus_settings_system_grayscale),
-                    summary = stringResource(R.string.focus_settings_system_grayscale_summary),
-                    icon = R.drawable.palette_24px,
-                    value = systemGrayscaleDuringFocus,
-                    onValueChanged = viewModel::setSystemGrayscaleDuringFocus,
-                )
-                if (systemGrayscaleDuringFocus) {
-                    SmallMessage(
-                        modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
-                        icon = R.drawable.emoji_objects_24px,
-                        text = stringResource(
-                            R.string.focus_settings_system_grayscale_adb,
-                            context.packageName,
-                        ),
-                    )
-                }
                 SwitchPreference(
                     title = stringResource(R.string.focus_settings_enable_dnd),
                     summary = stringResource(R.string.focus_settings_enable_dnd_summary),
@@ -307,54 +261,6 @@ fun FocusSettingsScreen() {
             }
         }
 
-        // Time awareness
-        item {
-            PreferenceCategory(title = stringResource(R.string.focus_system_time_awareness_title)) {
-                SmallMessage(
-                    modifier = Modifier.padding(bottom = 12.dp),
-                    icon = R.drawable.alarm_24px,
-                    text = stringResource(R.string.focus_settings_time_blindness_summary),
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.focus_settings_time_blindness_enabled),
-                    summary = stringResource(R.string.focus_settings_time_blindness_enabled_summary),
-                    icon = R.drawable.alarm_24px,
-                    value = timeBlindnessEnabled,
-                    onValueChanged = { enabled ->
-                        viewModel.setFocusTimeBlindnessRemindersEnabled(enabled)
-                        if (enabled && !hasNotificationPermission(context)) {
-                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                    },
-                )
-                if (timeBlindnessEnabled && !usageAccessGranted) {
-                    MissingPermissionBanner(
-                        modifier = Modifier.padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
-                        text = stringResource(R.string.focus_settings_time_blindness_usage_access),
-                        onClick = { viewModel.openUsageAccessSettings() },
-                    )
-                }
-                if (timeBlindnessEnabled && !notificationsGranted) {
-                    MissingPermissionBanner(
-                        modifier = Modifier.padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
-                        text = stringResource(R.string.focus_settings_time_blindness_notifications),
-                        onClick = { notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
-                    )
-                }
-                if (timeBlindnessEnabled) {
-                    ListPreference(
-                        title = stringResource(R.string.focus_settings_time_blindness_interval),
-                        items = listOf(5, 10, 15, 20, 30, 45, 60).map {
-                            stringResource(R.string.focus_settings_time_blindness_interval_value, it) to it
-                        },
-                        value = timeBlindnessIntervalMinutes,
-                        onValueChanged = viewModel::setFocusTimeBlindnessIntervalMinutes,
-                        icon = R.drawable.timer_24px,
-                    )
-                }
-            }
-        }
-
         // Intelligence / context
         item {
             PreferenceCategory(title = stringResource(R.string.focus_system_intelligence_title)) {
@@ -445,6 +351,15 @@ fun FocusSettingsScreen() {
                     icon = R.drawable.query_stats_24px,
                     onClick = { backStack.add(FocusInsightsRoute) },
                 )
+                // Screen-time reflection reads UsageStats. Without the grant the insights and the
+                // home "today on distracting apps" line silently read zero, so offer it here.
+                if (!usageAccessGranted) {
+                    MissingPermissionBanner(
+                        modifier = Modifier.padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
+                        text = stringResource(R.string.focus_settings_usage_access),
+                        onClick = { viewModel.openUsageAccessSettings() },
+                    )
+                }
             }
         }
     }

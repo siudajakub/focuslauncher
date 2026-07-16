@@ -10,13 +10,11 @@ import android.content.Context
 import android.os.Build
 import android.os.Process
 import android.provider.Settings
-import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import de.mm20.launcher2.calendar.CalendarRepository
 import de.mm20.launcher2.calendar.providers.CalendarList
 import de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
-import de.mm20.launcher2.ui.launcher.focus.TimeBlindnessService
 import de.mm20.launcher2.services.focus.shouldShowFocusQuickStart
 import de.mm20.launcher2.ui.settings.SettingsActivity
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,18 +46,6 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
     val noIconsMode = searchUiSettings.focusNoIconsMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
-    val grayscaleDuringFocus = searchUiSettings.focusGrayscaleDuringFocusBlocks
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
-
-    val grayscaleAlways = searchUiSettings.focusGrayscaleModeEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
-
-    val systemGrayscaleDuringFocus = searchUiSettings.focusSystemGrayscaleDuringFocus
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
-
-    val windDownGrayscale = searchUiSettings.focusWindDownGrayscaleEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
-
     val commuteModeEnabled = searchUiSettings.focusCommuteModeEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
@@ -84,16 +70,10 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
     val focusDistractingDailyLaunchLimit = searchUiSettings.focusDistractingDailyLaunchLimit
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
 
-    val focusTimeBlindnessRemindersEnabled = searchUiSettings.focusTimeBlindnessRemindersEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
-
-    val focusTimeBlindnessIntervalMinutes = searchUiSettings.focusTimeBlindnessIntervalMinutes
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 15)
-
-    // Time blindness reminders rely on Usage Access to know which app is in the
-    // foreground. Without it the service can never detect a distracting app, so the
-    // UI surfaces this state and lets the user grant it. Refreshed on screen resume
-    // because the grant happens in system settings, outside this process.
+    // Screen-time reflection (Focus Insights and the home "today on distracting apps" line)
+    // reads UsageStats. Without the grant it can only ever report zero, so the UI surfaces
+    // this state and lets the user grant it. Refreshed on screen resume because the grant
+    // happens in system settings, outside this process.
     val usageAccessGranted = MutableStateFlow(hasUsageAccess())
 
     fun refreshUsageAccess() {
@@ -211,22 +191,6 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
         searchUiSettings.setFocusNoIconsMode(enabled)
     }
 
-    fun setGrayscaleDuringFocus(enabled: Boolean) {
-        searchUiSettings.setFocusGrayscaleDuringFocusBlocks(enabled)
-    }
-
-    fun setGrayscaleAlways(enabled: Boolean) {
-        searchUiSettings.setFocusGrayscaleModeEnabled(enabled)
-    }
-
-    fun setSystemGrayscaleDuringFocus(enabled: Boolean) {
-        searchUiSettings.setFocusSystemGrayscaleDuringFocus(enabled)
-    }
-
-    fun setWindDownGrayscale(enabled: Boolean) {
-        searchUiSettings.setFocusWindDownGrayscaleEnabled(enabled)
-    }
-
     fun setCommuteModeEnabled(enabled: Boolean) {
         searchUiSettings.setFocusCommuteModeEnabled(enabled)
     }
@@ -277,24 +241,6 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
 
     fun setFocusDistractingDailyLaunchLimit(limit: Int) {
         searchUiSettings.setFocusDistractingDailyLaunchLimit(limit)
-    }
-
-    fun setFocusTimeBlindnessRemindersEnabled(enabled: Boolean) {
-        searchUiSettings.setFocusTimeBlindnessRemindersEnabled(enabled)
-        // Start/stop the foreground poller immediately. Previously the service was
-        // only ever started by the boot receiver, so enabling the toggle did nothing
-        // until the next reboot.
-        val intent = Intent(context, TimeBlindnessService::class.java)
-        if (enabled) {
-            intent.action = TimeBlindnessService.ACTION_START
-            ContextCompat.startForegroundService(context, intent)
-        } else {
-            context.stopService(intent)
-        }
-    }
-
-    fun setFocusTimeBlindnessIntervalMinutes(minutes: Int) {
-        searchUiSettings.setFocusTimeBlindnessIntervalMinutes(minutes)
     }
 
     fun setFocusTodoistApiToken(token: String) {

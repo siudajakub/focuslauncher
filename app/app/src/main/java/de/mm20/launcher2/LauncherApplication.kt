@@ -15,16 +15,12 @@ import de.mm20.launcher2.searchable.searchableModule
 import de.mm20.launcher2.icons.iconsModule
 import de.mm20.launcher2.music.musicModule
 import de.mm20.launcher2.search.searchModule
-import de.mm20.launcher2.unitconverter.unitConverterModule
 import de.mm20.launcher2.widgets.widgetsModule
 import de.mm20.launcher2.database.databaseModule
 import de.mm20.launcher2.debug.initDebugMode
 import de.mm20.launcher2.globalactions.globalActionsModule
 import de.mm20.launcher2.notifications.notificationsModule
 import de.mm20.launcher2.permissions.permissionsModule
-import de.mm20.launcher2.data.plugins.dataPluginsModule
-import de.mm20.launcher2.devicepose.devicePoseModule
-import de.mm20.launcher2.plugins.servicesPluginsModule
 import de.mm20.launcher2.preferences.preferencesModule
 import de.mm20.launcher2.profiles.profilesModule
 import de.mm20.launcher2.services.favorites.favoritesModule
@@ -33,13 +29,7 @@ import de.mm20.launcher2.services.widgets.widgetsServiceModule
 import de.mm20.launcher2.themes.themesModule
 import de.mm20.launcher2.services.focus.FocusPolicyService
 import de.mm20.launcher2.services.focus.focusModule
-import de.mm20.launcher2.ui.launcher.focus.TimeBlindnessService
-import de.mm20.launcher2.weather.weatherModule
-import android.content.Intent
-import androidx.core.content.ContextCompat
-import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.first
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -52,7 +42,6 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + SupervisorJob()
 
-    private val searchUiSettings: SearchUiSettings by inject()
     private val focusPolicyService: FocusPolicyService by inject()
 
     override fun onCreate() {
@@ -82,15 +71,10 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     preferencesModule,
                     searchModule,
                     themesModule,
-                    unitConverterModule,
-                    weatherModule,
                     widgetsModule,
                     servicesTagsModule,
                     widgetsServiceModule,
-                    dataPluginsModule,
-                    servicesPluginsModule,
                     backupModule,
-                    devicePoseModule,
                     profilesModule,
                     i18nDataModule,
                     focusModule,
@@ -100,18 +84,6 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
 
         launch {
             focusPolicyService.reconcileFocusSession(this@LauncherApplication)
-
-            // Start the time-blindness foreground poller if the feature is enabled.
-            // Previously the service was only ever started from BOOT_COMPLETED, so a
-            // user who enabled it before this build (or who never rebooted) would not
-            // get reminders until the next reboot. Reading the flag here keeps the
-            // feature consistent on every app launch, off the main thread.
-            if (searchUiSettings.focusTimeBlindnessRemindersEnabled.first()) {
-                val intent = Intent(this@LauncherApplication, TimeBlindnessService::class.java).apply {
-                    action = TimeBlindnessService.ACTION_START
-                }
-                ContextCompat.startForegroundService(this@LauncherApplication, intent)
-            }
         }
     }
 
