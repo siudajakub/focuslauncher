@@ -10,7 +10,6 @@ import de.mm20.launcher2.applications.AppRepository
 import de.mm20.launcher2.appshortcuts.AppShortcutRepository
 import de.mm20.launcher2.badges.BadgeService
 import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
-import de.mm20.launcher2.devicepose.DevicePoseProvider
 import de.mm20.launcher2.icons.IconService
 import de.mm20.launcher2.icons.LauncherIcon
 import de.mm20.launcher2.notifications.Notification
@@ -63,8 +62,6 @@ class SearchableItemVM : ListItemViewModel(), KoinComponent {
     private val searchUiSettings: SearchUiSettings by inject()
 
     val isUpToDate = MutableStateFlow(true)
-
-    val devicePoseProvider: DevicePoseProvider by inject()
 
     val searchable = MutableStateFlow<SavableSearchable?>(null)
     private val iconSize = MutableStateFlow(0)

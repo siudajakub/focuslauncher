@@ -47,7 +47,7 @@ android {
         release {
             signingConfig = signingConfigs.findByName("gh-actions")
             // R8 / resource shrinking is intentionally off for 1.0.0: no keep rules exist
-            // for Koin / kotlinx.serialization / Room / Compose / the plugin AIDL, so enabling
+            // for Koin / kotlinx.serialization / Room / Compose, so enabling
             // it needs a vetted rule set plus on-device testing (post-1.0 follow-up).
             isMinifyEnabled = false
             isShrinkResources = false
@@ -118,10 +118,8 @@ dependencies {
     implementation(project(":core:base"))
     implementation(project(":data:calendar"))
     implementation(project(":core:crashreporter"))
-    implementation(project(":data:currencies"))
     implementation(project(":data:customattrs"))
     implementation(project(":data:searchable"))
-    implementation(project(":data:plugins"))
     implementation(project(":data:themes"))
     implementation(project(":data:i18n"))
     implementation(project(":core:i18n"))
@@ -134,17 +132,13 @@ dependencies {
     implementation(project(":core:preferences"))
     implementation(project(":services:search"))
     implementation(project(":services:tags"))
-    implementation(project(":data:unitconverter"))
     implementation(project(":app:ui"))
-    implementation(project(":data:weather"))
     implementation(project(":data:widgets"))
     implementation(project(":data:database"))
     implementation(project(":services:global-actions"))
     implementation(project(":services:widgets"))
     implementation(project(":services:favorites"))
     implementation(project(":services:focus"))
-    implementation(project(":services:plugins"))
-    implementation(project(":core:devicepose"))
 
     // Uncomment this if you want annoying notifications in your debug builds
     //debugImplementation(libs.leakcanary)

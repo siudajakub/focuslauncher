@@ -128,7 +128,6 @@ dependencies {
     implementation(project(":services:icons"))
     implementation(project(":services:music"))
     implementation(project(":services:tags"))
-    implementation(project(":data:weather"))
     implementation(project(":data:calendar"))
     implementation(project(":services:search"))
     implementation(project(":core:preferences"))
@@ -143,14 +142,11 @@ dependencies {
     implementation(project(":core:crashreporter"))
     implementation(project(":data:notifications"))
     implementation(project(":core:permissions"))
-    implementation(project(":data:unitconverter"))
-    implementation(project(":services:plugins"))
     implementation(project(":services:backup"))
     implementation(project(":services:global-actions"))
     implementation(project(":services:widgets"))
     implementation(project(":services:favorites"))
     implementation(project(":services:focus"))
-    implementation(project(":core:devicepose"))
 
     testImplementation(libs.bundles.tests)
 }
