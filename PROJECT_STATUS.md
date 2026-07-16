@@ -126,7 +126,34 @@ Verified on 2026-07-16 with JDK 21, after the removals above:
 Note that CI does not run automatically on this branch: `ci.yml` triggers only on `main` and on
 pull requests to `main`, so a feature branch needs `gh workflow run ci.yml --ref <branch>`.
 
-Performance traces and the Pixel smoke checklist require a physical device and were not run.
+Verified on a Pixel 8 / Android 17 (SDK 37) upgrading in place from a real 2026-06-30 install, so
+the `37 -> 38` migration ran against actual user data rather than a fixture:
+
+- Cold launch 316–444 ms, no crash; `user_version = 38`; `forecasts`, `Currency` and `Plugins`
+  dropped; all four focus indexes present; the weather widget row gone, leaving music + calendar.
+  Room's schema-identity check passing on open is what confirms the index names.
+- No service of any kind running (`dumpsys activity services` empty). The installed APK still lists
+  `FOREGROUND_SERVICE` and `RECEIVE_BOOT_COMPLETED` — both merge in from the WorkManager library
+  manifest, not from this app — and lists no location, `VIBRATE` or `WRITE_SECURE_SETTINGS`.
+- The obsolete `ExchangeRates` periodic work was found still ENQUEUED with `run_attempt_count = 11`
+  and is now CANCELLED; see the fix below.
+- Search returns apps only: `12+34`, `10 km` and `5 eur` produce no result; `sett` finds Settings.
+- The focus gate intercepts a distracting-app launch, turn-away returns to the launcher and logs
+  `resisted`, and `EXPLAIN QUERY PLAN` shows the gate's query using
+  `index_FocusEvent_appKey_timestamp` rather than scanning.
+- Focus settings shows no grayscale or Time Awareness surface; the Usage Access banner correctly
+  appears in Insights only when the grant is missing.
+
+Perfetto/Macrobenchmark traces and Battery Historian evidence were not collected.
+
+## Fixed During Device Verification
+
+Deleting the weather and currency modules did not stop their work: WorkManager persists enqueued
+work in its own database under `no_backup/`, which survives an upgrade. Every existing install kept
+an hourly `ExchangeRates` job that now woke the device only to fail instantiating a deleted class
+and retry on backoff. `LauncherApplication.cancelRemovedFeatureWork()` cancels it by unique name;
+that cleanup can be deleted once no install can still be upgrading from a build that had those
+features.
 
 ## Work Tracking
 
