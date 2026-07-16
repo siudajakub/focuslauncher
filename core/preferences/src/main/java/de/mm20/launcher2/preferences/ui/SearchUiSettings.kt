@@ -148,15 +148,6 @@ class SearchUiSettings internal constructor(
         }
     }
 
-    val focusStrictSearch
-        get() = launcherDataStore.data.map { it.focusStrictSearch }.distinctUntilChanged()
-
-    fun setFocusStrictSearch(enabled: Boolean) {
-        launcherDataStore.update {
-            it.copy(focusStrictSearch = enabled)
-        }
-    }
-
     val focusEssentialAppKeys
         get() = launcherDataStore.data.map { it.focusEssentialAppKeys }.distinctUntilChanged()
 
@@ -738,20 +729,6 @@ class SearchUiSettings internal constructor(
         launcherDataStore.update { it.copy(focusDistractingDailyLaunchLimit = limit) }
     }
 
-    val focusTimeBlindnessRemindersEnabled
-        get() = launcherDataStore.data.map { it.focusTimeBlindnessRemindersEnabled }.distinctUntilChanged()
-
-    fun setFocusTimeBlindnessRemindersEnabled(enabled: Boolean) {
-        launcherDataStore.update { it.copy(focusTimeBlindnessRemindersEnabled = enabled) }
-    }
-
-    val focusTimeBlindnessIntervalMinutes
-        get() = launcherDataStore.data.map { it.focusTimeBlindnessIntervalMinutes }.distinctUntilChanged()
-
-    fun setFocusTimeBlindnessIntervalMinutes(minutes: Int) {
-        launcherDataStore.update { it.copy(focusTimeBlindnessIntervalMinutes = minutes) }
-    }
-
     val focusTodoistApiToken
         get() = launcherDataStore.data.map { it.focusTodoistApiToken }.distinctUntilChanged()
 
@@ -772,48 +749,6 @@ class SearchUiSettings internal constructor(
                 focusDailyIntentionDate = date
             )
         }
-    }
-
-    val focusGrayscaleModeEnabled
-        get() = launcherDataStore.data.map { it.focusGrayscaleModeEnabled }.distinctUntilChanged()
-
-    fun setFocusGrayscaleModeEnabled(enabled: Boolean) {
-        launcherDataStore.update { it.copy(focusGrayscaleModeEnabled = enabled) }
-    }
-
-    val focusGrayscaleDuringFocusBlocks
-        get() = launcherDataStore.data.map { it.focusGrayscaleDuringFocusBlocks }.distinctUntilChanged()
-
-    fun setFocusGrayscaleDuringFocusBlocks(enabled: Boolean) {
-        launcherDataStore.update { it.copy(focusGrayscaleDuringFocusBlocks = enabled) }
-    }
-
-    val focusSystemGrayscaleDuringFocus
-        get() = launcherDataStore.data.map { it.focusSystemGrayscaleDuringFocus }.distinctUntilChanged()
-
-    fun setFocusSystemGrayscaleDuringFocus(enabled: Boolean) {
-        launcherDataStore.update { it.copy(focusSystemGrayscaleDuringFocus = enabled) }
-    }
-
-    val focusSystemGrayscalePreviousEnabled
-        get() = launcherDataStore.data.map { it.focusSystemGrayscalePreviousEnabled }.distinctUntilChanged()
-
-    fun setFocusSystemGrayscalePreviousEnabled(value: Int) {
-        launcherDataStore.update { it.copy(focusSystemGrayscalePreviousEnabled = value) }
-    }
-
-    val focusSystemGrayscalePreviousMode
-        get() = launcherDataStore.data.map { it.focusSystemGrayscalePreviousMode }.distinctUntilChanged()
-
-    fun setFocusSystemGrayscalePreviousMode(value: Int) {
-        launcherDataStore.update { it.copy(focusSystemGrayscalePreviousMode = value) }
-    }
-
-    val focusWindDownGrayscaleEnabled
-        get() = launcherDataStore.data.map { it.focusWindDownGrayscaleEnabled }.distinctUntilChanged()
-
-    fun setFocusWindDownGrayscaleEnabled(enabled: Boolean) {
-        launcherDataStore.update { it.copy(focusWindDownGrayscaleEnabled = enabled) }
     }
 
     val focusQuietHoursStartMinutes

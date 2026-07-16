@@ -8,14 +8,12 @@ import kotlinx.coroutines.flow.map
 
 data class FocusSettingsData(
     val enabled: Boolean = true,
-    val strictSearch: Boolean = true,
     val hideDistractingApps: Boolean = true,
     val defaultDelaySeconds: Int = 10,
     val defaultSessionMinutes: Int = 15,
     val quietHoursEnabled: Boolean = true,
     val quietHoursStartMinutes: Int = 20 * 60,
     val quietHoursEndMinutes: Int = 8 * 60,
-    val desaturateDistractingApps: Boolean = true,
     val noIconsMode: Boolean = false,
     val enableDnd: Boolean = false,
     val productivityTimeEnabled: Boolean = false,
@@ -43,14 +41,12 @@ class FocusSettings internal constructor(
     val data = launcherDataStore.data.map {
         FocusSettingsData(
             enabled = it.focusModeEnabled,
-            strictSearch = it.focusStrictSearch,
             hideDistractingApps = it.focusHideDistractingApps,
             defaultDelaySeconds = it.focusDefaultDelaySeconds,
             defaultSessionMinutes = it.focusDefaultSessionMinutes,
             quietHoursEnabled = it.focusQuietHoursEnabled,
             quietHoursStartMinutes = it.focusQuietHoursStartMinutes,
             quietHoursEndMinutes = it.focusQuietHoursEndMinutes,
-            desaturateDistractingApps = it.focusDesaturateDistractingApps,
             noIconsMode = it.focusNoIconsMode,
             enableDnd = it.focusEnableDnd,
             productivityTimeEnabled = it.focusProductivityTimeEnabled,
@@ -76,10 +72,6 @@ class FocusSettings internal constructor(
         launcherDataStore.update { it.copy(focusModeEnabled = enabled) }
     }
 
-    fun setStrictSearch(enabled: Boolean) {
-        launcherDataStore.update { it.copy(focusStrictSearch = enabled) }
-    }
-
     fun setHideDistractingApps(enabled: Boolean) {
         launcherDataStore.update { it.copy(focusHideDistractingApps = enabled) }
     }
@@ -102,10 +94,6 @@ class FocusSettings internal constructor(
 
     fun setQuietHoursEndMinutes(minutes: Int) {
         launcherDataStore.update { it.copy(focusQuietHoursEndMinutes = minutes) }
-    }
-
-    fun setDesaturateDistractingApps(enabled: Boolean) {
-        launcherDataStore.update { it.copy(focusDesaturateDistractingApps = enabled) }
     }
 
     fun setNoIconsMode(enabled: Boolean) {

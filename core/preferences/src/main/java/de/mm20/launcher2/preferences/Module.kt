@@ -5,9 +5,7 @@ import de.mm20.launcher2.preferences.media.MediaSettings
 import de.mm20.launcher2.preferences.search.CalendarSearchSettings
 import de.mm20.launcher2.preferences.search.FavoritesSettings
 import de.mm20.launcher2.preferences.search.RankingSettings
-import de.mm20.launcher2.preferences.search.SearchFilterSettings
 import de.mm20.launcher2.preferences.search.ShortcutSearchSettings
-import de.mm20.launcher2.preferences.search.UnitConverterSettings
 import de.mm20.launcher2.preferences.ui.BadgeSettings
 import de.mm20.launcher2.preferences.ui.ClockWidgetSettings
 import de.mm20.launcher2.preferences.ui.FocusSettings
@@ -17,7 +15,6 @@ import de.mm20.launcher2.preferences.ui.LocaleSettings
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.preferences.ui.UiSettings
 import de.mm20.launcher2.preferences.ui.UiState
-import de.mm20.launcher2.preferences.weather.WeatherSettings
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -26,7 +23,6 @@ val preferencesModule = module {
     single { LauncherDataStore(androidContext()) }
     factory<Backupable>(named<LauncherDataStore>()) { get<LauncherDataStore>() }
     factory { MediaSettings(get()) }
-    factory { UnitConverterSettings(get()) }
     factory { BadgeSettings(get()) }
     factory { UiSettings(get()) }
     factory { FocusSettings(get()) }
@@ -37,9 +33,7 @@ val preferencesModule = module {
     factory { CalendarSearchSettings(get()) }
     factory { UiState(get()) }
     factory { SearchUiSettings(get()) }
-    factory { WeatherSettings(get()) }
     factory { GestureSettings(get()) }
     factory { ClockWidgetSettings(get()) }
-    factory { SearchFilterSettings(get()) }
     factory { LocaleSettings(get()) }
 }

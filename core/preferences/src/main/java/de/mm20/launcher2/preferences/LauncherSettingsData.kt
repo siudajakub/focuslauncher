@@ -1,7 +1,6 @@
 package de.mm20.launcher2.preferences
 
 import android.content.Context
-import de.mm20.launcher2.search.SearchFilters
 import de.mm20.launcher2.serialization.UUIDSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -73,7 +72,6 @@ data class LauncherSettingsData internal constructor(
     val favoritesCompactTags: Boolean = false,
 
     val focusModeEnabled: Boolean = true,
-    val focusStrictSearch: Boolean = true,
     val focusHideDistractingApps: Boolean = true,
     val focusDefaultDelaySeconds: Int = 10,
     val focusDefaultSessionMinutes: Int = 15,
@@ -145,46 +143,21 @@ data class LauncherSettingsData internal constructor(
     val focusOneSecEnabled: Boolean = false,
     val focusMicroDelaysEnabled: Boolean = false,
     val focusDistractingDailyLaunchLimit: Int = 0,
-    val focusTimeBlindnessRemindersEnabled: Boolean = false,
-    val focusTimeBlindnessIntervalMinutes: Int = 15,
     val focusTodoistApiToken: String = "",
     val focusDailyIntention: String = "",
     val focusDailyIntentionDate: String = "",
-    val focusGrayscaleModeEnabled: Boolean = false,
-    val focusGrayscaleDuringFocusBlocks: Boolean = false,
-    // System-wide grayscale (whole device, via Settings.Secure daltonizer) during focus sessions.
-    // Opt-in and requires the ADB-granted WRITE_SECURE_SETTINGS. The Previous* fields snapshot the
-    // pre-session daltonizer state so it can be restored on session end (-1 = nothing stored).
-    val focusSystemGrayscaleDuringFocus: Boolean = false,
-    val focusSystemGrayscalePreviousEnabled: Int = -1,
-    val focusSystemGrayscalePreviousMode: Int = -1,
-    // Wind-down: grayscale the launcher during the evening quiet-hours window (opt-in). Reuses the
-    // existing focusQuietHours*Minutes window bounds (default 20:00–08:00).
-    val focusWindDownGrayscaleEnabled: Boolean = false,
     val focusQuickCaptures: List<String> = emptyList(),
 
     val searchAllApps: Boolean = false,
-
-    val fileSearchProviders: Set<String> = setOf("local"),
-
-    @Deprecated("Use contactSearchProviders `local` instead")
-    val contactSearchEnabled: Boolean = true,
-    val contactSearchProviders: Set<String> = setOf("local"),
-    val contactSearchCallOnTap: Boolean = false,
 
     val calendarSearchProviders: Set<String> = setOf("local"),
     val calendarSearchExcludedCalendars: Set<String> = setOf(),
 
     val shortcutSearchEnabled: Boolean = true,
 
-    val unitConverterEnabled: Boolean = true,
-    val unitConverterCurrencies: Boolean = true,
-
     val badgesNotifications: Boolean = true,
     val badgesSuspendedApps: Boolean = true,
-    val badgesCloudFiles: Boolean = true,
     val badgesShortcuts: Boolean = true,
-    val badgesPlugins: Boolean = true,
 
     val gridColumnCount: Int = 4,
     val gridIconSize: Int = 48,
@@ -241,38 +214,6 @@ data class LauncherSettingsData internal constructor(
     val animationsCharging: Boolean = true,
 
     val stateTagsMultiline: Boolean = false,
-
-    val weatherProvider: String = "metno",
-    val weatherAutoLocation: Boolean = true,
-    val weatherLocation: LatLon? = null,
-    val weatherLocationName: String? = null,
-    val weatherLastLocation: LatLon? = null,
-    val weatherLastUpdate: Long = 0L,
-    val weatherProviderSettings: Map<String, ProviderSettings> = emptyMap(),
-
-    @Deprecated("Use locationSearchProviders instead")
-    val locationSearchEnabled: Boolean = false,
-    val locationSearchProviders: Set<String> = setOf("openstreetmaps"),
-    val locationSearchRadius: Int = 1500,
-    val locationSearchHideUncategorized: Boolean = true,
-    val locationSearchOverpassUrl: String? = null,
-    val locationSearchTileServer: String? = null,
-    val locationSearchShowMap: Boolean = true,
-    val locationSearchShowPositionOnMap: Boolean = false,
-    val locationSearchThemeMap: Boolean = true,
-
-    val searchFilter: SearchFilters = SearchFilters(),
-    val searchFilterBar: Boolean = true,
-    val searchFilterBarItems: List<KeyboardFilterBarItem> = listOf(
-        KeyboardFilterBarItem.Apps,
-        KeyboardFilterBarItem.Shortcuts,
-        KeyboardFilterBarItem.Events,
-        KeyboardFilterBarItem.Contacts,
-        KeyboardFilterBarItem.Files,
-        KeyboardFilterBarItem.Tools,
-        KeyboardFilterBarItem.HiddenResults,
-    ),
-
 
     @JsonNames("clockWidgetTimeFormat")
     val localeTimeFormat: TimeFormat = TimeFormat.System,
@@ -573,34 +514,6 @@ enum class WeightFactor {
     Default,
     Low,
     High,
-}
-
-@Serializable
-data class LatLon(
-    val lat: Double,
-    val lon: Double,
-)
-
-@Serializable
-data class ProviderSettings(
-    val locationId: String? = null,
-    val locationName: String? = null,
-    val managedLocation: Boolean = false,
-)
-
-@Serializable
-enum class KeyboardFilterBarItem {
-    @SerialName("online") OnlineResults,
-    @SerialName("apps") Apps,
-    @SerialName("websites") Websites,
-    @SerialName("articles") Articles,
-    @SerialName("places") Places,
-    @SerialName("files") Files,
-    @SerialName("shortcuts") Shortcuts,
-    @SerialName("contacts") Contacts,
-    @SerialName("events") Events,
-    @SerialName("tools") Tools,
-    @SerialName("hidden") HiddenResults,
 }
 
 @Serializable
