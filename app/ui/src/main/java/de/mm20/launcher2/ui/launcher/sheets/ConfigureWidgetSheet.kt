@@ -92,8 +92,6 @@ import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
 import de.mm20.launcher2.ktx.isAtLeastApiLevel
 import de.mm20.launcher2.permissions.PermissionGroup
 import de.mm20.launcher2.permissions.PermissionsManager
-import de.mm20.launcher2.plugin.PluginRepository
-import de.mm20.launcher2.plugin.PluginType
 import de.mm20.launcher2.search.Tag
 import de.mm20.launcher2.search.calendar.CalendarListType
 import de.mm20.launcher2.themes.colors.atTone
@@ -119,7 +117,6 @@ import de.mm20.launcher2.widgets.AppsWidget
 import de.mm20.launcher2.widgets.CalendarWidget
 import de.mm20.launcher2.widgets.MusicWidget
 import de.mm20.launcher2.widgets.NotesWidget
-import de.mm20.launcher2.widgets.WeatherWidget
 import de.mm20.launcher2.widgets.Widget
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.map
@@ -148,7 +145,6 @@ fun ConfigureWidgetSheet(
                 .verticalScroll(rememberScrollState())
         ) {
             when (widget) {
-                is WeatherWidget -> ConfigureWeatherWidget(widget, onWidgetUpdated)
                 is AppWidget -> ConfigureAppWidget(widget, onWidgetUpdated)
                 is CalendarWidget -> ConfigureCalendarWidget(widget, onWidgetUpdated)
                 is AppsWidget -> ConfigureFavoritesWidget(widget, onWidgetUpdated)
@@ -157,29 +153,6 @@ fun ConfigureWidgetSheet(
             }
         }
 
-    }
-}
-
-@Composable
-fun ColumnScope.ConfigureWeatherWidget(
-    widget: WeatherWidget,
-    onWidgetUpdated: (WeatherWidget) -> Unit,
-) {
-    val context = LocalContext.current
-
-    OutlinedCard {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            SwitchPreference(
-                title = stringResource(R.string.widget_config_weather_compact),
-                iconPadding = false,
-                value = !widget.config.showForecast,
-                onValueChanged = {
-                    onWidgetUpdated(widget.copy(config = widget.config.copy(showForecast = !it)))
-                }
-            )
-        }
     }
 }
 
@@ -602,7 +575,6 @@ fun ColumnScope.ConfigureAppWidget(
                         )
                     )
 
-                    is WeatherWidget -> it.copy(id = widget.id)
                     is MusicWidget -> it.copy(id = widget.id)
                     is CalendarWidget -> it.copy(id = widget.id)
                     is AppsWidget -> it.copy(id = widget.id)
@@ -788,18 +760,11 @@ fun ColumnScope.ConfigureCalendarWidget(
 ) {
     val calendarRepository: CalendarRepository = koinInject()
     val permissionsManager: PermissionsManager = koinInject()
-    val pluginRepository: PluginRepository = koinInject()
     val calendars by remember {
         calendarRepository.getCalendars().map {
             it.sortedBy { it.name }
         }
     }.collectAsState(null)
-    val plugins by remember {
-        pluginRepository.findMany(
-            type = PluginType.Calendar,
-            enabled = true,
-        )
-    }.collectAsState(emptyList())
 
     val hasPermission by remember {
         permissionsManager.hasPermission(PermissionGroup.Calendar)
@@ -838,17 +803,17 @@ fun ColumnScope.ConfigureCalendarWidget(
 
     if (groups?.isNotEmpty() == true) {
         for (group in groups) {
-            val pluginName = remember(plugins, group.key) {
-                if (group.key == "local") "Calendars"
-                else if (group.key == "tasks.org") "Tasks"
-                else plugins.find { it.authority == group.key }?.label
+            val groupName = when (group.key) {
+                "local" -> "Calendars"
+                "tasks.org" -> "Tasks"
+                else -> null
             }
-            if (pluginName != null) {
+            if (groupName != null) {
                 Text(
                     modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.secondary,
-                    text = pluginName
+                    text = groupName
                 )
             }
             OutlinedCard {

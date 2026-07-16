@@ -66,7 +66,6 @@ abstract class FavoritesVM : ViewModel(), KoinComponent {
                             "calendar",
                             "tasks.org",
                             "tag",
-                            "plugin.calendar"
                         ) else listOf("tag"),
                         minPinnedLevel = PinnedLevel.AutomaticallySorted,
                         limit = 10 * columns,
@@ -78,7 +77,6 @@ abstract class FavoritesVM : ViewModel(), KoinComponent {
                                     "calendar",
                                     "tasks.org",
                                     "tag",
-                                    "plugin.calendar"
                                 ) else listOf("tag"),
                                 maxPinnedLevel = PinnedLevel.FrequentlyUsed,
                                 minPinnedLevel = PinnedLevel.FrequentlyUsed,

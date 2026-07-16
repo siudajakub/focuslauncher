@@ -6,8 +6,6 @@ minSdk = "26"
 compileSdk = "36"
 targetSdk = "36"
 
-pluginSdk = "2.2.0"
-
 gradle = "8.1.2"
 android-gradle-plugin = "9.1.0"
 ksp-gradle-plugin = "2.3.4"
@@ -149,4 +147,3 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-gradle-plugin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-plugin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-dokka = { id = "org.jetbrains.dokka", version = "2.2.0" }
