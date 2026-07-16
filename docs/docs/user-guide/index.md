@@ -8,12 +8,13 @@ FocusLauncher is available for Android devices running Android 8.0 or higher.
 
 ## Installation
 
-The latest signed APK is published on
-[GitHub Releases](https://github.com/siudajakub/focuslauncher/releases). Download the
-`app-default-release` APK from the most recent release and install it on your device.
+FocusLauncher is preparing its first signed public APK. As of 2026-07-16 there is no published
+GitHub Release. Until the first tagged release passes verification, build the debug APK from source
+using the repository README; do not install APKs from unofficial mirrors.
 
-To get notified about new versions, watch the repository's releases on GitHub.
+After the first release, signed APKs will be published on
+[GitHub Releases](https://github.com/siudajakub/focuslauncher/releases). You can watch the
+repository's releases to be notified.
 
 > [!NOTE]
-> FocusLauncher is distributed only through GitHub Releases. It is not on the Google
-> Play Store or F-Droid.
+> The planned public channel is GitHub Releases. FocusLauncher is not on Google Play or F-Droid.

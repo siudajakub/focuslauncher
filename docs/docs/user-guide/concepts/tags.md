@@ -19,22 +19,5 @@ OR
 3. Select an existing tag or create a new one.
 4. Assign items to tags by dragging them onto the tags.
 
-OR
-
-1. Go to Settings > Search > Tags
-2. On this screen, you can:
-   - Create a new tag by tapping on the <span class="material-symbols-rounded">add</span> in the bottom right corner
-   - Quickly assign multiple apps to a tag:
-     - Tap on a tag
-     - In the dialog sheet, tap on “x items selected”
-     - A list of apps opens where you can select / unselect apps
-   - Rename a tag:
-     - Tap on a tag and change the name in the dialog sheet
-   - Delete a tag:
-     - Tap on the <span class="material-symbols-rounded">more_vert</span> icon and select <span class="material-symbols-rounded">delete</span> Delete
-   - Duplicate a tag:
-     - Tap on the <span class="material-symbols-rounded">more_vert</span> and select <span class="material-symbols-rounded">content_copy</span> Duplicate
-   - Merge two tags:
-     - Tap on one of the two tags you want to merge
-     - Change the name of that tag to the name of the other tag
-     - The contents of the two tags will be merged
+The inherited Settings > Search > Tags route is not exposed by the current settings hub; use item
+customization or the Edit Favorites sheet.

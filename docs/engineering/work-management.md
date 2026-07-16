@@ -6,6 +6,9 @@ Current board: https://github.com/users/siudajakub/projects/1
 
 Seeded backlog range: https://github.com/siudajakub/focuslauncher/issues/1 through https://github.com/siudajakub/focuslauncher/issues/10
 
+The 2026-07-16 review follow-ups are tracked in
+[issues #97–#107](https://github.com/siudajakub/focuslauncher/issues/97).
+
 ## Rules
 
 - Do not add task checkboxes to `PROJECT_STATUS.md`, `ROADMAP.md`, or `CLEANUP_STATUS.md`.

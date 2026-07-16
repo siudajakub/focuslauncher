@@ -15,7 +15,7 @@ Use this skill when the user asks to compile the application, install it on a co
 2. **Compile and Install**
    Compile and install the default debug build on the device using Gradle. Since the project requires JDK 21, you must set `JAVA_HOME` explicitly:
    ```bash
-   export JAVA_HOME="/opt/homebrew/opt/openjdk@21"
+   export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
    export ANDROID_HOME="$HOME/Library/Android/sdk"
    export ANDROID_SDK_ROOT="$ANDROID_HOME"
    export GRADLE_USER_HOME="$PWD/.gradle-home"
@@ -25,7 +25,7 @@ Use this skill when the user asks to compile the application, install it on a co
 3. **Set as Default Launcher**
    Use ADB to assign the Home role to the newly installed debug application:
    ```bash
-   adb shell cmd role add-role-holder android.app.role.HOME de.mm20.launcher2.debug
+   adb shell cmd role add-role-holder android.app.role.HOME com.siudajakub.focuslauncher.debug
    ```
 
 4. **Verify (Optional)**

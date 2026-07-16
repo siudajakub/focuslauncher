@@ -7,9 +7,10 @@ run at once without colliding.
 
 This directory is **not** status, **not** a backlog, and **not** architecture:
 
-- Verified facts about the tree → [`PROJECT_STATUS.md`](../../PROJECT_STATUS.md).
+- Verified facts about the tree → [`PROJECT_STATUS.md`](https://github.com/siudajakub/focuslauncher/blob/main/PROJECT_STATUS.md).
 - Actionable tasks, priority, ownership → GitHub Issues (see [work-management](../engineering/work-management.md)).
-- Durable rules and procedures → [`AGENTS.md`](../../AGENTS.md) and [`docs/engineering`](../engineering/).
+- Durable rules and procedures → [`AGENTS.md`](https://github.com/siudajakub/focuslauncher/blob/main/AGENTS.md)
+  and the [engineering architecture](../engineering/architecture.md).
 
 A worklog here only captures *in-flight* context that does not yet belong in any of those.
 
@@ -68,7 +69,8 @@ For Claude Code, `SessionStart` and `PreCompact` hooks in `.claude/settings.json
 `TEMPLATE.md`) into context — so each session automatically sees other sessions' claims without
 anyone remembering to look, and is reminded to flush its own worklog before context is compacted.
 The hooks are read-only; opening, updating, and pruning worklogs is still a deliberate step you
-take per this protocol. Codex relies on the same protocol via [`AGENTS.md`](../../AGENTS.md).
+take per this protocol. Codex relies on the same protocol via
+[`AGENTS.md`](https://github.com/siudajakub/focuslauncher/blob/main/AGENTS.md).
 
 ## Parallel Sessions Use Separate Worktrees
 
@@ -87,7 +89,8 @@ git worktree list   # show active worktrees
 
 Keep worktrees as **siblings** of the repo, not inside it. Each worktree has its own
 `.gradle-home`/build output, so set the build environment per worktree
-(see [`AGENTS.md`](../../AGENTS.md) and [verification.md](../engineering/verification.md)). Record the
+(see [`AGENTS.md`](https://github.com/siudajakub/focuslauncher/blob/main/AGENTS.md) and
+[verification.md](../engineering/verification.md)). Record the
 worktree path in the worklog's `Branch / worktree` line so other sessions can see where it lives.
 
 ## Conventions

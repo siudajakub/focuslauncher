@@ -1,6 +1,6 @@
 # Color Schemes
 
-Color schemes can be managed at settings > appearance > color schemes.
+Color schemes are managed at Launcher settings > Appearance > Color schemes.
 
 ## Default
 

@@ -8,7 +8,7 @@ sidebar_position: 2
 
 There are two options:
 
-1. Enable Settings > Home screen > Dock.
+1. Enable Launcher Settings > Home screen > Dock.
 
 2. Scroll down to the end of the widgets list, select "Edit widgets" > "Add widget" > "Favorites" to
    add
@@ -34,7 +34,7 @@ private spaces [here](https://support.google.com/android/answer/15341885?hl=en).
 
 ## Can I remove / customize the clock?
 
-Yes, you can customize the clock style by going to Settings > Home screen > Clock and selecting a
+Yes, you can customize the clock style by going to Launcher Settings > Home screen > Clock and selecting a
 different
 style. There is also an "empty style" that will remove the clock entirely.
 
@@ -66,12 +66,11 @@ supports blur effects and that the GPU is powerful enough to handle them.
 
 ## Where do I download FocusLauncher?
 
-FocusLauncher is distributed as a signed APK on
-[GitHub Releases](https://github.com/siudajakub/focuslauncher/releases). Download the latest
-release and install it on your device. See the [Get Started](/docs/user-guide/) page for
-details.
+FocusLauncher has not published its first APK yet. The planned official channel is
+[GitHub Releases](https://github.com/siudajakub/focuslauncher/releases); until then, follow the
+source-build instructions in the repository. See [Get Started](/docs/user-guide/) for details.
 
 ## Will FocusLauncher ever be available on the Play Store?
 
-No. FocusLauncher is distributed only through GitHub Releases, not the Google Play Store or
-F-Droid.
+The current distribution plan is GitHub Releases, not Google Play or F-Droid. That may change only
+through an explicit future release decision.

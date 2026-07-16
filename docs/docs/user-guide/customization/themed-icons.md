@@ -5,7 +5,7 @@ Themed Icons is a feature that adapt app icons to the launcher's color scheme:
 ![Themed icons off](/img/themed-icons-off.png)
 ![Themed icons on](/img/themed-icons-on.png)
 
-Themed icons can be enabled for supported apps in Settings > Grid & icons > Themed Icons.
+Themed icons can be enabled for supported apps in Launcher settings > Advanced > Icons.
 
 > [!NOTE]
 > If you are an app developer, you can support themed icons by adding a `<monochrome>` drawable to
@@ -40,7 +40,7 @@ in the icon pack selection dialog.
 
 ## Auto generated themed icons
 
-There is also an option to force themed icons to all icons (Settings > Grid & icons > Force themed
+There is also an option to force themed icons to all icons (Launcher settings > Advanced > Icons > Force themed
 icons). This scales the foreground layer of an icon down, adds a monochrome color filter and
 replaces the background with a solid color. Using this option is generally not recommended because
 icons may become illegible, but it might work well in combination with certain monochrome icon

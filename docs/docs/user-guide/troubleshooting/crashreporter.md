@@ -1,12 +1,22 @@
 # Crash Reporter
 
-When the launcher crashes, a notification is posted. When you tap on that notification, the crash reporter screen opens. You can also navigate to that screen like this: Settings > Debug > Crash reporter.
+When the launcher crashes, a notification is posted. When you tap it, the crash reporter opens. You
+can also navigate to Launcher settings > Advanced > Debug > Crash reporter.
 
 The crash reporter lists crashes and exceptions.
 
+::: warning
+The in-app report button currently targets the upstream Kvaesitso repository. Until
+[issue #104](https://github.com/siudajakub/focuslauncher/issues/104) is fixed, open reports directly
+in the [FocusLauncher issue tracker](https://github.com/siudajakub/focuslauncher/issues/new).
+:::
+
 ## Crashes
 
-Crashes are marked with the <span class="material-symbols-rounded">error</span> icon. Crashes are unexpected errors that were not handled by launcher. They are often a consequence of bugs and should therefore be reported. You can click the <span class="material-symbols-rounded">bug_report</span> icon in the top right corner to create a new issue on GitHub. Make sure to fill in additional information like steps to reproduce (if possible) or what you were trying to do that lead to the crash.
+Crashes are marked with the <span class="material-symbols-rounded">error</span> icon. Crashes are
+unexpected errors that were not handled by the launcher and should be reported. Copy the report and
+create a new FocusLauncher issue using the link above. Include steps to reproduce and what you were
+doing when the crash occurred.
 
 [Read more about reporting bugs](/docs/contributor-guide/report-bugs).
 

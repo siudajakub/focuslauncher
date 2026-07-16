@@ -84,42 +84,30 @@ Ordered by strength of evidence, most-supported first.
 *kSafe* (timed lockbox). Consistent finding: the power is *self-imposed physical distance*, and the
 friction only holds if the software bypass path is also closed.
 
-## Where FocusLauncher already stands
+## Product implications for FocusLauncher
 
-Unusually strong for this category: it combines real visual minimalism (calm home, hide/fade/
-text-first distracting apps) **and** active friction (staged gate: pause → breathing/countdown →
-intention + micro-step → session duration), **and** deterministic local policy (essential/distracting
-classification, daily budget, focus sessions with DND, productivity windows, habit gates,
-calendar-driven schedule blocks, recovery/resume, adaptive/escalating friction with an attention
-drift score, weekly insights). No competitor combines minimalism + friction + schedule-awareness +
-zero-telemetry + open-source. The gaps were mostly *unwired* good ideas.
+The current tree combines visual reduction (calm home, hide/fade/text-first modes, optional
+grayscale), active launch friction, deterministic local classification/policy, focus sessions,
+calendar-aware planning, habits, history, turn-away reflection, and optional on-device UsageStats.
+This gives the product a coherent evidence-backed direction, but code review on 2026-07-16 found
+release-significant gaps in shortcut routing, Time Awareness, grayscale state durability, and focus
+metrics. See `PROJECT_STATUS.md` and the linked GitHub Issues for verified state.
 
-## Feature backlog (prioritised)
+## Current implementation notes
 
-**Shipped in this pass (2026-07-04):**
-- Turn-away tracking + gentle positive reinforcement (evidence #1, #4). Gate + weekly insight.
-- Grayscale that actually works: launcher-surface (always / during focus) + system-wide during
-  focus via the ADB-granted daltonizer (evidence #3).
-- Gate "opened N times today" counter (self-monitoring #4) — pairs with turn-aways.
-- Wind-down: opt-in evening (8pm–8am) launcher grayscale — bedtime is the highest-leverage
-  reduction window. (System-wide grayscale during wind-down is a follow-up; kept to the safe
-  launcher-surface layer for now since it has no session lifecycle to hang restore on.)
-- Real usage-stats reflection: a "Today on distracting apps" card in Focus Insights showing actual
-  foreground time + top offenders from the platform UsageStats (self-monitoring #4). Read-only;
-  hides itself without Usage Access.
-- Correctness: daily-budget & escalation no longer miscount non-launch events; gate DB write off the
-  main thread; DND restore on the stale-session edge.
-
-**High-value next (not yet built):**
-1. **Capped/high-cost emergency override** — raise the cost of the "off switch" (the #1 defeat path);
-   the app already has an unused emergency-bypass field to build on. Left for a session that can
-   device-test the launch-critical path.
-2. **System-wide grayscale during wind-down** — extend evening grayscale to every app (needs a
-   lifecycle to safely restore the global daltonizer for a passive window).
-3. **Notification triage** — Before Launcher's differentiator; allow-list + low-urgency inbox
-   (larger: needs a NotificationListenerService).
-4. **Escalating extension friction** — extra friction specifically on repeat "just 5 more minutes"
-   unlocks (closes the loophole Screen Time/One Sec leave open).
+- Turn-away events, launcher grayscale, focus-session system grayscale, wind-down grayscale, gate
+  open counts, and UsageStats reflection exist on `feature/focus-enhancements-2026-07`.
+- System grayscale is opt-in and requires ADB-granted `WRITE_SECURE_SETTINGS`; its persistence path
+  needs the crash-safe fix tracked in [#97](https://github.com/siudajakub/focuslauncher/issues/97).
+- Shortcut policy bypass, Time Awareness correctness/polling, focus metrics durability, dormant
+  currency/weather work, and focus data-path optimization are tracked in
+  [#98](https://github.com/siudajakub/focuslauncher/issues/98),
+  [#99](https://github.com/siudajakub/focuslauncher/issues/99),
+  [#100](https://github.com/siudajakub/focuslauncher/issues/100),
+  [#101](https://github.com/siudajakub/focuslauncher/issues/101), and
+  [#102](https://github.com/siudajakub/focuslauncher/issues/102).
+- Notification triage would extend the existing notification-listener infrastructure rather than
+  add a second listener service.
 
 **Deliberately avoided:** punitive streaks / heavy gamification (backfire evidence); cloud/accounts
 (local-first principle); anything that makes essential apps inherit distracting-app friction.

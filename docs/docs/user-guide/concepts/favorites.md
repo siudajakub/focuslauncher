@@ -14,11 +14,16 @@ You can pin any app and any search result to favorites by long pressing it and s
 
 Some apps allow the creation of home screen shortcuts. These shortcuts will also appear in the favorites section.
 
+::: warning
+Pinned shortcuts currently bypass the owning application's focus gate. This is a known pre-release
+bug tracked in [issue #98](https://github.com/siudajakub/focuslauncher/issues/98).
+:::
+
 ## Access favorites
 
 Favorites can appear in three different places:
 
-- Above (or below) the app grid (enabled by default, can be disabled at Settings > Search > Favorites)
+- Above (or below) the app grid when the favorites panel is enabled
 - In the [favorites widget](/docs/user-guide/widgets/favorites-widget) (not enabled by default)
 - In the [clock widget](/docs/user-guide/widgets/clock#dynamic-components) (not enabled by default)
 
@@ -27,7 +32,8 @@ Favorites can appear in three different places:
 
 ## Customization
 
-Favorites can be customized at Settings > Search > Favorites > Edit favorites. The same panel can be opened by clicking the pen icon in the favorites panel.
+Favorites are customized from the favorites panel or widget: open its edit/configure action to show
+the Edit Favorites sheet. The current settings hub has no separate Favorites route.
 
 In this panel, you can
 

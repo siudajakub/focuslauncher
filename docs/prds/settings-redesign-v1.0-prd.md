@@ -1,5 +1,12 @@
 # Settings Redesign - Product Requirements Document (PRD)
 
+> Historical implementation specification. The two-root Focus settings / Launcher settings hub and
+> explicit Quick Start entry are present in the current tree. This checklist is not live project
+> status; see
+> [`PROJECT_STATUS.md`](https://github.com/siudajakub/focuslauncher/blob/main/PROJECT_STATUS.md) and
+> GitHub Issues for verified state and
+> follow-up work.
+
 ## Requirements Description
 
 ### Background

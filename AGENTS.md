@@ -67,6 +67,7 @@ Use JDK 21 or newer for full Gradle verification.
 Fast checks:
 
 ```bash
+./gradlew :services:focus:testDebugUnitTest
 ./gradlew :app:ui:testDebugUnitTest
 ./gradlew :app:app:assembleDefaultDebug
 python3 tools/check_agent_docs.py

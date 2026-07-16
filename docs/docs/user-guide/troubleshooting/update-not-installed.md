@@ -7,17 +7,19 @@ installed one.
 
 ## How FocusLauncher is distributed
 
-FocusLauncher is distributed as a signed APK on
-[GitHub Releases](https://github.com/siudajakub/focuslauncher/releases). Always update by
-installing a newer release APK on top of an existing install of the same signing identity.
+FocusLauncher is preparing its first signed APK for
+[GitHub Releases](https://github.com/siudajakub/focuslauncher/releases), but no public release
+exists as of 2026-07-16. After release, always update by installing an APK with the same application
+ID and signing identity as the installed build.
 
-Different build flavors (release, debug, nightly) use different application IDs and signing keys,
-so they install side by side rather than updating one another.
+Release, debug, and nightly builds use different application IDs, so they install side by side
+rather than updating one another. Release and nightly CI builds use the same owner-held signing
+identity; local debug builds use the Android debug key.
 
 ## If the update still fails
 
 If you previously installed a build signed with a different key (for example a self-built debug
-APK), you cannot update it in place with the official release. To switch:
+APK), you cannot update it in place with a future official release. To switch:
 
 1. Back up your data in Settings > Backup & restore.
 2. Uninstall the existing version.

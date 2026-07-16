@@ -1,6 +1,6 @@
 # FocusLauncher Roadmap
 
-Last reviewed: 2026-06-14
+Last reviewed: 2026-07-16
 
 ## Product Goal
 
@@ -24,9 +24,17 @@ Keep friction, limits, habits, environmental cues, and recommendations determini
 
 Expand JVM coverage for pure policy logic, maintain Room migration tests, build every pull request, and perform Pixel smoke tests for launcher lifecycle and launch interception changes.
 
+### Keep The Launcher Light
+
+Treat wakeups, foreground services, background work, database scans, search latency, and GPU-heavy
+effects as product constraints. Measure on a device, remove work for unreachable features, and
+prefer shared/event-driven state over duplicate polling or aggregation.
+
 ### Prepare Distribution
 
-Stabilize application identity, signing, privacy documentation, release notes, upgrade behavior, and reproducible release builds before public distribution.
+Use the configured application identity, signing, privacy documentation, release workflow, upgrade
+behavior, and reproducible build checks to ship the first verified public APK. GitHub Releases is
+the planned first channel; no public release exists yet.
 
 ## Work Tracking
 

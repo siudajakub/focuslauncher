@@ -1,6 +1,6 @@
 # Report Bugs
 
-The easiest way to get involved is to report bugs on the [issue tracker](https://github.com/siudajakub/focuslauncher/issues). Before you open a new issue, please make sure you have searched for existing issues to avoid duplications and that you are running the latest release version of the launcher.
+The easiest way to get involved is to report bugs on the [issue tracker](https://github.com/siudajakub/focuslauncher/issues). Before opening one, search existing issues and record the exact commit/build you are running. No public FocusLauncher release exists yet.
 
 Please include all relevant information such as:
 
@@ -11,10 +11,15 @@ Please include all relevant information such as:
 
 ## Crash reports
 
-When the launcher crashes, a crash report is automatically generated. You can find these crash reports at Settings > Debug > Crash Reporter.
+When the launcher crashes, a crash report is automatically generated. Find reports at Launcher
+settings > Advanced > Debug > Crash Reporter.
 
-Use the <span class="material-symbols-rounded">bug_report</span> icon in the top right corner to open an new issue with that report. Make sure to fill in additional information before submitting, such as steps to reproduce (if possible) or what you were trying to do when the launcher crashed.
+The in-app report action still targets the upstream tracker; this is tracked in
+[issue #104](https://github.com/siudajakub/focuslauncher/issues/104). Until it is fixed, copy the
+report and open a [FocusLauncher issue](https://github.com/siudajakub/focuslauncher/issues/new)
+manually. Add steps to reproduce and what you were doing when the launcher crashed.
 
 ## Logs
 
-Logs can be exported at Settings > Debug > Export logs. Most of the time it is not necessary to submit logs unless your asked to do so.
+Logs can be exported at Launcher settings > Advanced > Debug > Export logs. Most of the time it is
+not necessary to submit logs unless you are asked to do so.

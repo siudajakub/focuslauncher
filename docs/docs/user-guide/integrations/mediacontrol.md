@@ -6,8 +6,9 @@ the [media control part](/docs/user-guide/widgets/clock#dynamic-components) of t
 
 ## My media playback doesn't show up!
 
-Per default, only media sessions from "music apps" are recognized by the media control integration.
-You can select which apps should be included in Settings > Integrations > Media control.
+The media service remains wired for the music widget and clock part. The current settings hub does
+not expose the inherited Media control screen, so its player allow-list cannot be edited through
+the product UI.
 
 ## I can't grant notification access permission!
 
@@ -22,4 +23,3 @@ The only way for third party apps to control media sessions is to read notificat
 media sessions from there. Sadly, the more privacy-friendly alternative is restricted to system apps
 only, ["due to privacy of media consumption"](https://developer.android.com/reference/android/Manifest.permission#MEDIA_CONTENT_CONTROL).
 Yep, that makes sense. Thank you, Google.
-

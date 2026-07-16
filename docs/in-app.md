@@ -17,8 +17,9 @@
 
 </script>
 
-# Open settings page
+# Open documentation page
 
-Scan this code to view the linked settings page in FocusLauncher.
+Scan this code to open the current documentation URL on another device. The Android manifest does
+not expose a website-to-settings deep link.
 
 <img :src="qrcode">
