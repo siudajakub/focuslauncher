@@ -118,9 +118,15 @@ Verified on 2026-07-16 with JDK 21, after the removals above:
 - `./gradlew test :app:app:assembleDefaultDebug`: passed; the default debug APK was produced.
 - `python3 tools/check_agent_docs.py`: passed.
 - `npm run docs:build`: passed.
+- CI on `feature/focus-enhancements-2026-07` (run 29503174408, `workflow_dispatch`): all three jobs
+  green, including `:data:database:connectedDebugAndroidTest` — 8 instrumented migration tests
+  passed on an API 35 emulator, covering `35 -> 36`, `36 -> 37`, the four new `37 -> 38` cases, and
+  the fresh-v38 schema identity check.
 
-Connected Room migration tests (including the new `37 -> 38` cases), performance traces, and the
-Pixel smoke checklist require a device or emulator and were not run.
+Note that CI does not run automatically on this branch: `ci.yml` triggers only on `main` and on
+pull requests to `main`, so a feature branch needs `gh workflow run ci.yml --ref <branch>`.
+
+Performance traces and the Pixel smoke checklist require a physical device and were not run.
 
 ## Work Tracking
 
