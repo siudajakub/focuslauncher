@@ -8,17 +8,13 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
-import de.mm20.launcher2.database.daos.PluginDao
 import de.mm20.launcher2.database.daos.ThemeDao
 import de.mm20.launcher2.database.entities.ColorsEntity
-import de.mm20.launcher2.database.entities.CurrencyEntity
 import de.mm20.launcher2.database.entities.CustomAttributeEntity
 import de.mm20.launcher2.database.entities.FocusEventEntity
 import de.mm20.launcher2.database.entities.FocusSessionEntity
-import de.mm20.launcher2.database.entities.ForecastEntity
 import de.mm20.launcher2.database.entities.IconEntity
 import de.mm20.launcher2.database.entities.IconPackEntity
-import de.mm20.launcher2.database.entities.PluginEntity
 import de.mm20.launcher2.database.entities.SavedSearchableEntity
 import de.mm20.launcher2.database.entities.ShapesEntity
 import de.mm20.launcher2.database.entities.TransparenciesEntity
@@ -51,6 +47,7 @@ import de.mm20.launcher2.database.migrations.Migration_33_34
 import de.mm20.launcher2.database.migrations.Migration_34_35
 import de.mm20.launcher2.database.migrations.Migration_35_36
 import de.mm20.launcher2.database.migrations.Migration_36_37
+import de.mm20.launcher2.database.migrations.Migration_37_38
 import de.mm20.launcher2.database.migrations.Migration_6_7
 import de.mm20.launcher2.database.migrations.Migration_7_8
 import de.mm20.launcher2.database.migrations.Migration_8_9
@@ -61,39 +58,32 @@ import java.util.UUID
 
 @Database(
     entities = [
-        ForecastEntity::class,
         SavedSearchableEntity::class,
-        CurrencyEntity::class,
         IconEntity::class,
         IconPackEntity::class,
         WidgetEntity::class,
         CustomAttributeEntity::class,
         ColorsEntity::class,
-        PluginEntity::class,
         ShapesEntity::class,
         TransparenciesEntity::class,
         TypographyEntity::class,
         FocusEventEntity::class,
         FocusSessionEntity::class,
-    ], version = 37, exportSchema = true
+    ], version = 38, exportSchema = true
 )
 @TypeConverters(ComponentNameConverter::class)
 abstract class AppDatabase : RoomDatabase() {
 
-    abstract fun weatherDao(): WeatherDao
     abstract fun iconDao(): IconDao
 
     abstract fun searchableDao(): SearchableDao
     abstract fun widgetDao(): WidgetDao
-    abstract fun currencyDao(): CurrencyDao
     abstract fun backupDao(): BackupRestoreDao
     abstract fun customAttrsDao(): CustomAttrsDao
     abstract fun focusEventDao(): FocusEventDao
     abstract fun focusSessionDao(): FocusSessionDao
 
     abstract fun themeDao(): ThemeDao
-
-    abstract fun pluginDao(): PluginDao
 
     companion object {
         private var _instance: AppDatabase? = null
@@ -107,12 +97,9 @@ abstract class AppDatabase : RoomDatabase() {
                             val defaultParentId = WidgetScreenTarget.Default.scopeId
                             db.execSQL(
                                 "INSERT INTO Widget (`type`, `position`, `id`, `parentId`) VALUES " +
-                                        "('weather', 0, ?, ?)," +
-                                        "('music', 1, ?, ?)," +
-                                        "('calendar', 2, ?, ?);",
+                                        "('music', 0, ?, ?)," +
+                                        "('calendar', 1, ?, ?);",
                                 arrayOf(
-                                    UUID.randomUUID().toBytes(),
-                                    defaultParentId.toBytes(),
                                     UUID.randomUUID().toBytes(),
                                     defaultParentId.toBytes(),
                                     UUID.randomUUID().toBytes(),
@@ -153,6 +140,7 @@ abstract class AppDatabase : RoomDatabase() {
                         Migration_34_35(),
                         Migration_35_36(),
                         Migration_36_37(),
+                        Migration_37_38(),
                     ).build()
             if (_instance == null) _instance = instance
             return instance

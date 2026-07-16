@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import de.mm20.launcher2.database.migrations.Migration_35_36
 import de.mm20.launcher2.database.migrations.Migration_36_37
+import de.mm20.launcher2.database.migrations.Migration_37_38
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -105,15 +106,89 @@ class AppDatabaseMigrationTest {
     }
 
     @Test
-    fun freshDatabase37_matchesCurrentRoomSchema() {
+    fun migrate37To38_dropsRemovedFeatureTables() {
+        withTestDatabase { database ->
+            database.execSQL("CREATE TABLE `forecasts` (`timestamp` INTEGER NOT NULL PRIMARY KEY)")
+            database.execSQL("CREATE TABLE `Currency` (`symbol` TEXT NOT NULL PRIMARY KEY)")
+            database.execSQL("CREATE TABLE `Plugins` (`authority` TEXT NOT NULL PRIMARY KEY)")
+            assertTrue(database.hasTable("forecasts"))
+            assertTrue(database.hasTable("Currency"))
+            assertTrue(database.hasTable("Plugins"))
+
+            Migration_37_38().migrate(database)
+
+            assertFalse(database.hasTable("forecasts"))
+            assertFalse(database.hasTable("Currency"))
+            assertFalse(database.hasTable("Plugins"))
+        }
+    }
+
+    @Test
+    fun migrate37To38_removesWeatherWidgetButKeepsOthers() {
+        withTestDatabase { database ->
+            createWidgetTableV37(database)
+            insertWidget(database, id = 1, type = "weather", position = 0)
+            insertWidget(database, id = 2, type = "music", position = 1)
+            insertWidget(database, id = 3, type = "calendar", position = 2)
+
+            Migration_37_38().migrate(database)
+
+            database.query("SELECT `type` FROM Widget ORDER BY `position`").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("music", cursor.getString(0))
+                assertTrue(cursor.moveToNext())
+                assertEquals("calendar", cursor.getString(0))
+                assertFalse(cursor.moveToNext())
+            }
+        }
+    }
+
+    @Test
+    fun migrate37To38_toleratesTablesThatWereNeverCreated() {
+        // A user who never had the removed features still has to migrate cleanly.
+        withTestDatabase { database ->
+            createWidgetTableV37(database)
+
+            Migration_37_38().migrate(database)
+
+            assertFalse(database.hasTable("forecasts"))
+        }
+    }
+
+    @Test
+    fun migrate37To38_addsFocusHistoryIndexes() {
+        withTestDatabase { database ->
+            createWidgetTableV37(database)
+            database.execSQL(
+                "CREATE TABLE `FocusEvent` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `timestamp` INTEGER NOT NULL, `appKey` TEXT NOT NULL)",
+            )
+            database.execSQL(
+                "CREATE TABLE `FocusSession` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `startedAt` INTEGER NOT NULL, `status` TEXT NOT NULL)",
+            )
+
+            Migration_37_38().migrate(database)
+
+            // Names must match what Room derives from the entities, or the identity check fails.
+            assertTrue(database.hasIndex("index_FocusEvent_timestamp"))
+            assertTrue(database.hasIndex("index_FocusEvent_appKey_timestamp"))
+            assertTrue(database.hasIndex("index_FocusSession_startedAt"))
+            assertTrue(database.hasIndex("index_FocusSession_status_startedAt"))
+        }
+    }
+
+    @Test
+    fun freshDatabase38_matchesCurrentRoomSchema() {
         val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
 
         try {
             val sqliteDatabase = database.openHelper.writableDatabase
-            assertEquals(37, sqliteDatabase.version)
+            assertEquals(38, sqliteDatabase.version)
             assertTrue(sqliteDatabase.hasTable("FocusEvent"))
             assertTrue(sqliteDatabase.hasTable("FocusSession"))
             assertFalse(sqliteDatabase.hasTable("SearchAction"))
+            assertFalse(sqliteDatabase.hasTable("forecasts"))
+            assertFalse(sqliteDatabase.hasTable("Currency"))
+            assertFalse(sqliteDatabase.hasTable("Plugins"))
         } finally {
             database.close()
         }
@@ -168,6 +243,32 @@ class AppDatabaseMigrationTest {
         )
     }
 
+    private fun createWidgetTableV37(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            """
+            CREATE TABLE `Widget` (
+                `id` BLOB NOT NULL PRIMARY KEY,
+                `type` TEXT NOT NULL,
+                `config` TEXT,
+                `position` INTEGER NOT NULL,
+                `parentId` BLOB
+            )
+            """.trimIndent(),
+        )
+    }
+
+    private fun insertWidget(
+        database: SupportSQLiteDatabase,
+        id: Int,
+        type: String,
+        position: Int,
+    ) {
+        database.execSQL(
+            "INSERT INTO Widget (`id`, `type`, `config`, `position`, `parentId`) VALUES (?, ?, NULL, ?, NULL)",
+            arrayOf(byteArrayOf(id.toByte()), type, position),
+        )
+    }
+
     private fun rowExists(database: SupportSQLiteDatabase, key: String): Boolean {
         database.query("SELECT 1 FROM CustomAttributes WHERE `key` = ?", arrayOf(key)).use { cursor ->
             return cursor.moveToFirst()
@@ -185,6 +286,15 @@ class AppDatabaseMigrationTest {
         query(
             "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
             arrayOf(tableName),
+        ).use { cursor ->
+            return cursor.moveToFirst()
+        }
+    }
+
+    private fun SupportSQLiteDatabase.hasIndex(indexName: String): Boolean {
+        query(
+            "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?",
+            arrayOf(indexName),
         ).use { cursor ->
             return cursor.moveToFirst()
         }

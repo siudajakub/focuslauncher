@@ -6,7 +6,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import de.mm20.launcher2.database.entities.CustomAttributeEntity
 import de.mm20.launcher2.database.entities.SavedSearchableEntity
-import de.mm20.launcher2.database.entities.WebsearchEntity
 import de.mm20.launcher2.database.entities.WidgetEntity
 
 @Dao
