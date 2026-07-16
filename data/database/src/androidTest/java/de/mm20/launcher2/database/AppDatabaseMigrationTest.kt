@@ -108,9 +108,8 @@ class AppDatabaseMigrationTest {
     @Test
     fun migrate37To38_dropsRemovedFeatureTables() {
         withTestDatabase { database ->
-            database.execSQL("CREATE TABLE `forecasts` (`timestamp` INTEGER NOT NULL PRIMARY KEY)")
-            database.execSQL("CREATE TABLE `Currency` (`symbol` TEXT NOT NULL PRIMARY KEY)")
-            database.execSQL("CREATE TABLE `Plugins` (`authority` TEXT NOT NULL PRIMARY KEY)")
+            createV37Tables(database)
+            createRemovedFeatureTablesV37(database)
             assertTrue(database.hasTable("forecasts"))
             assertTrue(database.hasTable("Currency"))
             assertTrue(database.hasTable("Plugins"))
@@ -126,7 +125,7 @@ class AppDatabaseMigrationTest {
     @Test
     fun migrate37To38_removesWeatherWidgetButKeepsOthers() {
         withTestDatabase { database ->
-            createWidgetTableV37(database)
+            createV37Tables(database)
             insertWidget(database, id = 1, type = "weather", position = 0)
             insertWidget(database, id = 2, type = "music", position = 1)
             insertWidget(database, id = 3, type = "calendar", position = 2)
@@ -144,27 +143,23 @@ class AppDatabaseMigrationTest {
     }
 
     @Test
-    fun migrate37To38_toleratesTablesThatWereNeverCreated() {
-        // A user who never had the removed features still has to migrate cleanly.
+    fun migrate37To38_toleratesRemovedTablesThatWereNeverCreated() {
+        // A user who never had the removed features still has to migrate cleanly: the drops are
+        // IF EXISTS, and nothing else in the migration may depend on those tables being there.
         withTestDatabase { database ->
-            createWidgetTableV37(database)
+            createV37Tables(database)
 
             Migration_37_38().migrate(database)
 
             assertFalse(database.hasTable("forecasts"))
+            assertTrue(database.hasIndex("index_FocusEvent_timestamp"))
         }
     }
 
     @Test
     fun migrate37To38_addsFocusHistoryIndexes() {
         withTestDatabase { database ->
-            createWidgetTableV37(database)
-            database.execSQL(
-                "CREATE TABLE `FocusEvent` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `timestamp` INTEGER NOT NULL, `appKey` TEXT NOT NULL)",
-            )
-            database.execSQL(
-                "CREATE TABLE `FocusSession` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `startedAt` INTEGER NOT NULL, `status` TEXT NOT NULL)",
-            )
+            createV37Tables(database)
 
             Migration_37_38().migrate(database)
 
@@ -243,7 +238,12 @@ class AppDatabaseMigrationTest {
         )
     }
 
-    private fun createWidgetTableV37(database: SupportSQLiteDatabase) {
+    /**
+     * The v37 tables that Migration_37_38 reads or writes. A real v37 database always has all of
+     * them, so the migration is entitled to assume they exist; a fixture that creates only some of
+     * them is testing a database that cannot occur.
+     */
+    private fun createV37Tables(database: SupportSQLiteDatabase) {
         database.execSQL(
             """
             CREATE TABLE `Widget` (
@@ -255,6 +255,19 @@ class AppDatabaseMigrationTest {
             )
             """.trimIndent(),
         )
+        database.execSQL(
+            "CREATE TABLE `FocusEvent` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `timestamp` INTEGER NOT NULL, `appKey` TEXT NOT NULL)",
+        )
+        database.execSQL(
+            "CREATE TABLE `FocusSession` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `startedAt` INTEGER NOT NULL, `status` TEXT NOT NULL)",
+        )
+    }
+
+    /** The tables the removed weather, currency-converter and plugin features left behind. */
+    private fun createRemovedFeatureTablesV37(database: SupportSQLiteDatabase) {
+        database.execSQL("CREATE TABLE `forecasts` (`timestamp` INTEGER NOT NULL PRIMARY KEY)")
+        database.execSQL("CREATE TABLE `Currency` (`symbol` TEXT NOT NULL PRIMARY KEY)")
+        database.execSQL("CREATE TABLE `Plugins` (`authority` TEXT NOT NULL PRIMARY KEY)")
     }
 
     private fun insertWidget(
