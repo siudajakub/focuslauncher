@@ -105,6 +105,7 @@ dependencies {
     //Android Jetpack
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core)
+    implementation(libs.androidx.work)
 
     implementation(libs.coil.core)
     implementation(libs.coil.svg)

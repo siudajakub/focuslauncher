@@ -1,6 +1,7 @@
 package de.mm20.launcher2
 
 import android.app.Application
+import androidx.work.WorkManager
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
@@ -83,8 +84,26 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
         }
 
         launch {
+            cancelRemovedFeatureWork()
             focusPolicyService.reconcileFocusSession(this@LauncherApplication)
         }
+    }
+
+    /**
+     * Cancels the periodic work of the removed weather and currency-converter features.
+     *
+     * Deleting the worker classes was not enough: WorkManager persists enqueued work in its own
+     * database, which survives the upgrade, so on an existing install those jobs stay scheduled
+     * and now wake the device every hour only to fail instantiating a class that no longer exists
+     * and retry on backoff. Cancelling by unique name is the only way to reach them.
+     *
+     * Safe to call repeatedly — cancelling an unknown name is a no-op — and safe to delete once no
+     * install can still be upgrading from a build that had these features.
+     */
+    private fun cancelRemovedFeatureWork() {
+        val workManager = WorkManager.getInstance(this)
+        workManager.cancelUniqueWork(OBSOLETE_EXCHANGE_RATE_WORK)
+        workManager.cancelUniqueWork(OBSOLETE_WEATHER_WORK)
     }
 
     override fun newImageLoader(): ImageLoader {
@@ -95,5 +114,11 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
             .crossfade(true)
             .crossfade(200)
             .build()
+    }
+
+    private companion object {
+        // The unique names the deleted CurrencyRepository and WeatherRepositoryImpl enqueued under.
+        const val OBSOLETE_EXCHANGE_RATE_WORK = "ExchangeRates"
+        const val OBSOLETE_WEATHER_WORK = "weather"
     }
 }
