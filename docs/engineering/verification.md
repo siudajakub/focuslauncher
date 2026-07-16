@@ -28,17 +28,22 @@ export PATH="$JAVA_HOME/bin:$PATH"
 | Room schema | Unit tests, `:data:database:connectedDebugAndroidTest`, exported schema review |
 | Build logic or dependencies | `./gradlew test :app:app:assembleDefaultDebug` |
 | Launch interception or lifecycle | Build plus Pixel 8 smoke test |
+| Polling, UsageStats, rendering, or battery work | Relevant unit/build checks plus on-device Perfetto/Battery Historian evidence; do not infer savings from code shape alone |
 
 ## Pixel Smoke Test
 
 ```bash
 adb devices -l
 adb install -r app/app/build/outputs/apk/default/debug/app-default-debug.apk
-adb shell am start -W -n de.mm20.launcher2.debug/de.mm20.launcher2.ui.launcher.LauncherActivity
-adb shell dumpsys activity exit-info de.mm20.launcher2.debug
+adb shell am start -W -n com.siudajakub.focuslauncher.debug/de.mm20.launcher2.ui.launcher.LauncherActivity
+adb shell dumpsys activity exit-info com.siudajakub.focuslauncher.debug
 ```
 
-For focus changes, verify essential launch, distracting launch, gate continuation, active session lock, session expiry, temporary unlock, and launcher restart. Use `dumpsys dropbox --print ... data_app_crash` when startup failures disappear from logcat. The full step-by-step device checklist lives in [pixel-smoke-test.md](pixel-smoke-test.md) — run it before any release.
+For focus changes, verify essential launch, distracting launch, turn-away logging, gate continuation,
+active session lock, session expiry, temporary unlock, UsageStats reflection, and launcher restart.
+Use `dumpsys dropbox --print ...
+data_app_crash` when startup failures disappear from logcat. The full step-by-step device checklist
+lives in [pixel-smoke-test.md](pixel-smoke-test.md) — run it before any release.
 
 ## Reporting
 

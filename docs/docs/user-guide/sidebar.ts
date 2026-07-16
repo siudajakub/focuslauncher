@@ -20,10 +20,6 @@ export const UserGuideSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Tags',
         link: '/docs/user-guide/concepts/tags',
       },
-      {
-        text: 'Plugins',
-        link: '/docs/user-guide/concepts/plugins',
-      },
     ],
   },
   {
@@ -50,19 +46,11 @@ export const UserGuideSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Media Control',
         link: '/docs/user-guide/integrations/mediacontrol',
       },
-      {
-        text: 'Weather',
-        link: '/docs/user-guide/integrations/weather',
-      },
     ],
   },
   {
     text: 'Search',
     items: [
-      {
-        text: 'Unit Converter',
-        link: '/docs/user-guide/search/unit-converter',
-      },
       {
         text: 'Quick Actions',
         link: '/docs/user-guide/search/quickactions',
@@ -95,10 +83,6 @@ export const UserGuideSidebar: DefaultTheme.SidebarItem[] = [
       {
         text: 'Notes Widget',
         link: '/docs/user-guide/widgets/notes-widget',
-      },
-      {
-        text: 'Weather Widget',
-        link: '/docs/user-guide/widgets/weather-widget',
       },
     ],
   },

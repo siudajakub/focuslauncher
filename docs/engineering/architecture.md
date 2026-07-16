@@ -7,10 +7,14 @@ FocusLauncher is a multi-module Android application using Gradle Kotlin DSL, Jet
 - `app/app`: application bootstrap, packaging, variants, manifest, and `LauncherApplication`.
 - `app/ui`: launcher activities, Compose surfaces, settings, search orchestration, and focus UI.
 - `core`: shared search types, preferences, permissions, compatibility, profiles, i18n, and utilities.
-- `data`: low-level repositories and providers for applications, custom attributes, database, files, widgets, and other data sources.
-- `services`: higher-level APIs for search, icons, backup, favorites, focus, widgets, and related orchestration. `services/focus` owns focus classification, policy, sessions, history, and session-expiry scheduling; UI-coupled focus helpers and screens stay in `app/ui`.
-- `libs`: standalone or vendored libraries.
-- `plugins/sdk`: public plugin contracts retained from upstream.
+- `data`: low-level repositories and providers for applications, shortcuts, calendar, custom
+  attributes, Room, themes, widgets, and notifications.
+- `services`: higher-level APIs for search, icons, backup, favorites, focus, widgets, music,
+  tags, badges, and global actions. `services/focus` owns focus classification, policy,
+  launch coordination, sessions, history, usage-summary models, UsageStats access, and
+  session-expiry scheduling; Android activities, Compose screens, and the gate-launcher
+  implementation stay in `app/ui`.
+- `libs`: the vendored address formatter and Material color utilities.
 - `docs`: VitePress user and contributor documentation.
 
 The active module graph is defined only by `settings.gradle.kts`. Do not infer physical removal from a hidden settings route or deleted UI screen.
@@ -38,6 +42,20 @@ The active module graph is defined only by `settings.gradle.kts`. Do not infer p
 - Database: inspect entity, DAO, database version, migrations, schemas, and migration tests.
 - UI: read `DESIGN_SYSTEM.md`, existing shared components, theme, and nearby screens first.
 - Removed feature: check settings, Gradle graph, application wiring, routes, strings, serialization, migrations, and tests before deletion.
+
+## Current Product Boundaries
+
+- Launcher search returns installed applications, plus pinned shortcut favorites matched by label —
+  the set through which a PWA added to the home screen surfaces. There is no other result type and
+  no filter model: `SearchService` takes one application repository. The code labels that second set
+  as PWAs but does not reliably distinguish web shortcuts from native/legacy shortcuts; this is a
+  known launch-policy gap.
+- Calendar, widgets, and music remain core because they support the focus home and planning flows.
+- The launcher performs no periodic background work and no network or location access of its own.
+  Adding either needs an explicit product decision, not just a module.
+- Weather, currency/unit conversion, the plugin system, device pose, feed, contacts,
+  files/WebDAV/accounts, locations, calculator, website search, and Wikipedia have been physically
+  removed. See [integrations-decision.md](integrations-decision.md).
 
 ## Documentation Boundaries
 

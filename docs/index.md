@@ -15,10 +15,11 @@ hero:
 <div class="home-intro">
   FocusLauncher is an apps-first Android launcher built to reduce distraction.
   It classifies your apps as essential or distracting, runs focus sessions that
-  gate the distracting ones, and adds launch friction, daily limits, time
-  awareness, focus history, and weekly insights — plus a lossless quick-capture
-  notes surface. Search is deliberately local and apps-first: no web search,
-  no Wikipedia, no online accounts.
+  gate the distracting ones, and adds launch friction, daily limits, focus
+  history, and weekly insights — plus a lossless quick-capture notes surface.
+  Search is deliberately local and apps-first: no web search, no Wikipedia and
+  no required online account. Optional Todoist focus planning is the intended
+  built-in network integration.
 
   FocusLauncher is a fork of <a href="https://github.com/MM2-0/Kvaesitso" target="_blank">Kvaesitso</a>.
 </div>

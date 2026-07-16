@@ -1,72 +1,131 @@
 # Project Status
 
-Last reviewed: 2026-06-30
-Branch reviewed: `dist/prep-1.0` (off `main`)
-Status: distribution preparation. The stabilization and integrations-removal work (including issue #49) is merged to `main`. Distribution prep for a first public GitHub Releases build — own app identity, version 1.0.0, release signing, tagged-release CI, rebranded privacy/store docs, and a hard exported-schema CI gate — is committed on `dist/prep-1.0`, not yet merged.
+Last reviewed: 2026-07-16
 
-## Current Product State
+Branch reviewed: `feature/focus-enhancements-2026-07`
 
-- The launcher is being reduced from general-purpose Kvaesitso toward an apps-first, focus-first product.
-- Focus app classification uses global essential and distracting key sets.
-- Focus sessions, temporary unlocks, launch friction, daily limits, focus history, and weekly focus insights exist in the current tree.
-- Turn-away reinforcement (2026-07-04, branch `feature/focus-enhancements-2026-07`): backing out of the gate for a distracting app logs a `FocusEventKind.Resisted` event (no migration; `eventKind` is a String column) and is reflected back as gentle positive reinforcement — today's turn-away count and today's per-app open count on the gate, plus a weekly "Turn-aways" stat in Focus Insights. Turn-aways are logged with block flags cleared so they never feed the drift/friction signals.
-- Grayscale is wired end to end (same branch): the launcher surface desaturates on demand (always, or only during a focus session) via a saturation `ColorMatrix` hardware layer on the decor view; and, opt-in, the whole device grays during a focus session by driving the `Settings.Secure` daltonizer to monochrome. System grayscale needs the ADB-granted `WRITE_SECURE_SETTINGS` (declared with `tools:ignore="ProtectedPermissions"`), is a strict no-op without it, and stores/restores the pre-session daltonizer state on every session-end path (mirroring the DND contract). An opt-in evening wind-down also grays the launcher surface during the quiet-hours window (default 20:00–08:00) via a cold minute-ticker in `LauncherScaffoldVM` and the pure `isWithinDailyWindow` helper (unit-tested for the past-midnight case). The previously-unreachable grayscale preferences now have settings toggles.
-- Real usage reflection (same branch): a "Today on distracting apps" card in Focus Insights shows actual foreground time and top offenders from the platform UsageStats (`FocusInsightsVM.todayDistractingUsage` + the pure, unit-tested `summarizeDistractingUsage`). Read-only, off-main; the card hides itself when Usage Access is not granted (reuses the Time Awareness permission). This is real self-monitoring feedback, distinct from the launcher's own gate log.
-- Time awareness is wired end to end: a Time Awareness settings section (enable toggle, interval, usage-access and notification permission prompts) with `TimeBlindnessService` and `TimeBlindnessReceiver` that start on app launch and on toggle, on a safe foreground-service path for API 34+.
-- Quick Capture is lossless: notes persist and list locally, with optional share.
-- Search surfaces matching pinned shortcuts; browser/PWA "add to home screen" shortcuts are tagged with a (web) label.
-- The settings menu is now organized into a two-item hub: Focus Settings and Launcher Settings, replacing the previous monolithic structure.
-- Correctness fixes (2026-07-04, same branch, from an independent focus-system review): the daily launch budget and the escalating-friction "recent launches" count now count only `Unlock` events — previously `resume_accepted`/`resume_dismissed` events inflated both, prematurely exhausting the budget and adding unearned delay. The gate's "Continue" no longer does a `runBlocking` Room insert on the main thread (now `FocusHistoryRepository.logEventAsync` on an IO scope). Manual `endFocusSession` now restores DND / clears the projection on every outcome including the narrow `StaleSession` race, not only `Finished`. Remaining known dead toggles: `focusCommuteModeEnabled`, `focusStrictSearch`, `focusAtAGlanceEnabled` (persisted, no behavioural consumer).
-- Calculator, website search, Wikipedia, Nextcloud, and Owncloud modules are removed from the active Gradle graph in the current tree. Their dead preference wrappers (`CalculatorSearchSettings`, `WebsiteSearchSettings`, `WikipediaSearchSettings`) and five orphaned persisted fields are now also removed; the DataStore serializer's `ignoreUnknownKeys = true` makes this safe for existing installs.
-- The integrations decision (#4) is made: the **Feed, Contacts, Files, and Locations** subsystems are now physically removed, including the `:data:files`, `:data:contacts`, `:data:locations`, `:services:feed`, `:services:accounts`, and `:libs:webdav` modules and their WebDAV/account backends. The core `File`/`Contact`/`Location` searchable interfaces and the plugin SDK contract are kept (no producers remain); the live Integrations settings screen (Tasks/Todoist), storage permissions, and `GenericFileProvider` are kept for sharing/backup.
-- Retained per the decision: Calendar and Widgets (core); Weather, Music, and Unit conversion (advanced-only / opt-in); the Plugin SDK (developer-only). Rationale recorded in `docs/engineering/integrations-decision.md`.
-- Focus data and services — classification, policy, sessions, history, session runtime, and the session-expiry worker — live in the `:services:focus` module and are now wired through a Koin `focusModule` with constructor injection (no `KoinComponent` self-injection). `FocusReviewModels` has been moved into `:services:focus` (decoupled from `app/ui`'s `R` via `core/i18n`). `FocusLaunchCoordinator` now also lives in `:services:focus`: the former circular dependency on `app/ui`'s `FocusGateActivity` was inverted via a `FocusGateLauncher` interface (with a platform-free `LaunchBounds` type) implemented by `app/ui`'s `FocusGateLauncherImpl` and supplied at the construction boundary through a parameterized `focusModule` factory; `:services:focus` now depends on `:services:favorites` (acyclic). Issue #49 is complete.
+Status: pre-release feature branch, ahead of `origin/main`; no public GitHub Release exists yet.
 
-## Architecture Snapshot
+## Current Product
 
-- `FocusProfile` is no longer an active model. Legacy focus attributes are cleaned by database migration `35 -> 36`.
-- App classification source of truth: `focusEssentialAppKeys` and `focusDistractingAppKeys`.
-- Temporary access source of truth: `FocusTemporaryUnlock` in custom attributes.
-- Session lifecycle (`:services:focus`): `FocusSessionRepository`, `FocusSessionRuntime`, `FocusSessionExpiryWorker` scheduling, and `FocusPolicyService`.
-- Launch policy: `FocusPolicyService` (`:services:focus`), coordinated from `FocusLaunchCoordinator` (`:services:focus`), which opens the gate through the `FocusGateLauncher` interface implemented in `app/ui`.
+- FocusLauncher is an apps-first Android launcher derived from Kvaesitso, with a two-entry settings
+  hub: Focus Settings and Launcher Settings.
+- App classification uses the global `focusEssentialAppKeys` and `focusDistractingAppKeys` sets.
+  Focus policy, sessions, temporary unlocks, history, expiry, usage reflection, and launch
+  coordination live in `:services:focus`.
+- The branch adds turn-away reflection and UsageStats-based distracting-app time. These compile and
+  have unit coverage, but still require the Pixel smoke checks in
+  `docs/engineering/pixel-smoke-test.md`.
+- Search returns installed applications plus pinned `shortcut`/`legacyshortcut` favorites — the set
+  through which a PWA added to the home screen surfaces. No other result type exists.
+  `SearchService` takes a single application repository and `SearchFilters` no longer exists. A
+  pinned shortcut can still bypass focus policy because it is launched as a generic favorite rather
+  than its owning app; see [issue #98](https://github.com/siudajakub/focuslauncher/issues/98).
+- Quick Capture persists notes locally and supports sharing. Calendar, widgets, and music remain
+  active.
 
-## Distribution Readiness
+## Removed On 2026-07-16
 
-First public channel is GitHub Releases (signed APK); not Google Play or F-Droid.
+The owner decided to delete rather than repair. Weather (module, providers, widget), the currency
+converter and its hourly ECB worker, the unit converter, the entire plugin system (`:plugins:sdk`,
+`:services:plugins`, `:data:plugins`, the `:core:base`/`:core:shared` contracts, the
+`de.mm20.launcher2:shared` publication, dokka), `:core:devicepose`, grayscale (launcher and the
+system daltonizer), and Time Awareness are all gone. The orphaned `File`/`Contact`/`Location`/
+`Website`/`Article` searchable types, the dead search-filter UI and settings, and the dead plugin
+and cloud badge providers went with them.
 
-- App identity: `applicationId = com.siudajakub.focuslauncher` (own identity; was upstream `de.mm20.launcher2`). The `.release` applicationId suffix is dropped so the public package is clean; `.debug`/`.nightly` still coexist with an installed release.
-- Version: `versionName = 1.0.0`, default `versionCode = 10000`; the nightly workflow keeps its date-based `VERSION_CODE_OVERRIDE`.
-- Signing: the `release` build type now uses the env-based `gh-actions` signing config (was inheriting the debug key). The keystore and secrets (`KEYSTORE`, `KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`) are owner-held in CI.
-- Release CI: `.github/workflows/release.yml` runs tests, then builds, signs, and publishes `assembleDefaultRelease` to a generated GitHub Release on a `v*` tag.
-- Exported-schema drift is now a hard CI gate derived from the live `AppDatabase` version (currently 37); pre-37 schemas are intentionally not backfilled (runtime migration tests cover 24→37).
-- Product docs rebranded to FocusLauncher: `docs/privacy-policy.md` rewritten for the local-only focus feature set, fastlane store descriptions updated, and the readme install section reflects the GitHub Releases channel. Kvaesitso fork attribution is retained.
-- The launcher icon is already a custom Focus Launcher adaptive mark (navy home/dock motif in `core/base/src/main/res`, `minSdk = 26` so adaptive-only), not the upstream search icon.
-- R8/minify is intentionally off for 1.0.0: `proguard-rules.pro` has no keep rules for Koin/kotlinx.serialization/Room/Compose, so enabling it needs a vetted rule set plus on-device testing (post-1.0 follow-up).
-- The release-readiness review pass is complete (independent code + build/release review): no code blockers. Follow-ups it surfaced are addressed — the privacy policy now accurately discloses Weather/location/network and the real permission set, a dead upstream `kvaesitso.mm20.de` deep link was removed, unused declared permissions (accounts, call, external-storage family, media-location) were pruned from the manifest, and the release-CI GitHub Actions are pinned to commit SHAs.
-- Signing: configured and validated. The four CI secrets (`KEYSTORE`, `KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`) are set for a fresh PKCS12 release key (alias `focuslauncher`, RSA-4096). A `release.yml` `workflow_dispatch` dry run (run 28457207599, 2026-06-30) built and signed `assembleDefaultRelease` and uploaded the artifact — the publish step is correctly skipped without a tag. The keystore file and credentials are owner-held and must be backed up (loss prevents future app updates). (This also unblocks the scheduled nightly, which had been failing at signing.)
-- Pixel 8 (Android 17) smoke test, partial (2026-06-30, new build + `com.siudajakub.focuslauncher.debug` identity): install, cold launch to Focus Home, and default-Home survival verified with no crash. The interactive focus-policy sections (distracting gate, temporary unlock, session expiry/recovery, time reminders, reboot) still need a manual pass per `docs/engineering/pixel-smoke-test.md`.
+This closes issues #97, #99, #101, #103 and the grayscale part of #106 by removal — see the
+"Superseded By Deletion" section of
+[`docs/engineering/code-review-2026-07-16.md`](docs/engineering/code-review-2026-07-16.md) for the
+rationale, and [`docs/engineering/integrations-decision.md`](docs/engineering/integrations-decision.md)
+for the superseding product decision.
+
+## Background Work And Battery
+
+- The launcher runs **no foreground service** and **no periodic background work**. The only
+  scheduled jobs are the one-shot, initial-delay `FocusSessionExpiryWorker` and
+  `AppSessionExpiryWorker`.
+- It requests **no location**. `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION`,
+  `WRITE_SECURE_SETTINGS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`,
+  `RECEIVE_BOOT_COMPLETED`, and `VIBRATE` are gone from the source manifests, and the dead
+  `Location`, `Contacts`, `ExternalStorage` and `Call` groups are gone from `PermissionsManager`.
+  (`WAKE_LOCK`/`RECEIVE_BOOT_COMPLETED`/`FOREGROUND_SERVICE` still merge in from the WorkManager
+  library manifest; nothing in this app declares or drives them.)
+- `INTERNET` is still declared and still needed: the **Todoist integration**
+  (`app/ui/.../focus/todoist/TodoistClient.kt`) fetches tasks over the network when the user has
+  configured an API token. That is the only outbound traffic the app makes; there is no automatic
+  or background network access.
+- Focus Home and Focus Insights share one `FocusUsageStatsRepository`, which single-flights the
+  UsageStats scan behind a 60s day-scoped cache, replacing one full-day platform scan per consumer
+  per input emission.
+- The music service no longer writes SharedPreferences once per second while a track plays; the
+  playback position is kept in memory and persisted at playback boundaries.
+
+## Architecture And Persistence
+
+- Android application ID: `com.siudajakub.focuslauncher`; source namespace remains
+  `de.mm20.launcher2` for fork compatibility.
+- Version: `1.0.0` (`versionCode = 10000`). Database version: **38**.
+- Migration `37 -> 38` drops the `forecasts`, `Currency` and `Plugins` tables and any leftover
+  weather widget row, and adds indexes on `FocusEvent(timestamp)`, `FocusEvent(appKey, timestamp)`,
+  `FocusSession(startedAt)`, and `FocusSession(status, startedAt)`. The fresh-install widget seed is
+  now music + calendar.
+- `FocusProfile` is no longer active. Temporary access is stored as `FocusTemporaryUnlock`; active
+  sessions are persisted by `FocusSessionRepository` and reconciled by `FocusSessionRuntime`.
+- The focus module has no compile dependency on `app/ui`: `FocusLaunchCoordinator` opens the gate
+  through the injected `FocusGateLauncher` interface.
+- Release and nightly CI use the owner-held `gh-actions` signing identity. Debug uses the Android
+  debug key. Release, nightly, and debug have distinct application IDs.
+- R8/minification remains disabled. Enabling it requires keep-rule work and device verification.
+
+## Open Review Findings
+
+Full report: [`docs/engineering/code-review-2026-07-16.md`](docs/engineering/code-review-2026-07-16.md).
+
+- Pinned Android shortcuts bypass the focus gate:
+  [issue #98](https://github.com/siudajakub/focuslauncher/issues/98).
+- Unlock logging can be lost and aggregate metrics mix event kinds:
+  [issue #100](https://github.com/siudajakub/focuslauncher/issues/100).
+- Focus data/gate optimization is partly done under
+  [issue #102](https://github.com/siudajakub/focuslauncher/issues/102): the Room indexes and the
+  shared UsageStats repository landed; gate re-evaluation I/O and history retention remain.
+- Search and media hot paths still need device measurement:
+  [issue #106](https://github.com/siudajakub/focuslauncher/issues/106) (its grayscale item is void).
+- Documentation toolchain advisories:
+  [issue #105](https://github.com/siudajakub/focuslauncher/issues/105); they do not affect the
+  Android runtime artifact.
+- Hard-coded focus-insight duration and summary formatting:
+  [issue #107](https://github.com/siudajakub/focuslauncher/issues/107).
+
+The in-app crash reporter now files against this fork rather than upstream Kvaesitso, closing
+[issue #104](https://github.com/siudajakub/focuslauncher/issues/104).
+
+## Distribution
+
+- The planned first public channel is a signed APK on GitHub Releases. No public release exists as
+  of this review.
+- `.github/workflows/release.yml` builds and publishes `assembleDefaultRelease` for `v*` tags.
+- A prior `workflow_dispatch` signing dry run succeeded on 2026-06-30. The keystore must remain
+  backed up because losing it prevents in-place updates.
+- The last recorded device smoke test was a partial Pixel 8 / Android 17 pass on 2026-06-30. It
+  covered install, cold launch, and default-home survival, not the current branch's interactive
+  focus paths.
 
 ## Verification Snapshot
 
-Refreshed on 2026-06-28 with JDK 21 on `stabilize/focus-launcher`, after the backlog-clearing wave (Koin DI, `FocusReviewModels` move, focus lifecycle tests, migration hardening, dead-preference removal, focus-copy i18n).
+Verified on 2026-07-16 with JDK 21, after the removals above:
 
-- `python3 tools/check_agent_docs.py`: passed; it also validates the session scripts and the `SessionStart`/`PreCompact` hook wiring.
-- `./gradlew test :app:app:assembleDefaultDebug :data:database:compileDebugAndroidTestKotlin`: BUILD SUCCESSFUL. All module unit tests pass, `app/app/build/outputs/apk/default/debug/app-default-debug.apk` is produced, and the instrumented DB migration tests compile.
-- After the Feed/Contacts/Files/Locations removals, `./gradlew test :app:app:assembleDefaultDebug`: BUILD SUCCESSFUL; the APK is produced from the reduced module graph.
-- `./gradlew :services:focus:testDebugUnitTest`: BUILD SUCCESSFUL; 73 focus tests pass (59 prior + 14 new session-lifecycle tests covering start, manual end, scheduled expiry, idempotent stale-worker runs, and restart recovery).
-- Pixel smoke test: not re-run in this wave; the last recorded run was 2026-06-14. The step-by-step checklist now lives in `docs/engineering/pixel-smoke-test.md`.
-- `:data:database:connectedDebugAndroidTest`: not run locally (needs an Android emulator); the hardened `Migration_35_36`/`Migration_36_37` tests compile and are covered by CI.
-- Distribution wave (2026-06-30, `dist/prep-1.0`): `./gradlew test :app:app:assembleDefaultDebug` BUILD SUCCESSFUL (all module unit tests pass, APK produced); `:app:app:assembleDefaultRelease --dry-run` configures cleanly with the `gh-actions` release signing config; `python3 tools/check_agent_docs.py` passes. A real signed release build is exercised only in CI (needs the owner-held keystore secrets).
+- `./gradlew test :app:app:assembleDefaultDebug`: passed; the default debug APK was produced.
+- `python3 tools/check_agent_docs.py`: passed.
+- `npm run docs:build`: passed.
 
-Focus-features wave (2026-07-04, `feature/focus-enhancements-2026-07` off `main`, JDK 21): `./gradlew :services:focus:testDebugUnitTest :app:app:assembleDefaultDebug` BUILD SUCCESSFUL — all focus unit tests pass (incl. new `FocusHistoryTurnAwayTest` and `FocusSystemGrayscaleTest`), APK produced. `python3 tools/check_agent_docs.py` passes. Not device-verified: the gate turn-away/open counters, launcher and system grayscale apply/restore, and the WRITE_SECURE_SETTINGS path still need a Pixel smoke test (`docs/engineering/pixel-smoke-test.md`) before merge.
-
-The working tree is clean and the stabilization work is committed, but the branch is not yet merged to `main` and has not had a full release verification, so this snapshot does not mean the branch is release-ready.
+Connected Room migration tests (including the new `37 -> 38` cases), performance traces, and the
+Pixel smoke checklist require a device or emulator and were not run.
 
 ## Work Tracking
 
-Product and cleanup work is tracked in GitHub Issues and the `FocusLauncher Stabilization` project board:
-
-- Project: https://github.com/users/siudajakub/projects/1
+- Project board: https://github.com/users/siudajakub/projects/1
 - Seeded backlog: https://github.com/siudajakub/focuslauncher/issues/1 through https://github.com/siudajakub/focuslauncher/issues/10
+- Review follow-ups: https://github.com/siudajakub/focuslauncher/issues/97 through https://github.com/siudajakub/focuslauncher/issues/107
 
-This file records verified state only; it is not a backlog.
+This file records verified state only. GitHub Issues own actionable work.

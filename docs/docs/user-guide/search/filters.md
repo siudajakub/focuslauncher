@@ -1,30 +1,17 @@
-# Filters
+# Search Scope
 
-Filters are used to narrow down the search results.
+FocusLauncher currently uses a fixed, local, apps-first query:
 
-## Apply filters
+- installed applications are searched and focus-ranked;
+- pinned shortcut favorites are matched separately;
+- hidden apps can appear through the dedicated hidden-items flow;
+- calendar events are not returned by search (they surface in the calendar widget and Focus Plan
+  instead).
 
-There are two ways to apply filters:
+There is no user-facing filter menu or settings route to change what search covers.
 
-1. Tap the <span class="material-symbols-rounded">filter_alt</span> icon in the search bar to open
-   the filter menu.
-2. Use the filter bar that is displayed above the keyboard when it is open.
-
-Filters are reset when the search bar is cleared.
-
-## Available filters
-
-- **Type filters:** Filter by result type. FocusLauncher's search is local and apps-first, so
-  these narrow the results to the kinds of items the launcher indexes (e.g., apps, shortcuts).
-- **Hidden results**: Show search results that were hidden by the user.
-
-> [!NOTE]
-> FocusLauncher does not search the web. There is no online-results, Wikipedia, or
-> website search — all search is performed locally on the device.
-
-## Customization
-
-You can customize which filters are pre-selected by default in Settings > Search > Default filter.
-
-You can customize the items and order of the filters in the filter bar in Settings > Search >
-Customize filter bar.
+::: warning
+Pinned shortcuts currently launch outside the owning application's focus policy. Do not rely on
+them for session blocking or daily limits until
+[issue #98](https://github.com/siudajakub/focuslauncher/issues/98) is fixed.
+:::

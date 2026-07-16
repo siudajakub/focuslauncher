@@ -1,12 +1,15 @@
-# Kvaesitso Focus Fork: Design System & Guidelines
+# FocusLauncher Design System
 
-This document outlines the standard UI patterns, thematic guidelines, and architectural rules for this fork. All AI agents and contributors must strictly adhere to these guidelines to ensure UI consistency and code quality.
+FocusLauncher uses the inherited Compose theme and component library to present a calm,
+information-efficient launcher. New UI should fit the existing hierarchy instead of introducing a
+second visual system.
 
-## 1. Activities and Theming
+## Activities And Theming
 
-All UI activities in the `:app:ui` module must inherit from `BaseActivity` (or apply the same composition locals and EdgeToEdge configuration) and wrap their Compose content with the standard `LauncherTheme` and `OverlayHost`.
+Activities in `:app:ui` inherit from `BaseActivity` (or reproduce its permission integration),
+enable edge-to-edge rendering, and wrap Compose content in `LauncherTheme` and the composition
+locals needed by the surface. Use `OverlayHost` when the flow can display launcher overlays.
 
-**Correct Activity Structure:**
 ```kotlin
 package de.mm20.launcher2.ui.example
 
@@ -22,14 +25,10 @@ class ExampleActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.enableEdgeToEdge(window)
-
         setContent {
             LauncherTheme {
                 ProvideCompositionLocals {
-                    OverlayHost {
-                        // Your Main Screen Composable here
-                        ExampleScreen()
-                    }
+                    OverlayHost { ExampleScreen() }
                 }
             }
         }
@@ -37,29 +36,44 @@ class ExampleActivity : BaseActivity() {
 }
 ```
 
-## 2. UI Components & Layouts
+Classes instantiated with Compose `viewModel()` must be visible to the generated factory; do not
+mark them `private`.
 
-- **Do NOT use raw Material 3 `Scaffold` directly if `MainSettingsScreen` or standard `FocusSection` can be used.**
-- If building a custom full-screen flow, use standard Material 3 components but always rely on `MaterialTheme.colorScheme` provided by `LauncherTheme`.
-- Ensure dark mode support: do not hardcode colors like `Color.White` or `Color.Black`. Use `MaterialTheme.colorScheme.surface`, `onSurface`, `primary`, etc.
-- **Animations:** Use `AnimatedVisibility` for list items, dialogs, and dynamic content. Use `fadeIn()`, `fadeOut()`, `slideInVertically()`, `slideOutVertically()`, and `animateContentSize()` modifier to give the app a polished, native feel.
+## Components And Layout
 
-## 3. Internationalization (I18N)
+- Reuse `PreferenceScreen`, `PreferenceCategory`, shared preference rows, launcher sheets, and
+  existing launcher cards before creating new containers.
+- Use `MaterialTheme.colorScheme`, typography, shapes, and spacing. Do not hardcode user-facing
+  colors or assume a light wallpaper.
+- Keep primary actions rare. Prefer `FilledTonalButton` or `OutlinedButton` for secondary or
+  reversible actions.
+- Use animation only when it explains state or continuity. Respect reduced-motion/system animation
+  settings and avoid decorative motion in focus-critical flows.
+- Keep focus gates, home cards, and settings concise; progressive disclosure is preferable to a
+  dense wall of controls.
 
-- **NEVER hardcode strings** directly in Compose code (e.g., `Text("Planowanie")`).
-- Always define strings in `core/i18n/src/main/res/values/strings.xml` and use `stringResource(R.string.key)`.
-- Keys should follow the naming convention: `feature_name_description` (e.g., `focus_plan_title`, `focus_home_agenda_title`).
+## Copy And Internationalization
 
-## 4. Feature specific UI rules (Focus Mode)
+- Canonical English copy belongs in `core/i18n/src/main/res/values/strings.xml`.
+- Compose uses `stringResource`/`pluralStringResource`; no hardcoded user-facing strings.
+- Copy should explain what changed, why an app is blocked, and how the user can safely reverse a
+  choice without shame or urgency.
 
-- Focus components should follow a minimalist, low-distraction design.
-- Use `FilledTonalButton` or `OutlinedButton` instead of solid primary buttons when actions are secondary or shouldn't draw immediate attention.
-- When creating sheets/dialogs, use `LauncherBottomSheet` or standard Material 3 `AlertDialog`.
+## Focus-Specific Rules
 
-## 5. Summary Check-list before finishing a UI task:
+- Essential apps do not inherit distracting-app friction or visual de-emphasis.
+- All app launches go through the shared focus launch coordinator unless an explicit, documented
+  integration exception applies.
+- Hiding, fading, and no-icons behavior must respect the focus master state and use the shared
+  classification source.
+- The launcher never changes display saturation, its own or the device's. Calm comes from what is
+  shown, not from draining colour the user chose.
+- Settings that require Usage Access, notification policy access, or notifications must state the
+  dependency and degrade safely when it is missing.
 
-1. Did I use `LauncherTheme`?
-2. Did I use `strings.xml` for all text?
-3. Did I inherit from `BaseActivity`?
-4. Are my colors adapting to dark mode?
-5. Did I add entry/exit animations for dynamic content?
+## UI Verification
+
+Check light/dark content, wallpaper contrast, system bars, font scaling, RTL, navigation/back,
+permission-denied states, and the relevant Pixel smoke path. For rendering changes that may affect
+GPU cost (blur, large layers), compare a device trace with the feature on and off before claiming a
+performance result.

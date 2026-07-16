@@ -6,22 +6,30 @@ stronger friction around distracting apps.
 
 ## What It Does
 
-- keeps launcher search centered around apps
-- adds focus-oriented settings and app classification
-- lets you separate essential apps from distracting ones
-- adds launch friction and session-based unlocking for distracting apps
-- aims for a cleaner, less impulse-driven home experience
+- returns nothing from search but your installed apps and the web apps you pinned to the home screen
+- separates essential and distracting apps behind one shared launch policy
+- provides focus sessions, temporary access, daily limits, adaptive launch friction, habits, and
+  calendar-aware planning
+- reflects turn-aways, weekly focus history, and optional on-device foreground time
+- keeps Quick Capture notes locally, with sharing only on explicit action
+- runs no background service, asks for no location, and goes online only for the Todoist
+  integration you configure yourself
 
 ## Project Status
 
 This repository is an actively customized fork of Kvaesitso.
 The current direction is focused on turning the launcher into a more intentional, focus-first Android experience.
 
+The current feature branch is not release-ready: pinned-shortcut focus policy
+([#98](https://github.com/siudajakub/focuslauncher/issues/98)) and focus metrics durability
+([#100](https://github.com/siudajakub/focuslauncher/issues/100)) remain open, and the branch still
+needs its device smoke pass. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the verified snapshot.
+
 ## Installation
 
-FocusLauncher is distributed as a signed APK through GitHub Releases. Download the latest release
-from [github.com/siudajakub/focuslauncher/releases](https://github.com/siudajakub/focuslauncher/releases)
-and install it on your device. It is not published on Google Play or F-Droid.
+FocusLauncher is preparing its first public signed APK through GitHub Releases. As of 2026-07-16,
+the repository has no published release; the Releases page will become the official channel after
+the first tagged build passes the release gate. It is not published on Google Play or F-Droid.
 
 You can also build it locally from source (see Development below).
 
@@ -38,11 +46,15 @@ You can also build it locally from source (see Development below).
 From the project root:
 
 ```bash
-./gradlew assembleDebug
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export GRADLE_USER_HOME="$PWD/.gradle-home"
+./gradlew :app:app:assembleDefaultDebug
 ```
 
 If your local environment does not already expose the Android SDK path, create a `local.properties`
-file with your `sdk.dir`.
+file with your `sdk.dir`. The APK is written to
+`app/app/build/outputs/apk/default/debug/app-default-debug.apk`.
 
 ## Reporting Issues
 
@@ -89,4 +101,4 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 ```
 
-The plugin SDK modules (`plugins/sdk` and `core/shared`) remain licensed under the Apache License 2.0.
+`core/shared` remains licensed under the Apache License 2.0, as inherited from upstream.

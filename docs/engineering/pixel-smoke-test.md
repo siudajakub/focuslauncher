@@ -16,7 +16,8 @@ export GRADLE_USER_HOME="$PWD/.gradle-home"
 ```
 
 - Test apps classified before running: at least one Essential and one Distracting app in Focus System settings (`focusEssentialAppKeys`, `focusDistractingAppKeys`).
-- For time reminders, grant Usage Access (`PACKAGE_USAGE_STATS`) and notifications (`POST_NOTIFICATIONS`).
+- For real screen-time reflection, grant Usage Access (`PACKAGE_USAGE_STATS`). For the session-expiry
+  reminder, grant notifications (`POST_NOTIFICATIONS`).
 
 ## Checklist
 
@@ -41,6 +42,9 @@ Use a fresh build for each pass. Tick every item or record the failure.
 - [ ] The gate explains why the app is blocked.
 - [ ] Cancelling the gate returns to the launcher with the app unopened.
 - [ ] Tap, Enter, and hidden-item/settings launch paths all reach the same gate.
+- [ ] Backing out from the Android back gesture, one-second cancel, breathing cancel, and gate
+  "Go back" each records exactly one turn-away and never records an unlock.
+- [ ] Continuing records exactly one unlock and never records a turn-away.
 
 ### Temporary unlock
 
@@ -63,12 +67,28 @@ Use a fresh build for each pass. Tick every item or record the failure.
 - [ ] Re-running an already-ended session is idempotent; no duplicate end or DND change.
 - [ ] After a reboot the launcher restarts cleanly with focus state intact.
 
-### Time reminders
+### Usage reflection
 
-- [ ] Enabling reminders starts `TimeBlindnessService`; settings request Usage Access and notifications.
-- [ ] Keeping a Distracting app foregrounded triggers a nudge notification.
-- [ ] The nudge is a soft reminder; it does not force-close the app.
-- [ ] Reminders restart after `BOOT_COMPLETED`.
+- [ ] Focus Home and Focus Insights show plausible foreground minutes for distracting apps with
+  Usage Access and hide the usage card without it.
+- [ ] Focus Settings offers the Usage Access grant when it is missing, and the number appears after
+  granting it and returning to the screen.
+- [ ] Opening Focus Home and Focus Insights in the same minute triggers only one UsageStats scan
+  (the shared cache is holding).
+
+### Search scope
+
+- [ ] Search returns installed apps and pinned web-app shortcuts, and nothing else — no contacts,
+  no calendar events, no conversions, no web results.
+
+### Performance and battery observation
+
+- [ ] The launcher runs no foreground service; its notification shade entry is absent.
+- [ ] `adb shell dumpsys jobscheduler | grep focuslauncher` shows no periodic job — only one-shot
+  session/app expiry work while a session or timed unlock is pending.
+- [ ] The launcher does not keep minute timers active while it is backgrounded.
+- [ ] `adb shell dumpsys batterystats` over an idle hour with the launcher as Home shows no
+  recurring wakeups attributable to the package.
 
 ### Crash diagnostics
 
