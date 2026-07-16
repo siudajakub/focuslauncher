@@ -7,8 +7,6 @@ val searchModule = module {
     single<SearchService> {
         SearchServiceImpl(
             get(named<Application>()),
-            get(named<AppShortcut>()),
-            get(),
             get(),
             get(),
         )

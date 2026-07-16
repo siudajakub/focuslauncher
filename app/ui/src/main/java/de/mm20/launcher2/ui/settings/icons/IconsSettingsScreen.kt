@@ -83,10 +83,8 @@ fun IconsSettingsScreen() {
     )
 
     val notificationBadges by viewModel.notificationBadges.collectAsStateWithLifecycle(null)
-    val cloudFileBadges by viewModel.cloudFileBadges.collectAsStateWithLifecycle(null)
     val suspendedAppBadges by viewModel.suspendedAppBadges.collectAsStateWithLifecycle(null)
     val shortcutBadges by viewModel.shortcutBadges.collectAsStateWithLifecycle(null)
-    val pluginBadges by viewModel.pluginBadges.collectAsStateWithLifecycle(null)
 
     val iconSize = with(density) { grid.iconSize.dp.toPx() }.toInt()
 
@@ -244,14 +242,6 @@ fun IconsSettingsScreen() {
                     )
                 }
                 SwitchPreference(
-                    title = stringResource(R.string.preference_cloud_badges),
-                    summary = stringResource(R.string.preference_cloud_badges_summary),
-                    value = cloudFileBadges == true,
-                    onValueChanged = {
-                        viewModel.setCloudFiles(it)
-                    }
-                )
-                SwitchPreference(
                     title = stringResource(R.string.preference_suspended_badges),
                     summary = stringResource(R.string.preference_suspended_badges_summary),
                     value = suspendedAppBadges == true,
@@ -265,14 +255,6 @@ fun IconsSettingsScreen() {
                     value = shortcutBadges == true,
                     onValueChanged = {
                         viewModel.setShortcuts(it)
-                    }
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.preference_plugin_badges),
-                    summary = stringResource(R.string.preference_plugin_badges_summary),
-                    value = pluginBadges == true,
-                    onValueChanged = {
-                        viewModel.setPluginBadges(it)
                     }
                 )
             }

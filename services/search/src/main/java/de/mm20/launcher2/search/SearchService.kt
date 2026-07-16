@@ -5,23 +5,19 @@ import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
 import de.mm20.launcher2.data.customattrs.utils.withCustomLabels
 import de.mm20.launcher2.profiles.Profile
 import de.mm20.launcher2.profiles.ProfileManager
-import de.mm20.launcher2.search.data.UnitConverter
-import de.mm20.launcher2.unitconverter.UnitConverterRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 
 interface SearchService {
+    /**
+     * Search installed applications. [initialResults] is emitted first so the caller can keep the
+     * previous query's results on screen instead of flashing empty while the new query resolves.
+     */
     fun search(
         query: String,
-        filters: SearchFilters,
         initialResults: SearchResults? = null,
     ): Flow<SearchResults>
 
@@ -30,15 +26,12 @@ interface SearchService {
 
 internal class SearchServiceImpl(
     private val appRepository: SearchableRepository<Application>,
-    private val appShortcutRepository: SearchableRepository<AppShortcut>,
-    private val unitConverterRepository: UnitConverterRepository,
     private val profileManager: ProfileManager,
     private val customAttributesRepository: CustomAttributesRepository,
 ) : SearchService {
 
     override fun search(
         query: String,
-        filters: SearchFilters,
         initialResults: SearchResults?,
     ): Flow<SearchResults> {
         if (query.isBlank()) {
@@ -47,50 +40,12 @@ internal class SearchServiceImpl(
             }
         }
         return flow {
-            val results = MutableStateFlow(
-                initialResults?.copy(
-                    apps = initialResults.apps.takeIf { filters.apps },
-                    shortcuts = initialResults.shortcuts.takeIf { filters.shortcuts },
-                    unitConverters = initialResults.unitConverters.takeIf { filters.tools },
-                ) ?: SearchResults()
+            emit(initialResults ?: SearchResults())
+            emitAll(
+                appRepository.search(query, allowNetwork = false)
+                    .withCustomLabels(customAttributesRepository)
+                    .map { SearchResults(apps = it) }
             )
-            supervisorScope {
-                if (filters.apps) {
-                    launch {
-                        appRepository.search(query, filters.allowNetwork)
-                            .withCustomLabels(customAttributesRepository)
-                            .collectLatest { r ->
-                                results.update {
-                                    it.copy(apps = r)
-                                }
-                            }
-                    }
-                }
-                if (filters.shortcuts) {
-                    launch {
-                        appShortcutRepository.search(query, filters.allowNetwork)
-                            .withCustomLabels(customAttributesRepository)
-                            .collectLatest { r ->
-                                results.update {
-                                    it.copy(shortcuts = r)
-                                }
-                            }
-                    }
-                }
-                if (filters.tools) {
-                    launch {
-                        unitConverterRepository.search(query)
-                            .collectLatest { r ->
-                                results.update {
-                                    it.copy(unitConverters = r?.let { listOf(it) }
-                                        ?: listOf())
-                                }
-                            }
-                    }
-                }
-
-                emitAll(results)
-            }
         }
     }
 
@@ -140,8 +95,6 @@ internal class SearchServiceImpl(
 
 data class SearchResults(
     val apps: List<Application>? = null,
-    val shortcuts: List<AppShortcut>? = null,
-    val unitConverters: List<UnitConverter>? = null,
 )
 
 data class AllAppsResults(
@@ -151,9 +104,5 @@ data class AllAppsResults(
 )
 
 fun SearchResults.toList(): List<Searchable> {
-    return listOfNotNull(
-        apps,
-        shortcuts,
-        unitConverters,
-    ).flatten()
+    return listOfNotNull(apps).flatten()
 }

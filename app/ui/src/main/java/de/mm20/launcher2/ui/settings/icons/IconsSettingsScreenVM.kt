@@ -105,11 +105,6 @@ class IconsSettingsScreenVM(
         permissionsManager.requestPermission(context, PermissionGroup.Notifications)
     }
 
-    val cloudFileBadges = badgeSettings.cloudFiles
-    fun setCloudFiles(cloudFiles: Boolean) {
-        badgeSettings.setCloudFiles(cloudFiles)
-    }
-
     val shortcutBadges = badgeSettings.shortcuts
     fun setShortcuts(shortcuts: Boolean) {
         badgeSettings.setShortcuts(shortcuts)
@@ -118,11 +113,6 @@ class IconsSettingsScreenVM(
     val suspendedAppBadges = badgeSettings.suspendedApps
     fun setSuspendedApps(suspendedApps: Boolean) {
         badgeSettings.setSuspendedApps(suspendedApps)
-    }
-
-    val pluginBadges = badgeSettings.plugins
-    fun setPluginBadges(plugins: Boolean) {
-        badgeSettings.setPlugins(plugins)
     }
 
     private val previewItems = grid.flatMapLatest { grid ->

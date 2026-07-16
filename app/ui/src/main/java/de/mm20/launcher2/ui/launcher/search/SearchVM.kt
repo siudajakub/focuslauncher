@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
 import de.mm20.launcher2.data.customattrs.FocusTemporaryUnlock
-import de.mm20.launcher2.devicepose.DevicePoseProvider
 import de.mm20.launcher2.ktx.isAtLeastApiLevel
 import de.mm20.launcher2.permissions.PermissionGroup
 import de.mm20.launcher2.permissions.PermissionsManager
@@ -23,7 +22,6 @@ import de.mm20.launcher2.search.Application
 
 import de.mm20.launcher2.search.ResultScore
 import de.mm20.launcher2.search.SavableSearchable
-import de.mm20.launcher2.search.SearchFilters
 import de.mm20.launcher2.search.SearchResults
 import de.mm20.launcher2.search.SearchService
 import de.mm20.launcher2.search.Searchable
@@ -67,7 +65,6 @@ class SearchVM : ViewModel(), KoinComponent {
     private val profileManager: ProfileManager by inject()
 
     private val searchUiSettings: SearchUiSettings by inject()
-    private val devicePoseProvider: DevicePoseProvider by inject()
 
     val launchOnEnter = searchUiSettings.launchOnEnter
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
@@ -241,11 +238,7 @@ class SearchVM : ViewModel(), KoinComponent {
                     limit = 50,
                 )
                 combine(
-                    searchService.search(
-                        query,
-                        filters = launcherSearchFilters(),
-                        previousResults,
-                    ),
+                    searchService.search(query, previousResults),
                     hiddenItemKeys,
                     pinnedWebApps,
                 ) { results, hiddenKeys, webApps ->
@@ -344,19 +337,6 @@ class SearchVM : ViewModel(), KoinComponent {
             FocusAppType.Distracting -> -0.18f
             else -> 0f
         }
-    }
-
-    private fun launcherSearchFilters(): SearchFilters {
-        // Launcher search returns only apps (plus installed PWAs, surfaced separately from pinned
-        // web-app favorites). The live ShortcutManager search is intentionally off so app-provided
-        // dynamic/conversation shortcuts (e.g. messaging "contacts") never leak into results.
-        return SearchFilters(
-            allowNetwork = false,
-            hiddenItems = false,
-            apps = true,
-            shortcuts = false,
-            tools = false,
-        )
     }
 
     /**

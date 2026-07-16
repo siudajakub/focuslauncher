@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import de.mm20.launcher2.icons.IconService
 import de.mm20.launcher2.icons.LauncherIcon
 import de.mm20.launcher2.search.SavableSearchable
-import de.mm20.launcher2.search.SearchFilters
 import de.mm20.launcher2.search.SearchService
 import de.mm20.launcher2.search.toList
 import kotlinx.coroutines.Dispatchers
@@ -39,10 +38,7 @@ class SearchablePickerVM : ViewModel(), KoinComponent {
         searchQuery = query
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            searchService.search(
-                query = query,
-                filters = SearchFilters(allowNetwork = true)
-            ).collectLatest {
+            searchService.search(query = query).collectLatest {
                 if (searchQuery != query) return@collectLatest
                 items = withContext(Dispatchers.Default) {
                     it.toList().filterIsInstance<SavableSearchable>().sorted()
