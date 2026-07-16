@@ -187,6 +187,9 @@ internal class MusicServiceImpl(
         }
     }.shareIn(scope, SharingStarted.WhileSubscribed(), 1)
 
+    // Held in memory while a track plays; only written to disk at a playback boundary. It is
+    // persisted solely to restore the UI after process death, which does not justify a
+    // SharedPreferences write on every one-second tick.
     private var lastPosition: Long? = null
         get() {
             if (field == null) {
@@ -194,12 +197,12 @@ internal class MusicServiceImpl(
             }
             return field
         }
-        set(value) {
-            preferences.edit {
-                putLong(PREFS_KEY_POSITION, value ?: -1)
-            }
-            field = value
+
+    private fun persistPosition() {
+        preferences.edit {
+            putLong(PREFS_KEY_POSITION, lastPosition ?: -1)
         }
+    }
 
     override val position: SharedFlow<Long?> = channelFlow {
         currentState.collectLatest { state ->
@@ -210,14 +213,21 @@ internal class MusicServiceImpl(
             if (state.position < 0 || state.lastPositionUpdateTime == 0L) {
                 send(null)
                 lastPosition = null
+                persistPosition()
                 return@collectLatest
             }
-            while (isActive) {
-                val offset = SystemClock.elapsedRealtime() - state.lastPositionUpdateTime
-                val position = state.position + offset
-                lastPosition = position
-                send(position)
-                delay(1000)
+            try {
+                while (isActive) {
+                    val offset = SystemClock.elapsedRealtime() - state.lastPositionUpdateTime
+                    val position = state.position + offset
+                    lastPosition = position
+                    send(position)
+                    delay(1000)
+                }
+            } finally {
+                // Playback changed, or nothing is subscribed any more: the one point where the
+                // position is worth a write.
+                persistPosition()
             }
         }
     }.shareIn(scope, SharingStarted.WhileSubscribed(), 1)

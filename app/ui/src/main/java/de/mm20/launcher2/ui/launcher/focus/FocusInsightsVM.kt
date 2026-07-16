@@ -29,6 +29,7 @@ class FocusInsightsVM : ViewModel(), KoinComponent {
     private val searchUiSettings: SearchUiSettings by inject()
     private val customAttributesRepository: CustomAttributesRepository by inject()
     private val appRepository: AppRepository by inject()
+    private val usageStatsRepository: FocusUsageStatsRepository by inject()
     private val context: Context by inject()
 
     private val actionSummary = MutableStateFlow<String?>(null)
@@ -48,8 +49,7 @@ class FocusInsightsVM : ViewModel(), KoinComponent {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), persistentListOf())
 
     // Today's real screen time on distracting apps, from the platform UsageStats. Returns an empty
-    // summary (card hides itself) when Usage Access is not granted — the Time Awareness setup already
-    // requests that permission, so there's no separate prompt here.
+    // summary (card hides itself) when Usage Access is not granted; Focus Settings offers the grant.
     val todayDistractingUsage: StateFlow<DistractingUsageSummary> = combine(
         apps,
         searchUiSettings.focusDistractingAppKeys,
@@ -61,9 +61,7 @@ class FocusInsightsVM : ViewModel(), KoinComponent {
         if (distracting.isEmpty()) {
             DistractingUsageSummary()
         } else {
-            withContext(Dispatchers.IO) {
-                summarizeDistractingUsage(queryTodayForegroundUsage(context), distracting)
-            }
+            summarizeDistractingUsage(usageStatsRepository.getTodayForegroundUsage(), distracting)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), DistractingUsageSummary())
 

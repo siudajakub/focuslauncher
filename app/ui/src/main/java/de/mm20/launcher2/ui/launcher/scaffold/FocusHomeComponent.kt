@@ -36,7 +36,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
-import de.mm20.launcher2.ui.launcher.focus.queryTodayForegroundUsage
 import de.mm20.launcher2.search.Application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -607,6 +606,7 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
     private val historyRepository: FocusHistoryRepository by inject()
     private val sessionRepository: FocusSessionRepository by inject()
     private val focusPolicyService: FocusPolicyService by inject()
+    private val usageStatsRepository: FocusUsageStatsRepository by inject()
 
     // Cold ticking clock: only runs while a derived flow is actually being collected
     // (i.e. the Focus Home UI is on screen). It stops when the launcher is backgrounded,
@@ -804,9 +804,7 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
         if (distracting.isEmpty()) {
             DistractingUsageSummary()
         } else {
-            withContext(Dispatchers.IO) {
-                summarizeDistractingUsage(queryTodayForegroundUsage(context), distracting)
-            }
+            summarizeDistractingUsage(usageStatsRepository.getTodayForegroundUsage(), distracting)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), DistractingUsageSummary())
 
