@@ -11,20 +11,14 @@ import de.mm20.launcher2.preferences.SearchBarColors
 import de.mm20.launcher2.preferences.SearchBarStyle
 import de.mm20.launcher2.preferences.ui.GestureSettings
 import de.mm20.launcher2.preferences.ui.UiSettings
-import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.search.SavableSearchable
-import de.mm20.launcher2.services.focus.isWithinDailyWindow
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import java.time.LocalTime
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -33,7 +27,6 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
     private val uiSettings: UiSettings by inject()
     private val gestureSettings: GestureSettings by inject()
     private val searchableRepository: SavableSearchableRepository by inject()
-    private val searchUiSettings: SearchUiSettings by inject()
 
     private var isSystemInDarkMode = MutableStateFlow(false)
 
@@ -93,44 +86,6 @@ class LauncherScaffoldVM : ViewModel(), KoinComponent {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), SearchBarColors.Auto)
     val searchBarStyle = uiSettings.searchBarStyle
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), SearchBarStyle.Transparent)
-
-    // Ticks once a minute so time-of-day triggers (wind-down window) re-evaluate. Cold: only runs
-    // while grayscaleActive is actually collected (launcher on screen), so no always-on wakeup.
-    private val minuteTicker: Flow<Unit> = flow {
-        while (true) {
-            emit(Unit)
-            delay(60_000)
-        }
-    }
-
-    // Grayscale the launcher during the evening wind-down window (opt-in), reusing the quiet-hours
-    // bounds. Bedtime is the highest-leverage window for using the phone less.
-    private val windDownGrayscaleActive: Flow<Boolean> = combine(
-        searchUiSettings.focusWindDownGrayscaleEnabled,
-        searchUiSettings.focusQuietHoursStartMinutes,
-        searchUiSettings.focusQuietHoursEndMinutes,
-        minuteTicker,
-    ) { enabled, startMinutes, endMinutes, _ ->
-        enabled && isWithinDailyWindow(
-            startMinutes = startMinutes,
-            endMinutes = endMinutes,
-            nowMinutesOfDay = LocalTime.now().let { it.hour * 60 + it.minute },
-        )
-    }
-
-    // Desaturate the whole launcher window when the user asks for it — always ("grayscale mode"),
-    // only while a focus session is running ("grayscale during focus blocks"), or during the evening
-    // wind-down window. Applied at the Activity decor view (see SharedLauncherActivity). Grayscale is
-    // the single most evidence-backed calm-down cue for reducing session length; this wires the
-    // previously inert preferences to real rendering.
-    val grayscaleActive: StateFlow<Boolean> = combine(
-        searchUiSettings.focusGrayscaleModeEnabled,
-        searchUiSettings.focusGrayscaleDuringFocusBlocks,
-        searchUiSettings.focusSessionEndsAt,
-        windDownGrayscaleActive,
-    ) { always, duringFocus, sessionEndsAt, windDown ->
-        always || windDown || (duringFocus && sessionEndsAt > System.currentTimeMillis())
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
     val gestureState: StateFlow<GestureState?> = gestureSettings.map { settings ->
             val swipeLeftAction = settings.swipeLeft

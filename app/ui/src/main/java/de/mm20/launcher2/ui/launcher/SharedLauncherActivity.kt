@@ -95,26 +95,6 @@ abstract class SharedLauncherActivity(
 
     internal val enterHomeTransitionManager = EnterHomeTransitionManager()
 
-    // Fully-desaturating paint applied as a hardware layer over the whole launcher window when
-    // grayscale mode is active. A view-level ColorMatrix layer is the reliable cross-API way to
-    // grayscale an arbitrary Compose tree (minSdk 26; no RenderEffect fallback needed).
-    private val grayscalePaint by lazy {
-        android.graphics.Paint().apply {
-            colorFilter = android.graphics.ColorMatrixColorFilter(
-                android.graphics.ColorMatrix().apply { setSaturation(0f) }
-            )
-        }
-    }
-
-    private fun applyWindowGrayscale(enabled: Boolean) {
-        val root = window.decorView
-        if (enabled) {
-            root.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, grayscalePaint)
-        } else {
-            root.setLayerType(android.view.View.LAYER_TYPE_NONE, null)
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         if (isAtLeastApiLevel(29)) {
@@ -181,11 +161,6 @@ abstract class SharedLauncherActivity(
                         val wallpaperBlurRadius by viewModel.wallpaperBlurRadius.collectAsState()
 
                         val fixedRotation by viewModel.fixedRotation.collectAsState()
-
-                        val grayscaleActive by viewModel.grayscaleActive.collectAsState()
-                        LaunchedEffect(grayscaleActive) {
-                            applyWindowGrayscale(grayscaleActive)
-                        }
 
                         val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
 
