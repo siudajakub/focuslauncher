@@ -22,12 +22,13 @@ Coverage summary: docs, JVM tests, debug build, and migration tests are **all co
 Known gaps inside the covered areas:
 
 - **Exported-schema gate covers the current version onward.** `migration-tests` derives the
-  current `AppDatabase` version from source (`AppDatabase.kt`, currently 37) and **fails the job**
+  current `AppDatabase` version from source (`AppDatabase.kt`, currently 39) and **fails the job**
   (`::error` + non-zero exit) if `data/database/schemas/de.mm20.launcher2.database.AppDatabase/<version>.json`
-  is missing. `37.json` is present, so the gate passes today; a future version bump without an
+  is missing. `39.json` is present, so the gate passes today; a future version bump without an
   exported schema will fail CI. Pre-37 schemas 25–36 are intentionally **not** backfilled — Room
-  only exports the current version's schema and cannot regenerate them from v37 source; runtime
-  migration correctness for the `24→37` range is covered by the instrumented `AppDatabaseMigrationTest`.
+  only exports the current version's schema and cannot regenerate them from v39 source; runtime
+  migration correctness for historical paths plus 37/38→39 is covered by the instrumented
+  `AppDatabaseMigrationTest`.
 - **No release/nightly build is exercised by `ci.yml`.** Only the debug variant is assembled on
   PR/push. The signed `nightly` path is exercised only by the scheduled `build-nightly.yml`.
 - **Lint is not gated.** `app/app` sets `lint { abortOnError = false }`; no workflow runs a lint

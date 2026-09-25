@@ -19,27 +19,23 @@ which calls `evaluate()` for `Application` items and either launches directly or
 | Gesture launch (swipe/long-press app) | `app/ui/.../scaffold/LaunchComponent.kt:54` → `FocusLaunchCoordinator.launch:39` | `FocusPolicyService.evaluate` → `FocusAppClassifier` | Yes | Consistent |
 | App detail toolbar "Launch" action | `app/ui/.../search/apps/AppItem.kt:403` → `SearchableItemVM.launch:158` → coordinator | `FocusPolicyService.evaluate` → `FocusAppClassifier` | Yes | Consistent |
 | App-shortcut child launch | `app/ui/.../search/common/SearchableItemVM.kt:199` (`launchChild`) → `FocusLaunchCoordinator.launch:39` | Shortcuts are not `Application`; launch directly (classification is app-scoped) | N/A (non-app) | Intentional exception |
-| Focus-gate continuation ("Continue") | `app/ui/.../focus/FocusGateActivity.kt:884` → `FocusLaunchCoordinator.launchDirect:76` after `evaluate` at `:392` | `FocusPolicyService.evaluate` resolved the gate; continuation sets `FocusTemporaryUnlock` then launches direct | Yes (gate already evaluated policy) | Consistent |
+| Focus-gate continuation (`Start break`) | `app/ui/.../focus/FocusGateActivity.kt` → `FocusLaunchCoordinator.launchDirect` after challenge and `evaluate` | `FocusPolicyService.evaluate` resolved the gate; only `Start break` sets `FocusTemporaryUnlock`, schedules expiry, and launches direct | Yes (gate already evaluated policy) | Consistent |
 | Focus-gate fast path (no gate required) | `app/ui/.../focus/FocusGateActivity.kt:402` → `launchDirect:76` | Guarded by `decision.requiresGate` from `evaluate:392` | Yes | Consistent |
-| Focus-home resume-context launch | `app/ui/.../scaffold/FocusHomeComponent.kt:914` (`acceptResumeContext`) → `FocusLaunchCoordinator.launchDirect:76` | None — uses `launchDirect`, skips `evaluate` | No (deliberate bypass) | Intentional exception |
+| Focus-home resume-context launch | `app/ui/.../scaffold/FocusHomeComponent.kt` (`acceptResumeContext`) evaluates current policy; gated cases route through `FocusLaunchCoordinator`, allowed cases launch direct | `FocusPolicyService.evaluate` → `FocusAppClassifier` | Yes | Consistent; recovery context is cleared only after a successful direct launch |
 | Browse visibility (hide distracting) | `app/ui/.../search/SearchVM.kt:200,211,222` and `.../common/SearchableItemVM.kt:115` (`hideFromBrowse`) | `FocusAppClassifier.classify` + `focusHideDistractingApps` + temporary-unlock | Yes (same classifier) | Consistent |
 | Search ranking (focus weighting) | `app/ui/.../search/SearchVM.kt:302,344` (`applyRanking`/`focusAdjustment`) | `FocusAppClassifier.classify` | Yes (same classifier) | Consistent |
 | Settings "open Tasks app" | `app/ui/.../settings/tasks/TasksSettingsScreenVM.kt:54` (`app.launch` direct) | None | No (bypass) | Intentional exception |
 | Settings "open Smartspacer app" | `app/ui/.../settings/smartspacer/SmartspacerSettingsScreenVM.kt:41` (`app.launch` direct) | None | No (bypass) | Intentional exception |
-| Time-blindness foreground nudge | `app/ui/.../focus/TimeBlindnessService.kt:190` | Reads `focusDistractingAppKeys` directly; prefix match on package name, not `FocusAppClassifier` | No (own classification) | GAP (classification only) |
+| Notification, deep link, Recents, or another app | Accessibility window event → `FocusSystemInterceptionService.onForegroundPackage` → `FocusPolicyService.evaluate` → `FocusGateLauncher` | Unique personal-profile app plus central policy; duplicate and protected package filters | Yes | Consistent when strict mode and both permissions are enabled; otherwise deliberate fail-open |
+| Temporary-unlock expiry while app remains foreground | in-process deadline or `AppSessionExpiryWorker` → `FocusSystemInterceptionService.reconcileForeground` | Usage Access foreground package → the same interception and policy path | Yes | Consistent and idempotent |
+| Time-blindness foreground nudge | `app/ui/.../focus/TimeBlindnessService.kt` | Resolves one personal app key and calls `FocusAppClassifier.classifyWith` using the current Essential and Distracting sets | Yes (same classifier) | Consistent |
 
 ## Gaps And Recommendations
 
-One classification-consistency gap; no launch-gating bypass that lets a distracting app skip
-the gate from a normal user-facing launch surface.
-
-- `app/ui/.../focus/TimeBlindnessService.kt:190` classifies the current foreground app with a
-  bespoke `distractingKeys.any { currentApp.startsWith(it) }` package-prefix match instead of
-  `FocusAppClassifier`. This is a reminder, not a launch gate (the launcher cannot intercept an
-  already-foregrounded app), so it is not a launch bypass, but the matching rule differs from the
-  classifier's exact app-`key` membership and can drift. Remedy: classify the resolved foreground
-  app key through `FocusAppClassifier.classifyNow`/`classifyWith` so the "distracting" definition
-  matches every other surface.
+No known normal user-facing app launch or strict-mode foreground path bypasses the central focus
+policy. System interception intentionally does not attempt to recreate a notification or deep-link
+destination: after the challenge it opens the app's launcher activity. Packages that are ambiguous
+across activities or profiles remain a documented strict-mode fail-open case.
 
 Intentional exceptions (no change needed, documented for completeness):
 
@@ -47,13 +43,6 @@ Intentional exceptions (no change needed, documented for completeness):
   (`org.tasks`, Smartspacer) directly from a settings screen to verify install/integration. These
   are configuration affordances, not user app launches; gating them through the focus gate would be
   surprising. Acceptable as-is.
-- `FocusHomeComponent.kt:914` (`acceptResumeContext`) uses `launchDirect` by design: the user has
-  explicitly accepted a recovery prompt for a previously-gated app, so re-gating would be redundant
-  friction. The accompanying `FocusLogEvent` records the resume.
 - Non-`Application` searchables (shortcuts, files, contacts, calendar, locations) launch directly
   through `FocusLaunchCoordinator.launchDirect` because focus classification is app-scoped; there is
   no app `key` to classify. Consistent with the model.
-
-Owner decision needed: confirm whether the time-blindness package-prefix match (which can flag
-sub-packages an explicit app key would not) is intended, or should be tightened to the classifier's
-exact-key membership.

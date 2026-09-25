@@ -752,6 +752,27 @@ class SearchUiSettings internal constructor(
         launcherDataStore.update { it.copy(focusTimeBlindnessIntervalMinutes = minutes) }
     }
 
+    val focusSystemInterceptionEnabled
+        get() = launcherDataStore.data.map { it.focusSystemInterceptionEnabled }.distinctUntilChanged()
+
+    fun setFocusSystemInterceptionEnabled(enabled: Boolean) {
+        launcherDataStore.update { it.copy(focusSystemInterceptionEnabled = enabled) }
+    }
+
+    val focusUnlockChallengeMethod
+        get() = launcherDataStore.data.map { it.focusUnlockChallengeMethod }.distinctUntilChanged()
+
+    fun setFocusUnlockChallengeMethod(method: de.mm20.launcher2.preferences.FocusUnlockChallengeMethod) {
+        launcherDataStore.update { it.copy(focusUnlockChallengeMethod = method) }
+    }
+
+    val focusStepTarget
+        get() = launcherDataStore.data.map { it.focusStepTarget.coerceIn(10, 100) }.distinctUntilChanged()
+
+    fun setFocusStepTarget(steps: Int) {
+        launcherDataStore.update { it.copy(focusStepTarget = steps.coerceIn(10, 100)) }
+    }
+
     val focusTodoistApiToken
         get() = launcherDataStore.data.map { it.focusTodoistApiToken }.distinctUntilChanged()
 

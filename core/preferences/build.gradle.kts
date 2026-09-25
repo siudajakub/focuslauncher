@@ -51,4 +51,6 @@ dependencies {
     implementation(project(":core:crashreporter"))
     implementation(project(":libs:material-color-utilities"))
 
+    testImplementation(libs.junit)
+
 }

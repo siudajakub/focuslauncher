@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -37,7 +38,7 @@ class FocusInsightsVM : ViewModel(), KoinComponent {
             initialValue = null
         )
 
-    private val nonNullReport = focusHistoryRepository.getWeeklyReport()
+    private val nonNullReport = weeklyReport.map { it ?: WeeklyFocusReport() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), WeeklyFocusReport())
 
     private val apps = appRepository.findMany()
@@ -46,16 +47,17 @@ class FocusInsightsVM : ViewModel(), KoinComponent {
     val recommendations = combine(
         nonNullReport,
         searchUiSettings.focusDismissedRecommendationKeys,
+        searchUiSettings.focusReviewSuggestionsEnabled,
         searchUiSettings.focusBlockPrepPromptsEnabled,
         searchUiSettings.focusPrepLeadTimeMinutes,
-    ) { report, dismissedKeys, prepEnabled, prepLead ->
-        resolveRecommendations(
+    ) { report, dismissedKeys, suggestionsEnabled, prepEnabled, prepLead ->
+        if (!suggestionsEnabled) emptyList() else resolveRecommendations(
             inputs = report.toReviewInputs(
                 prepPromptEnabled = prepEnabled,
                 prepLeadMinutes = prepLead,
             ),
             dismissedKeys = dismissedKeys,
-            limit = 3,
+            limit = 2,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 

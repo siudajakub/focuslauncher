@@ -45,5 +45,8 @@ dependencies {
     implementation(project(":core:base"))
     implementation(project(":core:i18n"))
     implementation(project(":core:permissions"))
+    implementation(project(":services:focus"))
+
+    testImplementation(libs.junit)
 
 }

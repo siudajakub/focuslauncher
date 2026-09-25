@@ -51,6 +51,8 @@ import de.mm20.launcher2.database.migrations.Migration_33_34
 import de.mm20.launcher2.database.migrations.Migration_34_35
 import de.mm20.launcher2.database.migrations.Migration_35_36
 import de.mm20.launcher2.database.migrations.Migration_36_37
+import de.mm20.launcher2.database.migrations.Migration_37_39
+import de.mm20.launcher2.database.migrations.Migration_38_39
 import de.mm20.launcher2.database.migrations.Migration_6_7
 import de.mm20.launcher2.database.migrations.Migration_7_8
 import de.mm20.launcher2.database.migrations.Migration_8_9
@@ -75,7 +77,7 @@ import java.util.UUID
         TypographyEntity::class,
         FocusEventEntity::class,
         FocusSessionEntity::class,
-    ], version = 37, exportSchema = true
+    ], version = 39, exportSchema = true
 )
 @TypeConverters(ComponentNameConverter::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -153,6 +155,8 @@ abstract class AppDatabase : RoomDatabase() {
                         Migration_34_35(),
                         Migration_35_36(),
                         Migration_36_37(),
+                        Migration_37_39(),
+                        Migration_38_39(),
                     ).build()
             if (_instance == null) _instance = instance
             return instance

@@ -76,7 +76,7 @@ data class LauncherSettingsData internal constructor(
     val focusStrictSearch: Boolean = true,
     val focusHideDistractingApps: Boolean = true,
     val focusDefaultDelaySeconds: Int = 10,
-    val focusDefaultSessionMinutes: Int = 15,
+    val focusDefaultSessionMinutes: Int = 10,
     val focusEssentialAppKeys: Set<String> = emptySet(),
     val focusDistractingAppKeys: Set<String> = emptySet(),
     val focusQuietHoursEnabled: Boolean = true,
@@ -147,12 +147,16 @@ data class LauncherSettingsData internal constructor(
     val focusDistractingDailyLaunchLimit: Int = 0,
     val focusTimeBlindnessRemindersEnabled: Boolean = false,
     val focusTimeBlindnessIntervalMinutes: Int = 15,
+    val focusSystemInterceptionEnabled: Boolean = false,
+    val focusUnlockChallengeMethod: FocusUnlockChallengeMethod = FocusUnlockChallengeMethod.Steps,
+    val focusStepTarget: Int = 30,
     val focusTodoistApiToken: String = "",
     val focusDailyIntention: String = "",
     val focusDailyIntentionDate: String = "",
     val focusGrayscaleModeEnabled: Boolean = false,
     val focusGrayscaleDuringFocusBlocks: Boolean = false,
     val focusQuickCaptures: List<String> = emptyList(),
+    val focusHomeHiddenSections: Set<FocusHomeSection> = emptySet(),
 
     val searchAllApps: Boolean = false,
 
@@ -497,6 +501,28 @@ enum class FocusAdaptiveFrictionMode {
     Light,
     Normal,
     Strict,
+}
+
+@Serializable
+enum class FocusUnlockChallengeMethod {
+    Steps,
+    Delay,
+    Tap,
+}
+
+@Serializable
+enum class FocusHomeSection {
+    Intention,
+    Clock,
+    Schedule,
+    Guidance,
+    Habits,
+    Insights,
+    Apps,
+    Sessions,
+    Planning,
+    BrainDump,
+    Agenda,
 }
 
 @Serializable

@@ -9,6 +9,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import de.mm20.launcher2.database.migrations.Migration_35_36
 import de.mm20.launcher2.database.migrations.Migration_36_37
+import de.mm20.launcher2.database.migrations.Migration_37_39
+import de.mm20.launcher2.database.migrations.Migration_38_39
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -105,14 +107,54 @@ class AppDatabaseMigrationTest {
     }
 
     @Test
-    fun freshDatabase37_matchesCurrentRoomSchema() {
+    fun migrate37To39_opensWithRoomAndPreservesData() {
+        createDatabaseAtVersion(37)
+
+        val database = openMigratedDatabase()
+        try {
+            val sqliteDatabase = database.openHelper.writableDatabase
+            assertEquals(39, sqliteDatabase.version)
+            assertEquals(1, sqliteDatabase.countRows("FocusSession"))
+            assertEquals(1, sqliteDatabase.countHiddenSearchables())
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    fun migrate38To39_opensWithRoomAndPreservesData() {
+        createDatabaseAtVersion(38, divergent38 = true)
+
+        val database = openMigratedDatabase()
+        try {
+            val sqliteDatabase = database.openHelper.writableDatabase
+            assertEquals(39, sqliteDatabase.version)
+            assertTrue(sqliteDatabase.hasTable("forecasts"))
+            assertTrue(sqliteDatabase.hasTable("Currency"))
+            assertTrue(sqliteDatabase.hasTable("Plugins"))
+            assertFalse(sqliteDatabase.hasIndex("index_FocusEvent_appKey_timestamp"))
+            assertFalse(sqliteDatabase.hasIndex("index_FocusEvent_timestamp"))
+            assertFalse(sqliteDatabase.hasIndex("index_FocusSession_startedAt"))
+            assertFalse(sqliteDatabase.hasIndex("index_FocusSession_status_startedAt"))
+            assertEquals(1, sqliteDatabase.countRows("FocusSession"))
+            assertEquals(1, sqliteDatabase.countHiddenSearchables())
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    fun freshDatabase39_matchesCurrentRoomSchema() {
         val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
 
         try {
             val sqliteDatabase = database.openHelper.writableDatabase
-            assertEquals(37, sqliteDatabase.version)
+            assertEquals(39, sqliteDatabase.version)
             assertTrue(sqliteDatabase.hasTable("FocusEvent"))
             assertTrue(sqliteDatabase.hasTable("FocusSession"))
+            assertTrue(sqliteDatabase.hasTable("forecasts"))
+            assertTrue(sqliteDatabase.hasTable("Currency"))
+            assertTrue(sqliteDatabase.hasTable("Plugins"))
             assertFalse(sqliteDatabase.hasTable("SearchAction"))
         } finally {
             database.close()
@@ -141,6 +183,37 @@ class AppDatabaseMigrationTest {
         } finally {
             helper.close()
         }
+    }
+
+    private fun createDatabaseAtVersion(version: Int, divergent38: Boolean = false) {
+        val database = Room.databaseBuilder(context, AppDatabase::class.java, TEST_DATABASE).build()
+        val sqliteDatabase = database.openHelper.writableDatabase
+        sqliteDatabase.execSQL(
+            "INSERT INTO `FocusSession` (`startedAt`, `plannedEndsAt`, `status`) VALUES (100, 200, 'active')",
+        )
+        sqliteDatabase.execSQL(
+            "INSERT INTO `Searchable` (`key`, `type`, `searchable`, `hidden`) VALUES ('hidden-app', 'application', '{}', 2)",
+        )
+        if (divergent38) {
+            sqliteDatabase.execSQL("DROP TABLE `forecasts`")
+            sqliteDatabase.execSQL("DROP TABLE `Currency`")
+            sqliteDatabase.execSQL("DROP TABLE `Plugins`")
+            sqliteDatabase.execSQL("CREATE INDEX `index_FocusEvent_appKey_timestamp` ON `FocusEvent` (`appKey`, `timestamp`)")
+            sqliteDatabase.execSQL("CREATE INDEX `index_FocusEvent_timestamp` ON `FocusEvent` (`timestamp`)")
+            sqliteDatabase.execSQL("CREATE INDEX `index_FocusSession_startedAt` ON `FocusSession` (`startedAt`)")
+            sqliteDatabase.execSQL("CREATE INDEX `index_FocusSession_status_startedAt` ON `FocusSession` (`status`, `startedAt`)")
+            sqliteDatabase.execSQL(
+                "UPDATE room_master_table SET identity_hash = 'c62b8be3af2092512d01c7db939098a5'",
+            )
+        }
+        sqliteDatabase.version = version
+        database.close()
+    }
+
+    private fun openMigratedDatabase(): AppDatabase {
+        return Room.databaseBuilder(context, AppDatabase::class.java, TEST_DATABASE)
+            .addMigrations(Migration_37_39(), Migration_38_39())
+            .build()
     }
 
     private fun createCustomAttributesV35(database: SupportSQLiteDatabase) {
@@ -187,6 +260,29 @@ class AppDatabaseMigrationTest {
             arrayOf(tableName),
         ).use { cursor ->
             return cursor.moveToFirst()
+        }
+    }
+
+    private fun SupportSQLiteDatabase.hasIndex(indexName: String): Boolean {
+        query(
+            "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?",
+            arrayOf(indexName),
+        ).use { cursor ->
+            return cursor.moveToFirst()
+        }
+    }
+
+    private fun SupportSQLiteDatabase.countRows(tableName: String): Int {
+        query("SELECT COUNT(*) FROM `$tableName`").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            return cursor.getInt(0)
+        }
+    }
+
+    private fun SupportSQLiteDatabase.countHiddenSearchables(): Int {
+        query("SELECT COUNT(*) FROM `Searchable` WHERE `key` = 'hidden-app' AND `hidden` = 2").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            return cursor.getInt(0)
         }
     }
 

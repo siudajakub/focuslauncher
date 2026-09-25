@@ -89,6 +89,17 @@ Default APK: `app/app/build/outputs/apk/default/debug/app-default-debug.apk`.
 - The final diff contains no unrelated churn, debug artifacts, or stale generated files.
 - Substantial changes receive a fresh-context review following `docs/engineering/code-review.md`.
 
+## Broad Audits
+
+- Capture the initial dirty-tree diff and preserve pre-existing user work.
+- Derive acceptance criteria from current code, project docs, and GitHub Issues; do not treat
+  historical plans as verified status.
+- Split read-only review across Sol, Terra, and Luna when parallel review is requested. Do not
+  assign Astra to delegated execution unless the user explicitly changes that constraint.
+- Check light and dark themes, enlarged text, accessibility labels, lifecycle transitions,
+  permission denial, screen-off behavior, duplicate work, and recurring wakeups where relevant.
+- Report exact commands and device scenarios; keep unverified manual behavior explicit.
+
 ## Parallel Sessions
 
 - One worktree per concurrent writer; never edit the same files from two sessions at once.

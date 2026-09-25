@@ -13,18 +13,16 @@ import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityOptionsCompat
 import de.mm20.launcher2.search.SavableSearchable
 import de.mm20.launcher2.services.focus.FocusLaunchCoordinator
-import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
 import de.mm20.launcher2.ui.component.FakeSplashScreen
 import de.mm20.launcher2.ui.ktx.toIntOffset
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
-import org.koin.core.parameter.parametersOf
+import org.koin.core.component.inject
 
 internal class LaunchComponent(
     private val activity: Activity,
     private val searchable: SavableSearchable,
 ): ScaffoldComponent(), KoinComponent {
-    private val focusLaunchCoordinator: FocusLaunchCoordinator = get { parametersOf(FocusGateLauncherImpl()) }
+    private val focusLaunchCoordinator: FocusLaunchCoordinator by inject()
     override val permanent: Boolean = false
     override val resetDelay: Long = 500L
     override val showSearchBar = false

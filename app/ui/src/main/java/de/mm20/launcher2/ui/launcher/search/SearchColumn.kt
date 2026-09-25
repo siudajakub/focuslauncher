@@ -1,7 +1,6 @@
 package de.mm20.launcher2.ui.launcher.search
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,9 +22,6 @@ import de.mm20.launcher2.profiles.Profile
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.ui.component.LauncherCard
 import de.mm20.launcher2.ui.launcher.search.apps.AppResults
-import de.mm20.launcher2.ui.launcher.search.common.grid.SearchResultGrid
-import de.mm20.launcher2.ui.launcher.search.common.list.ListItem
-import de.mm20.launcher2.ui.launcher.search.common.list.ListResults
 import de.mm20.launcher2.ui.launcher.search.favorites.SearchFavorites
 import de.mm20.launcher2.ui.launcher.search.favorites.SearchFavoritesVM
 import de.mm20.launcher2.ui.launcher.sheets.HiddenItemsSheet
@@ -62,7 +58,6 @@ fun SearchColumn(
     val apps = viewModel.appResults
     val workApps = viewModel.workAppResults
     val privateApps = viewModel.privateSpaceAppResults
-    val shortcuts = viewModel.shortcutResults
     val hiddenResults = viewModel.hiddenResults
 
     val profiles by viewModel.profiles.collectAsState(emptyList())
@@ -70,7 +65,6 @@ fun SearchColumn(
 
     var selectedAppProfileIndex by remember(isSearchEmpty) { mutableIntStateOf(0) }
     var selectedAppIndex by remember(query) { mutableIntStateOf(-1) }
-    var selectedShortcutIndex by remember(query) { mutableIntStateOf(-1) }
 
     LazyVerticalGrid(
         modifier = modifier.padding(horizontal = 8.dp),
@@ -128,35 +122,6 @@ fun SearchColumn(
             )
         }
 
-        if (shortcuts.isNotEmpty()) {
-            if (showList) {
-                // Render shortcuts (incl. browser/PWA "add to home screen" links) the same way
-                // apps are rendered in list mode, so they honor the list / no-icons preferences
-                // instead of always showing as an icon grid.
-                ListResults(
-                    key = "shortcuts",
-                    items = shortcuts,
-                    selectedIndex = selectedShortcutIndex,
-                    itemContent = { shortcut, showDetails, index ->
-                        ListItem(
-                            modifier = Modifier.fillMaxWidth(),
-                            item = shortcut,
-                            showDetails = showDetails,
-                            onShowDetails = { selectedShortcutIndex = if (it) index else -1 },
-                        )
-                    },
-                    reverse = reverse,
-                )
-            } else {
-                item(key = "shortcuts", span = { GridItemSpan(maxLineSpan) }) {
-                    LauncherCard(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    ) {
-                        SearchResultGrid(shortcuts, reverse = reverse)
-                    }
-                }
-            }
-        }
     }
 
     val sheetManager = LocalBottomSheetManager.current

@@ -4,10 +4,13 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.text.format.DateFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import de.mm20.launcher2.calendar.providers.CalendarList
 import de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode
+import de.mm20.launcher2.preferences.FocusUnlockChallengeMethod
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.component.MissingPermissionBanner
@@ -46,6 +50,7 @@ import de.mm20.launcher2.ui.settings.focussystem.FocusQuickStartRoute
 import de.mm20.launcher2.ui.settings.focussystem.FocusSystemSettingsScreenVM
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
+import java.util.Calendar
 
 @Serializable
 data object FocusSettingsRoute : NavKey
@@ -58,6 +63,8 @@ fun FocusSettingsScreen() {
     val searchUiSettings = koinInject<SearchUiSettings>()
 
     var notificationsGranted by remember { mutableStateOf(hasNotificationPermission(context)) }
+    var showInterceptionDisclosure by remember { mutableStateOf(false) }
+    var enableInterceptionAfterDisclosure by remember { mutableStateOf(false) }
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted -> notificationsGranted = granted }
@@ -80,12 +87,7 @@ fun FocusSettingsScreen() {
     val fadeDistractingApps = viewModel.fadeDistractingApps.collectAsStateWithLifecycle().value
     val noIconsMode = viewModel.noIconsMode.collectAsStateWithLifecycle().value
     val adaptiveFrictionMode = viewModel.adaptiveFrictionMode.collectAsStateWithLifecycle().value
-    val commuteModeEnabled = viewModel.commuteModeEnabled.collectAsStateWithLifecycle().value
-    val atAGlanceEnabled = viewModel.atAGlanceEnabled.collectAsStateWithLifecycle().value
     val reviewSuggestionsEnabled = viewModel.reviewSuggestionsEnabled.collectAsStateWithLifecycle().value
-    val environmentContextEnabled = viewModel.environmentContextEnabled.collectAsStateWithLifecycle().value
-    val environmentChargingContextEnabled = viewModel.environmentChargingContextEnabled.collectAsStateWithLifecycle().value
-    val environmentExplainabilityEnabled = viewModel.environmentExplainabilityEnabled.collectAsStateWithLifecycle().value
     val applyToPersonalProfile = viewModel.applyToPersonalProfile.collectAsStateWithLifecycle().value
     val applyToWorkProfile = viewModel.applyToWorkProfile.collectAsStateWithLifecycle().value
     val applyToPrivateProfile = viewModel.applyToPrivateProfile.collectAsStateWithLifecycle().value
@@ -94,6 +96,10 @@ fun FocusSettingsScreen() {
     val timeBlindnessEnabled = viewModel.focusTimeBlindnessRemindersEnabled.collectAsStateWithLifecycle().value
     val timeBlindnessIntervalMinutes = viewModel.focusTimeBlindnessIntervalMinutes.collectAsStateWithLifecycle().value
     val usageAccessGranted = viewModel.usageAccessGranted.collectAsStateWithLifecycle().value
+    val accessibilityGranted = viewModel.accessibilityGranted.collectAsStateWithLifecycle().value
+    val systemInterceptionEnabled = viewModel.systemInterceptionEnabled.collectAsStateWithLifecycle().value
+    val challengeMethod = viewModel.unlockChallengeMethod.collectAsStateWithLifecycle().value
+    val stepTarget = viewModel.stepTarget.collectAsStateWithLifecycle().value
 
     PreferenceScreen(title = stringResource(R.string.focus_settings_title)) {
         // Master toggle + inline status summary (replaces the legacy status nav-row).
@@ -108,14 +114,7 @@ fun FocusSettingsScreen() {
                     summary = stringResource(R.string.focus_settings_mode_enabled_summary),
                     icon = R.drawable.timer_24px,
                     value = focusModeEnabled,
-                    onValueChanged = { enabled ->
-                        viewModel.setFocusModeEnabled(enabled)
-                        // The gate "time" fires an AppSessionExpiryWorker notification when it
-                        // ends; without POST_NOTIFICATIONS that reminder silently never shows.
-                        if (enabled && !hasNotificationPermission(context)) {
-                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                    },
+                    onValueChanged = viewModel::setFocusModeEnabled,
                 )
                 Preference(
                     title = stringResource(R.string.focus_system_quick_start_title),
@@ -169,6 +168,81 @@ fun FocusSettingsScreen() {
                     onValueChanged = viewModel::setAdaptiveFrictionMode,
                     icon = R.drawable.tune_24px,
                 )
+                ListPreference(
+                    title = stringResource(R.string.focus_system_challenge_method_title),
+                    items = listOf(
+                        stringResource(R.string.focus_system_challenge_steps) to FocusUnlockChallengeMethod.Steps,
+                        stringResource(R.string.focus_system_challenge_delay) to FocusUnlockChallengeMethod.Delay,
+                        stringResource(R.string.focus_system_challenge_tap) to FocusUnlockChallengeMethod.Tap,
+                    ),
+                    value = challengeMethod,
+                    onValueChanged = viewModel::setUnlockChallengeMethod,
+                    icon = R.drawable.timer_24px,
+                )
+                if (challengeMethod == FocusUnlockChallengeMethod.Steps) {
+                    ListPreference(
+                        title = stringResource(R.string.focus_system_step_target_title),
+                        items = listOf(10, 20, 30, 50, 100).map {
+                            stringResource(R.string.focus_system_step_target_value, it) to it
+                        },
+                        value = stepTarget,
+                        onValueChanged = viewModel::setStepTarget,
+                        icon = R.drawable.timer_24px,
+                    )
+                }
+                SwitchPreference(
+                    title = stringResource(R.string.focus_system_interception_title),
+                    summary = stringResource(R.string.focus_system_interception_summary),
+                    icon = R.drawable.lock_24px,
+                    value = systemInterceptionEnabled,
+                    onValueChanged = { enabled ->
+                        if (enabled) {
+                            enableInterceptionAfterDisclosure = true
+                            showInterceptionDisclosure = true
+                        } else {
+                            viewModel.setSystemInterceptionEnabled(false)
+                        }
+                    },
+                )
+                Preference(
+                    title = stringResource(R.string.focus_system_interception_permissions_title),
+                    summary = stringResource(
+                        R.string.focus_system_interception_permissions_status,
+                        stringResource(
+                            if (accessibilityGranted) R.string.focus_system_permission_granted
+                            else R.string.focus_system_permission_missing
+                        ),
+                        stringResource(
+                            if (usageAccessGranted) R.string.focus_system_permission_granted
+                            else R.string.focus_system_permission_missing
+                        ),
+                    ),
+                    icon = R.drawable.info_24px,
+                    onClick = {
+                        if (!accessibilityGranted) {
+                            enableInterceptionAfterDisclosure = false
+                            showInterceptionDisclosure = true
+                        }
+                        else if (!usageAccessGranted) viewModel.openUsageAccessSettings()
+                    },
+                )
+                if (systemInterceptionEnabled && !accessibilityGranted) {
+                    MissingPermissionBanner(
+                        modifier = Modifier.padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
+                        text = stringResource(R.string.focus_system_interception_accessibility_missing),
+                        onClick = {
+                            enableInterceptionAfterDisclosure = false
+                            showInterceptionDisclosure = true
+                        },
+                    )
+                }
+                if (systemInterceptionEnabled && !usageAccessGranted) {
+                    MissingPermissionBanner(
+                        modifier = Modifier.padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
+                        text = stringResource(R.string.focus_system_interception_usage_missing),
+                        onClick = viewModel::openUsageAccessSettings,
+                    )
+                }
                 SmallMessage(
                     modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
                     icon = R.drawable.emoji_objects_24px,
@@ -238,7 +312,7 @@ fun FocusSettingsScreen() {
                     onValueChanged = { searchUiSettings.setFocusPlanTimelineStartHour(it) },
                     min = 0,
                     max = 23,
-                    label = { Text(String.format("%02d:00", it)) }
+                    label = { Text(formatHour(context, it)) }
                 )
                 SliderPreference(
                     title = stringResource(R.string.focus_settings_timeline_end_hour),
@@ -246,7 +320,7 @@ fun FocusSettingsScreen() {
                     onValueChanged = { searchUiSettings.setFocusPlanTimelineEndHour(it) },
                     min = 1,
                     max = 24,
-                    label = { Text(String.format("%02d:00", it)) }
+                    label = { Text(formatHour(context, it)) }
                 )
                 TextPreference(
                     title = stringResource(R.string.focus_settings_event_durations),
@@ -338,41 +412,6 @@ fun FocusSettingsScreen() {
                     onValueChanged = viewModel::setApplyToPrivateProfile,
                 )
                 SwitchPreference(
-                    title = stringResource(R.string.focus_system_at_a_glance_title),
-                    summary = stringResource(R.string.focus_system_at_a_glance_summary),
-                    icon = R.drawable.visibility_24px,
-                    value = atAGlanceEnabled,
-                    onValueChanged = viewModel::setAtAGlanceEnabled,
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.focus_system_commute_mode_title),
-                    summary = stringResource(R.string.focus_system_commute_mode_summary),
-                    icon = R.drawable.directions_car_24px,
-                    value = commuteModeEnabled,
-                    onValueChanged = viewModel::setCommuteModeEnabled,
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.focus_system_context_title),
-                    summary = stringResource(R.string.focus_system_context_summary),
-                    icon = R.drawable.travel_explore_24px,
-                    value = environmentContextEnabled,
-                    onValueChanged = viewModel::setEnvironmentContextEnabled,
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.focus_system_context_charging_title),
-                    summary = stringResource(R.string.focus_system_context_charging_summary),
-                    icon = R.drawable.battery_4_bar_24px,
-                    value = environmentChargingContextEnabled,
-                    onValueChanged = viewModel::setEnvironmentChargingContextEnabled,
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.focus_system_explainability_title),
-                    summary = stringResource(R.string.focus_system_explainability_summary),
-                    icon = R.drawable.info_24px,
-                    value = environmentExplainabilityEnabled,
-                    onValueChanged = viewModel::setEnvironmentExplainabilityEnabled,
-                )
-                SwitchPreference(
                     title = stringResource(R.string.focus_system_review_title),
                     summary = stringResource(R.string.focus_system_review_summary),
                     icon = R.drawable.query_stats_24px,
@@ -406,6 +445,42 @@ fun FocusSettingsScreen() {
             }
         }
     }
+
+    if (showInterceptionDisclosure) {
+        AlertDialog(
+            onDismissRequest = { showInterceptionDisclosure = false },
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
+            title = { Text(stringResource(R.string.focus_system_interception_disclosure_title)) },
+            text = { Text(stringResource(R.string.focus_system_interception_disclosure_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showInterceptionDisclosure = false
+                        if (enableInterceptionAfterDisclosure) {
+                            viewModel.setSystemInterceptionEnabled(true)
+                        }
+                        if (!accessibilityGranted) viewModel.openAccessibilitySettings()
+                        else if (!usageAccessGranted) viewModel.openUsageAccessSettings()
+                    },
+                ) {
+                    Text(stringResource(R.string.focus_system_interception_disclosure_accept))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showInterceptionDisclosure = false }) {
+                    Text(stringResource(R.string.focus_gate_cancel))
+                }
+            },
+        )
+    }
+}
+
+private fun formatHour(context: Context, hour: Int): String {
+    val calendar = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour % 24)
+        set(Calendar.MINUTE, 0)
+    }
+    return DateFormat.getTimeFormat(context).format(calendar.time)
 }
 
 private fun hasNotificationPermission(context: Context): Boolean {

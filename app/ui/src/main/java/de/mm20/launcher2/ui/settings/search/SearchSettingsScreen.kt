@@ -8,10 +8,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.component.preferences.ListPreference
+import de.mm20.launcher2.ui.component.preferences.Preference
 import de.mm20.launcher2.ui.component.preferences.PreferenceCategory
 import de.mm20.launcher2.ui.component.preferences.PreferenceScreen
 import de.mm20.launcher2.ui.component.preferences.SwitchPreference
 import de.mm20.launcher2.ui.locals.LocalBackStack
+import de.mm20.launcher2.ui.settings.hiddenitems.HiddenItemsSettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -82,6 +84,12 @@ fun SearchSettingsScreen() {
                         if (it != null) viewModel.setReverseSearchResults(it)
                     },
                     icon = R.drawable.sort_24px
+                )
+                Preference(
+                    title = stringResource(R.string.preference_hidden_items),
+                    summary = stringResource(R.string.preference_hidden_items_summary),
+                    icon = R.drawable.visibility_off_24px,
+                    onClick = { backStack.add(HiddenItemsSettingsRoute) },
                 )
             }
         }

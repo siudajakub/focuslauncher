@@ -1,7 +1,6 @@
 package de.mm20.launcher2.ui.launcher.focus
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,13 +11,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import de.mm20.launcher2.ui.base.BaseActivity
@@ -44,26 +42,32 @@ class TimeBlindnessOverlayActivity : BaseActivity() {
                                 .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.85f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(32.dp)
+                            Surface(
+                                color = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                shape = MaterialTheme.shapes.extraLarge,
+                                tonalElevation = 6.dp,
                             ) {
-                                Text(
-                                    text = stringResource(R.string.time_blindness_title),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 32.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = stringResource(R.string.time_blindness_message, minutes),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 20.sp,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
-                                Spacer(modifier = Modifier.height(32.dp))
-                                Button(onClick = { finish() }) {
-                                    Text(text = stringResource(R.string.time_blindness_understood))
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(32.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.time_blindness_title),
+                                        style = MaterialTheme.typography.headlineLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = stringResource(R.string.time_blindness_message, minutes),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(32.dp))
+                                    Button(onClick = { finish() }) {
+                                        Text(text = stringResource(R.string.time_blindness_understood))
+                                    }
                                 }
                             }
                         }

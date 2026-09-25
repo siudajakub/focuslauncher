@@ -39,4 +39,5 @@ class SearchFiltersTest {
         assertTrue(filters.allCategoriesEnabled)
         assertEquals(3, filters.enabledCategories)
     }
+
 }

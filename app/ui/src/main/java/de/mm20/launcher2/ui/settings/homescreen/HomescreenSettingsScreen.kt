@@ -42,6 +42,7 @@ import androidx.navigation3.runtime.NavKey
 import de.mm20.launcher2.preferences.SearchBarColors
 import de.mm20.launcher2.preferences.SearchBarStyle
 import de.mm20.launcher2.preferences.SystemBarColors
+import de.mm20.launcher2.preferences.FocusHomeSection
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.component.DismissableBottomSheet
 import de.mm20.launcher2.ui.component.SearchBar
@@ -86,6 +87,7 @@ fun HomescreenSettingsScreen() {
     val hideStatusBar by viewModel.hideStatusBar.collectAsStateWithLifecycle(null)
     val hideNavBar by viewModel.hideNavBar.collectAsStateWithLifecycle(null)
     val chargingAnimation by viewModel.chargingAnimation.collectAsStateWithLifecycle(null)
+    val hiddenFocusHomeSections by viewModel.hiddenFocusHomeSections.collectAsStateWithLifecycle(emptySet())
     val backStack = LocalBackStack.current
 
     PreferenceScreen(title = stringResource(id = R.string.preference_screen_homescreen)) {
@@ -99,6 +101,29 @@ fun HomescreenSettingsScreen() {
                         viewModel.setFixedRotation(it)
                     },
                 )
+            }
+        }
+        item {
+            PreferenceCategory(title = stringResource(R.string.focus_home_customization_title)) {
+                listOf(
+                    R.string.daily_intention_title to FocusHomeSection.Intention,
+                    R.string.preference_screen_clockwidget to FocusHomeSection.Clock,
+                    R.string.focus_home_daily_schedule_title to FocusHomeSection.Schedule,
+                    R.string.focus_home_customization_guidance to FocusHomeSection.Guidance,
+                    R.string.focus_home_daily_habits_title to FocusHomeSection.Habits,
+                    R.string.focus_insights_title to FocusHomeSection.Insights,
+                    R.string.focus_home_essentials_title to FocusHomeSection.Apps,
+                    R.string.focus_home_session_title to FocusHomeSection.Sessions,
+                    R.string.focus_home_planning_title to FocusHomeSection.Planning,
+                    R.string.quick_capture_title to FocusHomeSection.BrainDump,
+                    R.string.focus_home_agenda_title to FocusHomeSection.Agenda,
+                ).forEach { (title, section) ->
+                    SwitchPreference(
+                        title = stringResource(title),
+                        value = section !in hiddenFocusHomeSections,
+                        onValueChanged = { viewModel.setFocusHomeSectionVisible(section, it) },
+                    )
+                }
             }
         }
         item {

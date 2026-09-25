@@ -2,6 +2,7 @@ package de.mm20.launcher2.preferences.ui
 
 import de.mm20.launcher2.preferences.ColorScheme
 import de.mm20.launcher2.preferences.GestureAction
+import de.mm20.launcher2.preferences.FocusHomeSection
 import de.mm20.launcher2.preferences.IconShape
 import de.mm20.launcher2.preferences.LauncherDataStore
 import de.mm20.launcher2.preferences.ScreenOrientation
@@ -114,6 +115,21 @@ class UiSettings internal constructor(
     fun setFocusAtAGlance(enabled: Boolean) {
         launcherDataStore.update {
             it.copy(focusAtAGlanceEnabled = enabled)
+        }
+    }
+
+    val focusHomeHiddenSections
+        get() = launcherDataStore.data.map { it.focusHomeHiddenSections }.distinctUntilChanged()
+
+    fun setFocusHomeSectionVisible(section: FocusHomeSection, visible: Boolean) {
+        launcherDataStore.update {
+            it.copy(
+                focusHomeHiddenSections = if (visible) {
+                    it.focusHomeHiddenSections - section
+                } else {
+                    it.focusHomeHiddenSections + section
+                }
+            )
         }
     }
 

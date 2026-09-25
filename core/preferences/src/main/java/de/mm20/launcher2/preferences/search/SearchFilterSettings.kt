@@ -20,6 +20,9 @@ val focusFirstFilterBarItems = KeyboardFilterBarItem.entries.filterNot { it in d
 fun SearchFilters.sanitizedForFocusFirst(): SearchFilters {
     return copy(
         allowNetwork = false,
+        apps = true,
+        shortcuts = false,
+        tools = false,
     )
 }
 

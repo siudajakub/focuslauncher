@@ -1,6 +1,7 @@
 package de.mm20.launcher2
 
 import android.app.Application
+import android.app.NotificationManager
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
@@ -32,7 +33,9 @@ import de.mm20.launcher2.services.tags.servicesTagsModule
 import de.mm20.launcher2.services.widgets.widgetsServiceModule
 import de.mm20.launcher2.themes.themesModule
 import de.mm20.launcher2.services.focus.FocusPolicyService
+import de.mm20.launcher2.services.focus.FocusGateLauncher
 import de.mm20.launcher2.services.focus.focusModule
+import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
 import de.mm20.launcher2.ui.launcher.focus.TimeBlindnessService
 import de.mm20.launcher2.weather.weatherModule
 import android.content.Intent
@@ -45,7 +48,10 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
+import org.koin.dsl.module
 import kotlin.coroutines.CoroutineContext
+
+private const val LEGACY_FOCUS_REMINDERS_CHANNEL_ID = "focus_productivity_reminders"
 
 class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
 
@@ -57,6 +63,9 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+
+        getSystemService(NotificationManager::class.java)
+            .deleteNotificationChannel(LEGACY_FOCUS_REMINDERS_CHANNEL_ID)
 
         if (BuildConfig.BUILD_TYPE == "debug") initDebugMode()
 
@@ -93,6 +102,9 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     devicePoseModule,
                     profilesModule,
                     i18nDataModule,
+                    module {
+                        single<FocusGateLauncher> { FocusGateLauncherImpl() }
+                    },
                     focusModule,
                 )
             )
@@ -110,7 +122,9 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                 val intent = Intent(this@LauncherApplication, TimeBlindnessService::class.java).apply {
                     action = TimeBlindnessService.ACTION_START
                 }
-                ContextCompat.startForegroundService(this@LauncherApplication, intent)
+                runCatching {
+                    ContextCompat.startForegroundService(this@LauncherApplication, intent)
+                }
             }
         }
     }

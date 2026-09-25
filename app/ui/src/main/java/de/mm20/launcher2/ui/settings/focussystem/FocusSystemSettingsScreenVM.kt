@@ -15,6 +15,7 @@ import androidx.core.content.getSystemService
 import de.mm20.launcher2.calendar.CalendarRepository
 import de.mm20.launcher2.calendar.providers.CalendarList
 import de.mm20.launcher2.preferences.FocusAdaptiveFrictionMode
+import de.mm20.launcher2.preferences.FocusUnlockChallengeMethod
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.ui.launcher.focus.TimeBlindnessService
 import de.mm20.launcher2.services.focus.shouldShowFocusQuickStart
@@ -84,8 +85,26 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
     // because the grant happens in system settings, outside this process.
     val usageAccessGranted = MutableStateFlow(hasUsageAccess())
 
+    val accessibilityGranted = permissionsManager.hasPermission(
+        de.mm20.launcher2.permissions.PermissionGroup.Accessibility
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    val systemInterceptionEnabled = searchUiSettings.focusSystemInterceptionEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    val unlockChallengeMethod = searchUiSettings.focusUnlockChallengeMethod
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), FocusUnlockChallengeMethod.Steps)
+
+    val stepTarget = searchUiSettings.focusStepTarget
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 30)
+
     fun refreshUsageAccess() {
+        permissionsManager.onResume()
+        val wasGranted = usageAccessGranted.value
         usageAccessGranted.value = hasUsageAccess()
+        if (!wasGranted && usageAccessGranted.value && focusTimeBlindnessRemindersEnabled.value) {
+            startTimeBlindnessService()
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -111,6 +130,24 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { context.startActivity(intent) }
+    }
+
+    fun openAccessibilitySettings() {
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(intent) }
+    }
+
+    fun setSystemInterceptionEnabled(enabled: Boolean) {
+        searchUiSettings.setFocusSystemInterceptionEnabled(enabled)
+    }
+
+    fun setUnlockChallengeMethod(method: FocusUnlockChallengeMethod) {
+        searchUiSettings.setFocusUnlockChallengeMethod(method)
+    }
+
+    fun setStepTarget(steps: Int) {
+        searchUiSettings.setFocusStepTarget(steps)
     }
 
     val focusTodoistApiToken = searchUiSettings.focusTodoistApiToken
@@ -258,11 +295,17 @@ class FocusSystemSettingsScreenVM : ViewModel(), KoinComponent {
         // until the next reboot.
         val intent = Intent(context, TimeBlindnessService::class.java)
         if (enabled) {
-            intent.action = TimeBlindnessService.ACTION_START
-            ContextCompat.startForegroundService(context, intent)
+            startTimeBlindnessService()
         } else {
             context.stopService(intent)
         }
+    }
+
+    private fun startTimeBlindnessService() {
+        val intent = Intent(context, TimeBlindnessService::class.java).apply {
+            action = TimeBlindnessService.ACTION_START
+        }
+        ContextCompat.startForegroundService(context, intent)
     }
 
     fun setFocusTimeBlindnessIntervalMinutes(minutes: Int) {

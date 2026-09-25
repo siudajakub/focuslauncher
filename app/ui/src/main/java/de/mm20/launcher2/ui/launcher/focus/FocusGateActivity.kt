@@ -51,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,6 +73,7 @@ import de.mm20.launcher2.calendar.CalendarRepository
 import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
 import de.mm20.launcher2.data.customattrs.FocusTemporaryUnlock
 import de.mm20.launcher2.preferences.FocusResumeContext
+import de.mm20.launcher2.preferences.FocusUnlockChallengeMethod
 import de.mm20.launcher2.icons.IconService
 import de.mm20.launcher2.search.Application
 import de.mm20.launcher2.searchable.SavableSearchableRepository
@@ -94,7 +96,6 @@ import java.time.ZoneId
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
-import org.koin.core.parameter.parametersOf
 
 class FocusGateActivity : BaseActivity() {
     private val searchableRepository: SavableSearchableRepository by inject()
@@ -224,7 +225,9 @@ private enum class FocusGateStage {
     Entry,
     OneSec,
     Animation,
-    Intent,
+    Challenge,
+    ReadyToStartBreak,
+    Unlocked,
     Blocked,
 }
 
@@ -238,9 +241,10 @@ private fun FocusGateScreen(
     onFinish: () -> Unit,
 ) {
     val context = LocalContext.current
-    val launchCoordinator: FocusLaunchCoordinator = koinInject { parametersOf(FocusGateLauncherImpl()) }
+    val launchCoordinator: FocusLaunchCoordinator = koinInject()
     val focusPolicyService: FocusPolicyService = koinInject()
     val historyRepository: FocusHistoryRepository = koinInject()
+    val systemInterceptionService: FocusSystemInterceptionService = koinInject()
     val calendarRepository: CalendarRepository = koinInject()
     val appRepository: AppRepository = koinInject()
     val iconService: IconService = koinInject()
@@ -253,7 +257,7 @@ private fun FocusGateScreen(
         appRepository.findMany()
     }.collectAsState(initial = emptyList())
     val focusSessionEndsAt by searchUiSettings.focusSessionEndsAt.collectAsState(initial = 0L)
-    val defaultSessionMinutes by searchUiSettings.focusDefaultSessionMinutes.collectAsState(initial = 15)
+    val defaultSessionMinutes by searchUiSettings.focusDefaultSessionMinutes.collectAsState(initial = 10)
     val capMinutes by searchUiSettings.focusDistractingSessionCapMinutes.collectAsState(initial = 15)
     val startRitualEnabled by searchUiSettings.focusStartRitualEnabled.collectAsState(initial = true)
     val microStepPromptEnabled by searchUiSettings.focusMicroStepPromptEnabled.collectAsState(initial = true)
@@ -266,6 +270,10 @@ private fun FocusGateScreen(
     val focusSessionActive = focusSessionEndsAt > System.currentTimeMillis()
     val focusOneSecEnabled by searchUiSettings.focusOneSecEnabled.collectAsState(initial = false)
     val focusMicroDelaysEnabled by searchUiSettings.focusMicroDelaysEnabled.collectAsState(initial = false)
+    val configuredChallengeMethod by searchUiSettings.focusUnlockChallengeMethod.collectAsState(
+        initial = FocusUnlockChallengeMethod.Steps
+    )
+    val stepTarget by searchUiSettings.focusStepTarget.collectAsState(initial = 30)
     val dailyIntention by searchUiSettings.focusDailyIntention.collectAsState(initial = "")
     val dailyIntentionDate by searchUiSettings.focusDailyIntentionDate.collectAsState(initial = "")
     val currentScheduleSnapshot by remember {
@@ -314,6 +322,12 @@ private fun FocusGateScreen(
     var hasLaunched by remember { mutableStateOf(false) }
     var stage by remember { mutableStateOf(FocusGateStage.Entry) }
     var countdownSeconds by remember { mutableIntStateOf(0) }
+    var activeChallengeMethod by remember(configuredChallengeMethod) {
+        mutableStateOf(configuredChallengeMethod)
+    }
+    var minimumChallengeDelaySeconds by remember(app.key) { mutableIntStateOf(0) }
+    var startBreakInProgress by remember(app.key) { mutableStateOf(false) }
+    val actionScope = rememberCoroutineScope()
     val fillProgress = remember { Animatable(0f) }
     val entryProgress = remember { Animatable(0f) }
 
@@ -427,7 +441,11 @@ private fun FocusGateScreen(
                     entryProgress.snapTo(1f)
                 }
 
-                if (focusOneSecEnabled && !policy.hardBlocked) {
+                if (!policy.allowsUnlockChallenge()) {
+                    stage = FocusGateStage.Animation
+                } else if (activeChallengeMethod != FocusUnlockChallengeMethod.Delay) {
+                    stage = FocusGateStage.Challenge
+                } else if (focusOneSecEnabled) {
                     stage = FocusGateStage.OneSec
                 } else {
                     stage = FocusGateStage.Animation
@@ -440,8 +458,11 @@ private fun FocusGateScreen(
                 reason = resolvedReasonPrefill
                 microStep = resolvedMicroStepPrefill
 
-                val minDelay = if (focusMicroDelaysEnabled) 3 else 0
-                val effectiveDelay = policy.effectiveDelaySeconds.coerceAtLeast(minDelay)
+                val effectiveDelay = resolveChallengeDelaySeconds(
+                    effectiveDelaySeconds = policy.effectiveDelaySeconds,
+                    microDelaysEnabled = focusMicroDelaysEnabled,
+                    minimumChallengeDelaySeconds = minimumChallengeDelaySeconds,
+                )
                 countdownSeconds = effectiveDelay
                 fillProgress.snapTo(0f)
 
@@ -473,9 +494,16 @@ private fun FocusGateScreen(
                 }
 
                 countdownSeconds = 0
-                stage = if (policy.hardBlocked) FocusGateStage.Blocked else FocusGateStage.Intent
+                stage = if (policy.allowsUnlockChallenge()) {
+                    FocusGateStage.ReadyToStartBreak
+                } else {
+                    FocusGateStage.Blocked
+                }
             }
-            FocusGateStage.Intent, FocusGateStage.Blocked -> {
+            FocusGateStage.Challenge,
+            FocusGateStage.ReadyToStartBreak,
+            FocusGateStage.Unlocked,
+            FocusGateStage.Blocked -> {
                 // Wait for user interaction
             }
         }
@@ -516,7 +544,7 @@ private fun FocusGateScreen(
             stringResource(R.string.focus_gate_message_distracting)
     }
     val scheduleSupportMessage = if (
-        stage == FocusGateStage.Intent &&
+        stage == FocusGateStage.ReadyToStartBreak &&
         prepState.show &&
         nextScheduleBlockLabel != null
     ) {
@@ -714,7 +742,61 @@ private fun FocusGateScreen(
                     }
                 }
 
-                FocusGateStage.Intent,
+                FocusGateStage.Challenge -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Spacer(modifier = Modifier.height(1.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.extraLarge,
+                            color = panelColor,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, panelOutline),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(18.dp),
+                            ) {
+                                if (activeChallengeMethod == FocusUnlockChallengeMethod.Steps) {
+                                    FocusStepChallenge(
+                                        targetSteps = stepTarget,
+                                        onComplete = { stage = FocusGateStage.ReadyToStartBreak },
+                                        onUseDelay = {
+                                            activeChallengeMethod = FocusUnlockChallengeMethod.Delay
+                                            minimumChallengeDelaySeconds = 10
+                                            stage = FocusGateStage.Animation
+                                        },
+                                    )
+                                } else {
+                                    Text(
+                                        text = stringResource(R.string.focus_gate_challenge_title),
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.focus_gate_tap_description),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    FilledTonalButton(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = { stage = FocusGateStage.ReadyToStartBreak },
+                                    ) {
+                                        Text(stringResource(R.string.focus_gate_tap_action))
+                                    }
+                                }
+                            }
+                        }
+                        OutlinedButton(modifier = Modifier.fillMaxWidth(), onClick = onGoBack) {
+                            Text(stringResource(R.string.focus_gate_go_back))
+                        }
+                    }
+                }
+
+                FocusGateStage.ReadyToStartBreak,
+                FocusGateStage.Unlocked,
                 FocusGateStage.Blocked,
                 -> {
                     Column(
@@ -747,7 +829,7 @@ private fun FocusGateScreen(
                                     text = if (stageValue == FocusGateStage.Blocked) {
                                         stringResource(R.string.focus_gate_blocked_title)
                                     } else {
-                                        stringResource(R.string.focus_gate_intentional_title)
+                                        stringResource(R.string.focus_gate_challenge_complete)
                                     },
                                     style = MaterialTheme.typography.headlineLarge,
                                     fontWeight = FontWeight.SemiBold,
@@ -772,7 +854,7 @@ private fun FocusGateScreen(
                                     )
                                 }
 
-                                if (stageValue == FocusGateStage.Intent) {
+                                if (stageValue == FocusGateStage.ReadyToStartBreak) {
                                     if (startRitualEnabled) {
                                         OutlinedTextField(
                                             modifier = Modifier
@@ -875,58 +957,73 @@ private fun FocusGateScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    if (stageValue == FocusGateStage.Intent) {
+                                    if (stageValue == FocusGateStage.ReadyToStartBreak) {
                                         Button(
                                             modifier = Modifier.fillMaxWidth(),
-                                            enabled = !startRitualEnabled || (
-                                                reason.isNotBlank() &&
-                                                    (!microStepPromptEnabled || microStep.isNotBlank())
-                                                ),
+                                            enabled = !startBreakInProgress && (
+                                                !startRitualEnabled || (
+                                                    reason.isNotBlank() &&
+                                                        (!microStepPromptEnabled || microStep.isNotBlank())
+                                                )
+                                            ),
                                             onClick = {
-                                                val unlockUntil = System.currentTimeMillis() + sessionMinutes * 60_000L
-                                                customAttributesRepository.setFocusTemporaryUnlock(
-                                                    app,
-                                                    FocusTemporaryUnlock(
-                                                        untilMillis = unlockUntil
-                                                    ),
-                                                )
-                                                AppSessionExpiryWorker.schedule(
-                                                    context = context,
-                                                    appKey = app.key,
-                                                    appLabel = app.labelOverride ?: app.label,
-                                                    delayMillis = sessionMinutes * 60_000L
-                                                )
-                                                searchUiSettings.setFocusLastResumeContext(
-                                                    FocusResumeContext(
-                                                        taskLabel = app.labelOverride ?: app.label,
-                                                        scheduleBlockLabel = currentScheduleBlockLabel,
-                                                        microStep = microStep.takeIf { it.isNotBlank() },
-                                                        appKey = app.key,
-                                                        interruptedAtMillis = System.currentTimeMillis(),
-                                                    )
-                                                )
-                                                kotlinx.coroutines.runBlocking {
-                                                    historyRepository.logEvent(
-                                                        FocusLogEvent(
-                                                            appKey = app.key,
-                                                            appLabel = app.labelOverride ?: app.label,
-                                                            reason = reason,
-                                                            scheduleBlockLabel = currentScheduleBlockLabel,
-                                                            microStep = microStep.takeIf { it.isNotBlank() },
-                                                            unlockDurationMinutes = sessionMinutes,
-                                                            usedEmergencyBypass = false,
-                                                            duringFocusSession = focusSessionActive,
-                                                            budgetBlocked = decision?.budgetBlocked == true,
-                                                            scheduleBlocked = decision?.blockReason == FocusBlockReason.HardBlockWindow,
-                                                            effectiveDelaySeconds = decision?.effectiveDelaySeconds ?: 0,
+                                                startBreakInProgress = true
+                                                actionScope.launch {
+                                                    try {
+                                                        val latestDecision = focusPolicyService.evaluate(app)
+                                                        if (!latestDecision.allowsUnlockChallenge()) {
+                                                            decision = latestDecision
+                                                            stage = FocusGateStage.Blocked
+                                                            return@launch
+                                                        }
+                                                        val unlockUntil = System.currentTimeMillis() +
+                                                            sessionMinutes * 60_000L
+                                                        customAttributesRepository.setFocusTemporaryUnlock(
+                                                            app,
+                                                            FocusTemporaryUnlock(untilMillis = unlockUntil),
                                                         )
-                                                    )
+                                                        AppSessionExpiryWorker.schedule(
+                                                            context = context,
+                                                            appKey = app.key,
+                                                            delayMillis = sessionMinutes * 60_000L,
+                                                        )
+                                                        systemInterceptionService.scheduleExpiry(app, unlockUntil)
+                                                        searchUiSettings.setFocusLastResumeContext(
+                                                            FocusResumeContext(
+                                                                taskLabel = app.labelOverride ?: app.label,
+                                                                scheduleBlockLabel = currentScheduleBlockLabel,
+                                                                microStep = microStep.takeIf { it.isNotBlank() },
+                                                                appKey = app.key,
+                                                                interruptedAtMillis = System.currentTimeMillis(),
+                                                            )
+                                                        )
+                                                        historyRepository.logEvent(
+                                                            FocusLogEvent(
+                                                                appKey = app.key,
+                                                                appLabel = app.labelOverride ?: app.label,
+                                                                reason = reason,
+                                                                scheduleBlockLabel = currentScheduleBlockLabel,
+                                                                microStep = microStep.takeIf { it.isNotBlank() },
+                                                                unlockDurationMinutes = sessionMinutes,
+                                                                usedEmergencyBypass = false,
+                                                                duringFocusSession = focusSessionActive,
+                                                                budgetBlocked = latestDecision.budgetBlocked,
+                                                                scheduleBlocked = latestDecision.blockReason ==
+                                                                    FocusBlockReason.HardBlockWindow,
+                                                                effectiveDelaySeconds =
+                                                                    latestDecision.effectiveDelaySeconds,
+                                                            )
+                                                        )
+                                                        stage = FocusGateStage.Unlocked
+                                                        launchCoordinator.launchDirect(app, context)
+                                                        onFinish()
+                                                    } finally {
+                                                        startBreakInProgress = false
+                                                    }
                                                 }
-                                                launchCoordinator.launchDirect(app, context)
-                                                onFinish()
                                             },
                                         ) {
-                                            Text(stringResource(R.string.focus_gate_continue))
+                                            Text(stringResource(R.string.focus_gate_start_break))
                                         }
                                     }
 

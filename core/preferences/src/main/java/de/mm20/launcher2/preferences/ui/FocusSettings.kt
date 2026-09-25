@@ -11,7 +11,7 @@ data class FocusSettingsData(
     val strictSearch: Boolean = true,
     val hideDistractingApps: Boolean = true,
     val defaultDelaySeconds: Int = 10,
-    val defaultSessionMinutes: Int = 15,
+    val defaultSessionMinutes: Int = 10,
     val quietHoursEnabled: Boolean = true,
     val quietHoursStartMinutes: Int = 20 * 60,
     val quietHoursEndMinutes: Int = 8 * 60,

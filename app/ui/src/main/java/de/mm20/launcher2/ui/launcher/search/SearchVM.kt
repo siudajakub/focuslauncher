@@ -19,7 +19,6 @@ import de.mm20.launcher2.permissions.PermissionsManager
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
 import de.mm20.launcher2.profiles.Profile
 import de.mm20.launcher2.profiles.ProfileManager
-import de.mm20.launcher2.search.AppShortcut
 import de.mm20.launcher2.search.Application
 
 import de.mm20.launcher2.search.ResultScore
@@ -32,7 +31,6 @@ import de.mm20.launcher2.search.Searchable
 import de.mm20.launcher2.search.isUnspecified
 import de.mm20.launcher2.searchable.SavableSearchableRepository
 import de.mm20.launcher2.searchable.VisibilityLevel
-import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
 import de.mm20.launcher2.services.focus.FocusLaunchCoordinator
 import de.mm20.launcher2.services.focus.FocusAppClassifier
 import de.mm20.launcher2.services.focus.FocusAppType
@@ -53,12 +51,10 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
 import org.koin.core.component.inject
-import org.koin.core.parameter.parametersOf
 
 class SearchVM : ViewModel(), KoinComponent {
-    private val focusLaunchCoordinator: FocusLaunchCoordinator = get { parametersOf(FocusGateLauncherImpl()) }
+    private val focusLaunchCoordinator: FocusLaunchCoordinator by inject()
     private val focusAppClassifier: FocusAppClassifier by inject()
 
     private val favoritesService: FavoritesService by inject()
@@ -109,11 +105,6 @@ class SearchVM : ViewModel(), KoinComponent {
     val appResults = mutableStateListOf<Application>()
     val workAppResults = mutableStateListOf<Application>()
     val privateSpaceAppResults = mutableStateListOf<Application>()
-
-    // Pinned launcher shortcuts (incl. PWAs added from a browser) that match the current query.
-    val shortcutResults = mutableStateListOf<SavableSearchable>()
-
-
 
     var previousResults: SearchResults? = null
 
@@ -233,7 +224,6 @@ class SearchVM : ViewModel(), KoinComponent {
                         workAppResults.updateItems(workApps)
                         privateSpaceAppResults.updateItems(privateApps)
                         hiddenResults.updateItems(hiddenItems)
-                        shortcutResults.clear()
                     }
 
             } else {
@@ -276,11 +266,6 @@ class SearchVM : ViewModel(), KoinComponent {
                             results.apps
                             ?.filterNot { hiddenKeys.contains(it.key) }
                             ?.applyRanking(query, appTypes, focusModeEnabled)
-                        )
-
-                        shortcutResults.updateItems(
-                            results.shortcuts
-                            ?.filterNot { hiddenKeys.contains(it.key) }
                         )
 
                         if (launchOnEnter.value) {
@@ -340,7 +325,6 @@ class SearchVM : ViewModel(), KoinComponent {
     private fun SearchResults.collectSavableSearchables(): List<SavableSearchable> {
         return buildList {
             addAll(apps ?: emptyList())
-            addAll(shortcuts ?: emptyList())
         }
     }
 
@@ -357,7 +341,7 @@ class SearchVM : ViewModel(), KoinComponent {
             allowNetwork = false,
             hiddenItems = false,
             apps = true,
-            shortcuts = true,
+            shortcuts = false,
             tools = false,
         )
     }
@@ -379,7 +363,6 @@ class SearchVM : ViewModel(), KoinComponent {
 
 enum class SearchCategory {
     Apps,
-    Shortcuts,
 }
 
 private data class AllAppsContext(

@@ -175,24 +175,6 @@ class FocusPolicyService(
                 frictionResolution = frictionResolution,
             )
         }
-        if (temporaryUnlockActive) {
-            return FocusPolicyDecision(
-                appType = appType,
-                temporaryUnlock = temporaryUnlock,
-                requiresGate = false,
-                hiddenFromBrowse = false,
-                hardBlocked = false,
-                budgetBlocked = false,
-                focusSessionLocked = false,
-                habitBlocked = false,
-                temporaryUnlockActive = true,
-                effectiveDelaySeconds = 0,
-                blockReason = FocusBlockReason.None,
-                blockingHabitTitle = null,
-                attentionState = attentionState,
-                frictionResolution = frictionResolution,
-            )
-        }
         val dailyLaunchLimit = searchUiSettings.focusDistractingDailyLaunchLimit.first()
         val budgetBlocked = if (appType == FocusAppType.Distracting && dailyLaunchLimit > 0) {
             val startOfDay = LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -209,25 +191,23 @@ class FocusPolicyService(
         val scheduleBlocked = false
         val sessionLocked = sessionActive && appType == FocusAppType.Distracting
         val hardBlocked = scheduleBlocked || budgetBlocked
-        val gatedByClassification = appType == FocusAppType.Distracting
-        val requiresGate = hardBlocked || sessionLocked || gatedByClassification
+        val gateResolution = resolveFocusGate(
+            appType = appType,
+            temporaryUnlockActive = temporaryUnlockActive,
+            hardBlocked = hardBlocked,
+            budgetBlocked = budgetBlocked,
+            sessionLocked = sessionLocked,
+        )
         val hiddenFromBrowse =
             appType == FocusAppType.Distracting &&
+            !temporaryUnlockActive &&
             searchUiSettings.focusHideDistractingApps.first()
-
-        val reason = when {
-            budgetBlocked -> FocusBlockReason.DailyBudget
-            hardBlocked -> FocusBlockReason.HardBlockWindow
-            sessionLocked -> FocusBlockReason.FocusSessionLock
-            gatedByClassification -> FocusBlockReason.Classification
-            else -> FocusBlockReason.None
-        }
 
         val effectiveDelay = when {
             appType != FocusAppType.Distracting -> 0
-            temporaryUnlockActive -> 0
             hardBlocked -> frictionResolution.resolvedDelaySeconds.coerceAtLeast(defaultDelaySeconds)
             sessionLocked -> frictionResolution.resolvedDelaySeconds
+            temporaryUnlockActive -> 0
             escalatingFrictionEnabled -> frictionResolution.resolvedDelaySeconds
             else -> defaultDelaySeconds
         }
@@ -235,15 +215,15 @@ class FocusPolicyService(
         return FocusPolicyDecision(
             appType = appType,
             temporaryUnlock = temporaryUnlock,
-            requiresGate = requiresGate,
+            requiresGate = gateResolution.requiresGate,
             hiddenFromBrowse = hiddenFromBrowse,
             hardBlocked = hardBlocked,
             budgetBlocked = budgetBlocked,
             focusSessionLocked = sessionLocked,
             habitBlocked = false,
-            temporaryUnlockActive = false,
+            temporaryUnlockActive = temporaryUnlockActive,
             effectiveDelaySeconds = effectiveDelay,
-            blockReason = reason,
+            blockReason = gateResolution.blockReason,
             blockingHabitTitle = null,
             attentionState = attentionState,
             frictionResolution = frictionResolution,

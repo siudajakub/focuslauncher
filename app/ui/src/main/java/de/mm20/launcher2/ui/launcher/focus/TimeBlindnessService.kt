@@ -3,6 +3,7 @@ package de.mm20.launcher2.ui.launcher.focus
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -11,28 +12,39 @@ import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.Process
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
+import de.mm20.launcher2.applications.AppRepository
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
+import de.mm20.launcher2.services.focus.FocusAppClassifier
+import de.mm20.launcher2.services.focus.FocusAppType
+import de.mm20.launcher2.services.focus.FocusForegroundController
+import de.mm20.launcher2.services.focus.FocusPackageCandidate
+import de.mm20.launcher2.services.focus.resolveUniquePersonalAppKey
+import de.mm20.launcher2.search.Application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.android.ext.android.inject
 
 class TimeBlindnessService : Service() {
 
     private val searchUiSettings: SearchUiSettings by inject()
+    private val appRepository: AppRepository by inject()
+    private val focusAppClassifier: FocusAppClassifier by inject()
+    private val foregroundController: FocusForegroundController by inject()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     // Single polling job. We cancel/replace it on every start so a null-intent
@@ -51,7 +63,9 @@ class TimeBlindnessService : Service() {
     private data class Config(
         val enabled: Boolean,
         val intervalMinutes: Int,
+        val essentialKeys: Set<String>,
         val distractingKeys: Set<String>,
+        val apps: List<Application>,
     )
 
     // Whether the screen is currently off. While true the poller does NOT wake
@@ -98,12 +112,16 @@ class TimeBlindnessService : Service() {
             combine(
                 searchUiSettings.focusTimeBlindnessRemindersEnabled,
                 searchUiSettings.focusTimeBlindnessIntervalMinutes,
+                searchUiSettings.focusEssentialAppKeys,
                 searchUiSettings.focusDistractingAppKeys,
-            ) { enabled, intervalMinutes, distractingKeys ->
+                appRepository.findMany(),
+            ) { enabled, intervalMinutes, essentialKeys, distractingKeys, apps ->
                 Config(
                     enabled = enabled,
                     intervalMinutes = intervalMinutes.coerceAtLeast(1),
+                    essentialKeys = essentialKeys,
                     distractingKeys = distractingKeys,
+                    apps = apps,
                 )
             }.collect { newConfig ->
                 config.value = newConfig
@@ -125,7 +143,7 @@ class TimeBlindnessService : Service() {
         // system kills us with an ANR/exception. Guard the typed overload for
         // API 34+ which requires the FOREGROUND_SERVICE_SPECIAL_USE permission.
         val notification = createNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {
             startForeground(NOTIFICATION_ID, notification)
@@ -144,60 +162,89 @@ class TimeBlindnessService : Service() {
                 return@launch
             }
 
-            // Outer loop: while the screen is off this suspends on the StateFlow
-            // with NO timer until USER_PRESENT flips it back, so there are ZERO
-            // periodic wakeups while the screen is off.
             while (true) {
                 screenOff.first { !it }
+                if (!foregroundController.hasUsageAccess()) {
+                    stopSelf()
+                    return@launch
+                }
 
-                var unbrokenMinutes = 0
+                var checkedAtMillis = System.currentTimeMillis()
+                var foregroundState = observeForegroundPackage(
+                    state = ContinuousForegroundState(),
+                    packageName = foregroundController.currentForegroundPackage(),
+                    observedAtMillis = checkedAtMillis,
+                )
 
-                // Inner active loop: runs the usage check once a minute while the
-                // screen is on. Breaks back out to suspend as soon as the screen
-                // turns off again.
                 while (!screenOff.value) {
-                    delay(60_000L) // check every minute
-
-                    if (screenOff.value) break
+                    val nowMillis = System.currentTimeMillis()
+                    val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager
+                    val usageEvents = usageStatsManager.queryEvents(checkedAtMillis + 1L, nowMillis)
+                    val event = android.app.usage.UsageEvents.Event()
+                    while (usageEvents.hasNextEvent()) {
+                        usageEvents.getNextEvent(event)
+                        if (event.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED) {
+                            foregroundState = observeForegroundPackage(
+                                state = foregroundState,
+                                packageName = event.packageName,
+                                observedAtMillis = event.timeStamp,
+                            )
+                        }
+                    }
+                    checkedAtMillis = nowMillis
 
                     val currentConfig = config.value ?: continue
                     if (!currentConfig.enabled) {
                         stopSelf()
                         return@launch
                     }
+                    if (!foregroundController.hasUsageAccess()) {
+                        stopSelf()
+                        return@launch
+                    }
 
                     val intervalMinutes = currentConfig.intervalMinutes
-                    val distractingKeys = currentConfig.distractingKeys
-
-                    val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager
-                    val endTime = System.currentTimeMillis()
-                    val startTime = endTime - 60_000
-                    val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
-
-                    var currentApp: String? = null
-                    val event = android.app.usage.UsageEvents.Event()
-                    while (usageEvents.hasNextEvent()) {
-                        usageEvents.getNextEvent(event)
-                        if (event.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED) {
-                            currentApp = event.packageName
-                        } else if (event.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_PAUSED || event.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_STOPPED) {
-                            if (currentApp == event.packageName) {
-                                currentApp = null
-                            }
+                    val foregroundAppKey = foregroundState.packageName?.let { packageName ->
+                        val matchingApps = currentConfig.apps.filter {
+                            it.componentName.packageName == packageName
                         }
+                        resolveUniquePersonalAppKey(
+                            matchingApps.map {
+                                FocusPackageCandidate(
+                                    appKey = it.key,
+                                    isPersonalProfile = it.user == Process.myUserHandle(),
+                                )
+                            }
+                        )
                     }
+                    val isDistracting = foregroundAppKey != null && focusAppClassifier.classifyWith(
+                        key = foregroundAppKey,
+                        essentialKeys = currentConfig.essentialKeys,
+                        distractingKeys = currentConfig.distractingKeys,
+                    ) == FocusAppType.Distracting
 
-                    if (currentApp != null && distractingKeys.any { currentApp!!.startsWith(it) }) {
-                        unbrokenMinutes++
+                    val intervalMillis = intervalMinutes * 60_000L
+                    var continuousMillis = if (isDistracting) {
+                        checkedAtMillis - (foregroundState.sinceMillis ?: checkedAtMillis)
                     } else {
-                        unbrokenMinutes = 0
+                        0L
                     }
-
-                    if (unbrokenMinutes >= intervalMinutes) {
+                    if (continuousMillis >= intervalMillis) {
                         vibrate()
                         showTimeBlindnessAlert(intervalMinutes)
-                        unbrokenMinutes = 0
+                        foregroundState = foregroundState.copy(sinceMillis = checkedAtMillis)
+                        continuousMillis = 0L
                     }
+
+                    val waitMillis = if (isDistracting) {
+                        (intervalMillis - continuousMillis).coerceAtLeast(1_000L)
+                    } else {
+                        IDLE_CHECK_INTERVAL_MILLIS
+                    }
+                    val screenTurnedOff = withTimeoutOrNull(waitMillis) {
+                        screenOff.first { it }
+                    } != null
+                    if (screenTurnedOff) break
                 }
             }
         }
@@ -211,15 +258,26 @@ class TimeBlindnessService : Service() {
     }
 
     private fun showTimeBlindnessAlert(minutes: Int) {
-        launchOverlayIntent(minutes)
-    }
-
-    private fun launchOverlayIntent(minutes: Int) {
-        val intent = Intent(this, de.mm20.launcher2.ui.launcher.focus.TimeBlindnessOverlayActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        val intent = Intent(this, TimeBlindnessOverlayActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("minutes", minutes)
         }
-        startActivity(intent)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            ALERT_NOTIFICATION_ID,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val notification = NotificationCompat.Builder(this, ALERT_CHANNEL_ID)
+            .setContentTitle(getString(R.string.time_blindness_title))
+            .setContentText(getString(R.string.time_blindness_message, minutes))
+            .setSmallIcon(R.drawable.timer_24px)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+            .notify(ALERT_NOTIFICATION_ID, notification)
     }
 
     private fun vibrate() {
@@ -277,31 +335,61 @@ class TimeBlindnessService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = getString(R.string.time_blindness_channel_name)
-            val descriptionText = getString(R.string.time_blindness_channel_desc)
-            val importance = NotificationManager.IMPORTANCE_LOW
-            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
-                description = descriptionText
-            }
             val notificationManager: NotificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            notificationManager.createNotificationChannels(
+                listOf(
+                    NotificationChannel(
+                        SERVICE_CHANNEL_ID,
+                        getString(R.string.time_blindness_service_channel_name),
+                        NotificationManager.IMPORTANCE_LOW,
+                    ),
+                    NotificationChannel(
+                        ALERT_CHANNEL_ID,
+                        getString(R.string.time_blindness_channel_name),
+                        NotificationManager.IMPORTANCE_DEFAULT,
+                    ).apply {
+                        description = getString(R.string.time_blindness_channel_desc)
+                    },
+                )
+            )
         }
     }
 
     private fun createNotification(): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
             .setContentTitle(getString(R.string.time_blindness_notification_title))
             .setContentText(getString(R.string.time_blindness_notification_text))
             .setSmallIcon(R.drawable.timer_24px)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
             .build()
     }
 
     companion object {
-        private const val CHANNEL_ID = "time_blindness_channel"
+        private const val SERVICE_CHANNEL_ID = "time_blindness_channel"
+        private const val ALERT_CHANNEL_ID = "time_blindness_alerts"
         private const val NOTIFICATION_ID = 2001
+        private const val ALERT_NOTIFICATION_ID = 2002
+        private const val IDLE_CHECK_INTERVAL_MILLIS = 60_000L
         const val ACTION_START = "de.mm20.launcher2.action.START_TIME_BLINDNESS"
         const val ACTION_STOP = "de.mm20.launcher2.action.STOP_TIME_BLINDNESS"
+    }
+}
+
+internal data class ContinuousForegroundState(
+    val packageName: String? = null,
+    val sinceMillis: Long? = null,
+)
+
+internal fun observeForegroundPackage(
+    state: ContinuousForegroundState,
+    packageName: String?,
+    observedAtMillis: Long,
+): ContinuousForegroundState {
+    return if (state.packageName == packageName) {
+        state
+    } else {
+        ContinuousForegroundState(packageName, observedAtMillis.takeIf { packageName != null })
     }
 }

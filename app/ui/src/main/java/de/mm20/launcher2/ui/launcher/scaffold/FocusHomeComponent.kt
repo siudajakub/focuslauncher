@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import de.mm20.launcher2.ui.launcher.focus.FocusGateLauncherImpl
 import androidx.lifecycle.viewModelScope
 import androidx.core.content.getSystemService
 import de.mm20.launcher2.applications.AppRepository
@@ -44,7 +43,9 @@ import de.mm20.launcher2.data.customattrs.CustomAttributesRepository
 import de.mm20.launcher2.data.customattrs.utils.withCustomLabels
 import de.mm20.launcher2.permissions.PermissionGroup
 import de.mm20.launcher2.permissions.PermissionsManager
+import de.mm20.launcher2.preferences.FocusHomeSection
 import de.mm20.launcher2.preferences.ui.SearchUiSettings
+import de.mm20.launcher2.preferences.ui.UiSettings
 import de.mm20.launcher2.searchable.PinnedLevel
 import de.mm20.launcher2.services.favorites.FavoritesService
 import de.mm20.launcher2.ui.R
@@ -98,9 +99,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
 import org.koin.core.component.inject
-import org.koin.core.parameter.parametersOf
 import org.koin.compose.koinInject
 import java.time.LocalDate
 import java.time.ZoneId
@@ -133,7 +132,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
         val nextEvents by viewModel.nextEvents.collectAsStateWithLifecycle(initialValue = emptyList())
         val focusSessionEndsAt by viewModel.focusSessionEndsAt.collectAsStateWithLifecycle(initialValue = 0L)
         val minutesRemaining by viewModel.minutesRemaining.collectAsStateWithLifecycle(initialValue = 0)
-        val defaultSessionMinutes by viewModel.defaultSessionMinutes.collectAsStateWithLifecycle(initialValue = 15)
+        val defaultSessionMinutes by viewModel.defaultSessionMinutes.collectAsStateWithLifecycle(initialValue = 10)
         val nextAlarm by viewModel.nextAlarm.collectAsStateWithLifecycle(initialValue = null)
         val sessionSummary by viewModel.sessionSummary.collectAsStateWithLifecycle(initialValue = FocusSessionUiSummary())
         val dailyScheduleState by viewModel.dailyScheduleState.collectAsStateWithLifecycle(
@@ -155,6 +154,8 @@ internal object FocusHomeComponent : ScaffoldComponent() {
         val activeDockApps by viewModel.activeDockApps.collectAsStateWithLifecycle(initialValue = emptyList())
         val blockPlanTargetApps by viewModel.blockPlanTargetApps.collectAsStateWithLifecycle(initialValue = emptyList())
         val searchUiSettings: SearchUiSettings = koinInject()
+        val uiSettings: UiSettings = koinInject()
+        val hiddenSections by uiSettings.focusHomeHiddenSections.collectAsStateWithLifecycle(initialValue = emptySet())
         val focusRecoveryEnabled by searchUiSettings.focusRecoveryEnabled.collectAsStateWithLifecycle(initialValue = true)
         val focusLastResumeContext by searchUiSettings.focusLastResumeContext.collectAsStateWithLifecycle(initialValue = null)
         val focusRecoveryResumeTimeoutMinutes by searchUiSettings.focusRecoveryResumeTimeoutMinutes.collectAsStateWithLifecycle(
@@ -333,83 +334,89 @@ internal object FocusHomeComponent : ScaffoldComponent() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             val todayStr = today.toString()
-            DailyIntentionCard(
-                intention = if (dailyIntentionDate == todayStr) dailyIntention else "",
-                onSaveIntention = { intention ->
-                    viewModel.setDailyIntention(intention, todayStr)
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (FocusHomeSection.Intention !in hiddenSections) {
+                DailyIntentionCard(
+                    intention = if (dailyIntentionDate == todayStr) dailyIntention else "",
+                    onSaveIntention = { intention ->
+                        viewModel.setDailyIntention(intention, todayStr)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
-            ClockWidget(
-                modifier = Modifier.fillMaxWidth(),
-                fillScreenHeight = false,
-            )
+            if (FocusHomeSection.Clock !in hiddenSections) {
+                ClockWidget(
+                    modifier = Modifier.fillMaxWidth(),
+                    fillScreenHeight = false,
+                )
+            }
 
-            FocusDailyScheduleCard(
-                state = dailyScheduleState,
-                hasBlockPlan = currentBlockPlan != null,
-                onOpenBlockSetup = {
-                    if (blockPlanTarget != null) {
-                        showBlockSetupSheet = true
-                    }
-                },
-                onOpenConfiguration = {
-                    context.startActivity(
-                        Intent(context, SettingsActivity::class.java).apply {
-                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                    )
-                },
-            )
-            FocusQuickStartDayCard(
-                show = shouldShowQuickStart && dailyScheduleState.snapshot.currentBlock == null,
-                onOpenFocusApps = {
-                    context.startActivity(
-                        Intent(context, SettingsActivity::class.java).apply {
-                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_APPS)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                    )
-                },
-                onOpenSchedule = {
-                    context.startActivity(
-                        Intent(context, SettingsActivity::class.java).apply {
-                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                    )
-                },
-                onOpenHabits = {
-                    context.startActivity(
-                        Intent(context, SettingsActivity::class.java).apply {
-                            putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                    )
-                },
-            )
-            FocusGuidanceCard(
-                state = guidanceState,
-                hasBlockPlan = currentBlockPlan != null,
-                onRecoverAccepted = { viewModel.acceptResumeContext() },
-                onRecoverDismissed = { viewModel.dismissResumeContext() },
-                onOpenBlockSetup = {
-                    if (blockPlanTarget != null) {
-                        showBlockSetupSheet = true
-                    }
-                },
-            )
-            FocusTransitionWarningCard(state = transitionWarningState)
+            if (FocusHomeSection.Schedule !in hiddenSections) {
+                FocusDailyScheduleCard(
+                    state = dailyScheduleState,
+                    hasBlockPlan = currentBlockPlan != null,
+                    onOpenBlockSetup = {
+                        if (blockPlanTarget != null) showBlockSetupSheet = true
+                    },
+                    onOpenConfiguration = {
+                        context.startActivity(
+                            Intent(context, SettingsActivity::class.java).apply {
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        )
+                    },
+                )
+            }
+            if (FocusHomeSection.Guidance !in hiddenSections) {
+                FocusQuickStartDayCard(
+                    show = shouldShowQuickStart && dailyScheduleState.snapshot.currentBlock == null,
+                    onOpenFocusApps = {
+                        context.startActivity(
+                            Intent(context, SettingsActivity::class.java).apply {
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_APPS)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        )
+                    },
+                    onOpenSchedule = {
+                        context.startActivity(
+                            Intent(context, SettingsActivity::class.java).apply {
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        )
+                    },
+                    onOpenHabits = {
+                        context.startActivity(
+                            Intent(context, SettingsActivity::class.java).apply {
+                                putExtra(SettingsActivity.EXTRA_ROUTE, SettingsActivity.ROUTE_FOCUS_SETTINGS)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        )
+                    },
+                )
+                FocusGuidanceCard(
+                    state = guidanceState,
+                    hasBlockPlan = currentBlockPlan != null,
+                    onRecoverAccepted = { viewModel.acceptResumeContext() },
+                    onRecoverDismissed = { viewModel.dismissResumeContext() },
+                    onOpenBlockSetup = {
+                        if (blockPlanTarget != null) showBlockSetupSheet = true
+                    },
+                )
+                FocusTransitionWarningCard(state = transitionWarningState)
+            }
 
             if (dailyScheduleState.snapshot.currentBlock != null) {
-                FocusScheduleDockCard(
-                    currentBlock = dailyScheduleState.snapshot.currentBlock,
-                    dockApps = activeDockApps,
-                )
+                if (FocusHomeSection.Apps !in hiddenSections) {
+                    FocusScheduleDockCard(
+                        currentBlock = dailyScheduleState.snapshot.currentBlock,
+                        dockApps = activeDockApps,
+                    )
+                }
             } else {
-                if (habitState.enabled || habitState.habits.isNotEmpty()) {
+                if (FocusHomeSection.Habits !in hiddenSections && (habitState.enabled || habitState.habits.isNotEmpty())) {
                     FocusHabitCard(
                         state = habitState,
                         onHabitCheckedChanged = { habitId, completed ->
@@ -418,21 +425,24 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                     )
                 }
 
-                FocusInsightsCard(
-                    state = insightsState,
-                    onOpenInsights = {
-                        context.startActivity(Intent(context, SettingsActivity::class.java).apply {
-                            putExtra(SettingsActivity.EXTRA_ROUTE, FocusInsightsRoute::class.java.name)
-                        })
-                    }
-                )
+                if (FocusHomeSection.Insights !in hiddenSections) {
+                    FocusInsightsCard(
+                        state = insightsState,
+                        onOpenInsights = {
+                            context.startActivity(Intent(context, SettingsActivity::class.java).apply {
+                                putExtra(SettingsActivity.EXTRA_ROUTE, FocusInsightsRoute::class.java.name)
+                            })
+                        }
+                    )
+                }
 
-                FocusEssentialAppsCard(apps = essentialApps)
-
-                FocusWebAppsCard(apps = webApps)
+                if (FocusHomeSection.Apps !in hiddenSections) {
+                    FocusEssentialAppsCard(apps = essentialApps)
+                    FocusWebAppsCard(apps = webApps)
+                }
             }
 
-            nextAlarm?.let {
+            nextAlarm?.takeIf { FocusHomeSection.Schedule !in hiddenSections }?.let {
                 Text(
                     text = stringResource(R.string.focus_home_next_alarm, it),
                     style = MaterialTheme.typography.labelLarge,
@@ -441,7 +451,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                 )
             }
 
-            FocusSection(
+            if (FocusHomeSection.Sessions !in hiddenSections) FocusSection(
                 title = stringResource(R.string.focus_home_session_title),
                 supportingText = if (focusSessionEndsAt > System.currentTimeMillis()) {
                     stringResource(R.string.focus_home_session_active, minutesRemaining)
@@ -500,7 +510,7 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                 }
             }
 
-            FocusSection(
+            if (FocusHomeSection.Planning !in hiddenSections) FocusSection(
                 title = stringResource(R.string.focus_home_planning_title),
                 supportingText = stringResource(R.string.focus_home_planning_subtitle)
             ) {
@@ -530,9 +540,11 @@ internal object FocusHomeComponent : ScaffoldComponent() {
                     }
                 }
 
-            QuickCaptureCard(modifier = Modifier.fillMaxWidth())
+            if (FocusHomeSection.BrainDump !in hiddenSections) {
+                QuickCaptureCard(modifier = Modifier.fillMaxWidth())
+            }
 
-            FocusSection(
+            if (FocusHomeSection.Agenda !in hiddenSections) FocusSection(
                 title = stringResource(R.string.focus_home_agenda_title),
             ) {
                 if (nextEvents.isEmpty()) {
@@ -599,7 +611,7 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
     private val permissionsManager: PermissionsManager by inject()
     private val searchUiSettings: SearchUiSettings by inject()
     private val context: Context by inject()
-    private val focusLaunchCoordinator: FocusLaunchCoordinator = get { parametersOf(FocusGateLauncherImpl()) }
+    private val focusLaunchCoordinator: FocusLaunchCoordinator by inject()
     private val historyRepository: FocusHistoryRepository by inject()
     private val sessionRepository: FocusSessionRepository by inject()
     private val focusPolicyService: FocusPolicyService by inject()
@@ -649,11 +661,10 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0L)
 
     val defaultSessionMinutes = searchUiSettings.focusDefaultSessionMinutes
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 15)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 10)
 
-    val minutesRemaining = searchUiSettings.focusSessionEndsAt
-        .map { endsAt ->
-            ((endsAt - System.currentTimeMillis()).coerceAtLeast(0L) / 60_000L).toInt()
+    val minutesRemaining = combine(searchUiSettings.focusSessionEndsAt, currentTime) { endsAt, nowMillis ->
+            ((endsAt - nowMillis).coerceAtLeast(0L) / 60_000L).toInt()
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
 
@@ -897,6 +908,12 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
             val resumeContext = searchUiSettings.focusLastResumeContext.first() ?: return@launch
             val appKey = resumeContext.appKey ?: return@launch
             val app = appRepository.findMany().first().firstOrNull { it.key == appKey } ?: return@launch
+            val decision = focusPolicyService.evaluate(app)
+            if (decision.requiresGate) {
+                focusLaunchCoordinator.launch(app, context)
+                return@launch
+            }
+            if (!focusLaunchCoordinator.launchDirect(app, context)) return@launch
             historyRepository.logEvent(
                 FocusLogEvent(
                     appKey = appKey,
@@ -913,10 +930,7 @@ internal class FocusHomeVM : ViewModel(), KoinComponent {
                     effectiveDelaySeconds = 0,
                 )
             )
-            val launched = focusLaunchCoordinator.launchDirect(app, context)
-            if (launched) {
-                searchUiSettings.setFocusLastResumeContext(null)
-            }
+            searchUiSettings.setFocusLastResumeContext(null)
         }
     }
 

@@ -36,7 +36,7 @@ interface CustomAttributesRepository: Backupable {
 
     fun getFocusTemporaryUnlock(searchable: SavableSearchable): Flow<FocusTemporaryUnlock>
     fun getFocusTemporaryUnlocks(searchables: List<SavableSearchable>): Flow<Map<String, FocusTemporaryUnlock>>
-    fun setFocusTemporaryUnlock(searchable: SavableSearchable, profile: FocusTemporaryUnlock)
+    suspend fun setFocusTemporaryUnlock(searchable: SavableSearchable, profile: FocusTemporaryUnlock)
 
     fun getAllTags(startsWith: String? = null): Flow<List<String>>
     fun getItemsForTag(tag: String): Flow<List<SavableSearchable>>
@@ -166,9 +166,9 @@ internal class CustomAttributesRepositoryImpl(
         }
     }
 
-    override fun setFocusTemporaryUnlock(searchable: SavableSearchable, profile: FocusTemporaryUnlock) {
+    override suspend fun setFocusTemporaryUnlock(searchable: SavableSearchable, profile: FocusTemporaryUnlock) {
         val dao = appDatabase.customAttrsDao()
-        scope.launch {
+        withContext(Dispatchers.IO) {
             searchableRepository.insert(searchable)
             appDatabase.runInTransaction {
                 dao.clearCustomAttribute(searchable.key, CustomAttributeType.Focus.value)

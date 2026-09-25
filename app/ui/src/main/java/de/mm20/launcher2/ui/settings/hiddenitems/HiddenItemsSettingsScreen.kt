@@ -54,8 +54,7 @@ fun HiddenItemsSettingsScreen() {
 
     val density = LocalDensity.current
 
-    val apps by viewModel.allApps.collectAsState()
-    val other by viewModel.hiddenItems.collectAsState()
+    val hiddenItems by viewModel.hiddenItems.collectAsState()
 
     val showButton by viewModel.hiddenItemsButton.collectAsState()
 
@@ -80,72 +79,16 @@ fun HiddenItemsSettingsScreen() {
                     .height(8.dp)
             )
         }
-        itemsIndexed(apps, key = { i, it -> it.key }) { i, searchable ->
-            val icon by remember(searchable.key) {
-                viewModel.getIcon(searchable, with(density) { 32.dp.roundToPx() })
-            }.collectAsState(null)
-
-            val visibility by remember(searchable.key) {
-                viewModel.getVisibility(searchable)
-            }.collectAsState(null)
-
-            var showDropdown by remember { mutableStateOf(false) }
-
-            val xs = MaterialTheme.shapes.extraSmall
-            val md = MaterialTheme.shapes.medium
-
-            Box(
-                modifier = Modifier
-                    .clip(
-                        xs.copy(
-                            topStart = if (i == 0) md.topStart else xs.topStart,
-                            topEnd = if (i == 0) md.topEnd else xs.topEnd,
-                            bottomStart = if (i == apps.lastIndex) md.bottomStart else xs.bottomStart,
-                            bottomEnd = if (i == apps.lastIndex) md.bottomEnd else xs.bottomEnd
-                        )
-                    )
-                    .background(MaterialTheme.colorScheme.surface)
-            ) {
-                HiddenItem(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            if (searchable is Application || searchable is CalendarEvent) {
-                                showDropdown = true
-                            } else {
-                                if (visibility == null) return@clickable
-                                viewModel.setVisibility(
-                                    searchable,
-                                    if (visibility == VisibilityLevel.Default) VisibilityLevel.Hidden else VisibilityLevel.Default
-                                )
-                            }
-                        },
-                    icon = icon,
-                    label = searchable.label,
-                    visibility = visibility,
-                )
-                VisibilityDropdown(
-                    expanded = showDropdown,
-                    onDismissRequest = { showDropdown = false },
-                    item = searchable,
-                    value = visibility,
-                    onValueChanged = {
-                        viewModel.setVisibility(searchable, it)
-                        showDropdown = false
-                    }
+        if (hiddenItems.isEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.preference_hidden_items_empty),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(20.dp),
                 )
             }
         }
-
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-            )
-        }
-
-        itemsIndexed(other, key = { i, it -> it.key }) { i, searchable ->
+        itemsIndexed(hiddenItems, key = { _, it -> it.key }) { i, searchable ->
             val icon by remember(searchable.key) {
                 viewModel.getIcon(searchable, with(density) { 32.dp.roundToPx() })
             }.collectAsState(null)
@@ -165,8 +108,8 @@ fun HiddenItemsSettingsScreen() {
                         xs.copy(
                             topStart = if (i == 0) md.topStart else xs.topStart,
                             topEnd = if (i == 0) md.topEnd else xs.topEnd,
-                            bottomStart = if (i == other.lastIndex) md.bottomStart else xs.bottomStart,
-                            bottomEnd = if (i == other.lastIndex) md.bottomEnd else xs.bottomEnd
+                            bottomStart = if (i == hiddenItems.lastIndex) md.bottomStart else xs.bottomStart,
+                            bottomEnd = if (i == hiddenItems.lastIndex) md.bottomEnd else xs.bottomEnd
                         )
                     )
                     .background(MaterialTheme.colorScheme.surface)

@@ -17,6 +17,8 @@ export GRADLE_USER_HOME="$PWD/.gradle-home"
 
 - Test apps classified before running: at least one Essential and one Distracting app in Focus System settings (`focusEssentialAppKeys`, `focusDistractingAppKeys`).
 - For time reminders, grant Usage Access (`PACKAGE_USAGE_STATS`) and notifications (`POST_NOTIFICATIONS`).
+- For strict interception, grant Usage Access and enable the FocusLauncher Accessibility service after accepting the in-app disclosure.
+- For Steps on Android 10+, grant Physical activity (`ACTIVITY_RECOGNITION`); keep a device without a step sensor or a denied-permission pass available for fallback validation.
 
 ## Checklist
 
@@ -44,10 +46,26 @@ Use a fresh build for each pass. Tick every item or record the failure.
 
 ### Temporary unlock
 
-- [ ] Choosing temporary access from the gate opens the Distracting app.
+- [ ] Steps counts live to the configured target, pauses after five seconds without a step, and keeps completed progress.
+- [ ] Denying Physical activity or using a device without a step sensor offers a Delay fallback of at least ten seconds.
+- [ ] Delay uses the effective adaptive/escalating delay; Tap requires confirmation before a separate `Start break` action.
+- [ ] Cancelling any challenge does not create a temporary unlock.
+- [ ] `Start break` opens the Distracting app for the selected 5, 10, 15, or 30 minutes, within the configured cap.
 - [ ] A relaunch within the unlock window opens directly, without the gate.
 - [ ] After the unlock window expires, the gate returns for that app.
-- [ ] The expiry notification (`AppSessionExpiryWorker`) appears for the gated "time" path.
+- [ ] No expiry notification appears after leaving the app or while it remains foreground.
+
+### Strict system interception
+
+- [ ] The disclosure accurately says that only foreground app identity/state is processed locally and that screen content is not read or sent.
+- [ ] Opening a blocked Distracting app from a notification, deep link, Recents, and another app performs Home and shows the same gate.
+- [ ] After challenge completion, `Start break` opens the app's main launcher activity; the original deep-link destination is not restored.
+- [ ] During an active temporary unlock, those system entry paths are not interrupted.
+- [ ] When a temporary unlock expires while the app remains foreground, FocusLauncher returns to Home and shows the gate again.
+- [ ] Force-stopping/restarting the process and reconnecting Accessibility preserves expiry enforcement through the worker recovery path.
+- [ ] Revoking Accessibility or Usage Access fails open for external launches; launcher-originated launches remain gated.
+- [ ] FocusLauncher, Settings, System UI, permission controller, default dialer, alarms/emergency surfaces, Essential apps, and Normal apps are never intercepted.
+- [ ] A package also installed in a work/private profile is not system-intercepted, while its personal launcher entry still follows launcher policy.
 
 ### Active focus session lock
 
@@ -66,7 +84,9 @@ Use a fresh build for each pass. Tick every item or record the failure.
 ### Time reminders
 
 - [ ] Enabling reminders starts `TimeBlindnessService`; settings request Usage Access and notifications.
-- [ ] Keeping a Distracting app foregrounded triggers a nudge notification.
+- [ ] Keeping a Distracting app foregrounded triggers a nudge notification at the configured boundary; tapping it opens the check-in overlay.
+- [ ] Switching to a Normal or Essential app before the boundary prevents the stale reminder.
+- [ ] Revoking Usage Access stops the service instead of continuing empty foreground queries.
 - [ ] The nudge is a soft reminder; it does not force-close the app.
 - [ ] Reminders restart after `BOOT_COMPLETED`.
 

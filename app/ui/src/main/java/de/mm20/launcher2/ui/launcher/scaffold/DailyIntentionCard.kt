@@ -100,7 +100,10 @@ fun DailyIntentionCard(
                         )
                     }
                     IconButton(onClick = { isEditing = true }) {
-                        Icon(painterResource(R.drawable.edit_24px), contentDescription = "Edit")
+                        Icon(
+                            painterResource(R.drawable.edit_24px),
+                            contentDescription = stringResource(R.string.focus_home_daily_intention_edit),
+                        )
                     }
                 }
             }

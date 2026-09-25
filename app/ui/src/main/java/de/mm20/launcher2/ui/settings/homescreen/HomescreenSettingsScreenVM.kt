@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import de.mm20.launcher2.ktx.isAtLeastApiLevel
 import de.mm20.launcher2.preferences.GestureAction
+import de.mm20.launcher2.preferences.FocusHomeSection
 import de.mm20.launcher2.preferences.ScreenOrientation
 import de.mm20.launcher2.preferences.SearchBarColors
 import de.mm20.launcher2.preferences.SearchBarStyle
@@ -36,6 +37,13 @@ class HomescreenSettingsScreenVM(
 ) : ViewModel() {
 
     var showClockWidgetSheet by mutableStateOf(false)
+
+    val hiddenFocusHomeSections = uiSettings.focusHomeHiddenSections
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptySet())
+
+    fun setFocusHomeSectionVisible(section: FocusHomeSection, visible: Boolean) {
+        uiSettings.setFocusHomeSectionVisible(section, visible)
+    }
 
 
     val dimWallpaper = uiSettings.dimWallpaper
