@@ -113,10 +113,24 @@ class BackupManager(
     }
 
     private suspend fun extractArchive(inputStream: InputStream, outDir: File) = withContext(Dispatchers.IO) {
+        val canonicalOutDir = outDir.canonicalPath
         val zipStream = ZipInputStream(inputStream)
         var entry = zipStream.nextEntry
         while(entry != null) {
             val file = File(outDir, entry.name)
+
+            // Fix Zip Slip Vulnerability
+            val canonicalFilePath = file.canonicalPath
+            val isCanonical = if (canonicalOutDir == "/") {
+                canonicalFilePath.startsWith(canonicalOutDir)
+            } else {
+                canonicalFilePath.startsWith(canonicalOutDir + File.separator)
+            }
+
+            if (!isCanonical) {
+                throw SecurityException("Path traversal attempt: ${entry.name}")
+            }
+
             file.outputStream().use {
                 zipStream.copyTo(it)
             }
