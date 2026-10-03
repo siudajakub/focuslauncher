@@ -117,6 +117,11 @@ class BackupManager(
         var entry = zipStream.nextEntry
         while(entry != null) {
             val file = File(outDir, entry.name)
+            val canonicalDirPath = outDir.canonicalPath + File.separator
+            val canonicalFilePath = file.canonicalPath
+            if (!canonicalFilePath.startsWith(canonicalDirPath)) {
+                throw SecurityException("Zip Slip vulnerability detected: " + entry.name)
+            }
             file.outputStream().use {
                 zipStream.copyTo(it)
             }
