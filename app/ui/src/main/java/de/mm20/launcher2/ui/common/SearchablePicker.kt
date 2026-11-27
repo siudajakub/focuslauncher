@@ -90,7 +90,7 @@ fun SearchablePicker(
                                         onClick = {
                                             viewModel.onSearchQueryChanged("")
                                         }) {
-                                        Icon(painterResource(R.drawable.close_24px), null)
+                                        Icon(painterResource(R.drawable.close_24px), stringResource(R.string.close))
                                     }
                                 }
                             },

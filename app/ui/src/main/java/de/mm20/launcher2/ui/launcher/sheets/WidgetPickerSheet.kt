@@ -320,7 +320,7 @@ fun WidgetPickerSheet(
                             trailingIcon = {
                                 if (query.isNotEmpty()) {
                                     IconButton(onClick = { viewModel.search("") }) {
-                                        Icon(painterResource(R.drawable.close_24px), null)
+                                        Icon(painterResource(R.drawable.close_24px), stringResource(R.string.close))
                                     }
                                 }
                             },

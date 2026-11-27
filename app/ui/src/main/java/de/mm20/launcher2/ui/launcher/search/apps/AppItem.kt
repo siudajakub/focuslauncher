@@ -241,7 +241,7 @@ fun AppItem(
                                                         viewModel.clearNotification(not)
                                                     }
                                                 ) {
-                                                    Icon(painterResource(R.drawable.close_24px), null)
+                                                    Icon(painterResource(R.drawable.close_24px), stringResource(R.string.close))
                                                 }
                                             }
                                         }
