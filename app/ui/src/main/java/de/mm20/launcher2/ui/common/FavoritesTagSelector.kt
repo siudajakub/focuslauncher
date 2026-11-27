@@ -126,7 +126,7 @@ fun FavoritesTagSelector(
                             modifier = Modifier
                                 .rotate(rot),
                             onClick = { onExpand(true) }) {
-                            Icon(painterResource(R.drawable.arrow_drop_down_24px), null)
+                            Icon(painterResource(R.drawable.arrow_drop_down_24px), stringResource(R.string.action_expand))
                         }
                     }
 
@@ -138,7 +138,7 @@ fun FavoritesTagSelector(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.edit_24px),
-                            contentDescription = null
+                            contentDescription = stringResource(R.string.menu_item_edit_favs)
                         )
                     }
                 }
@@ -211,7 +211,7 @@ fun FavoritesTagSelector(
                             .rotate(rot),
                         onClick = { onExpand(false) }
                     ) {
-                        Icon(painterResource(R.drawable.arrow_drop_up_24px), null)
+                        Icon(painterResource(R.drawable.arrow_drop_up_24px), stringResource(R.string.action_collapse))
                     }
 
                     if (editButton) {
@@ -220,7 +220,7 @@ fun FavoritesTagSelector(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.edit_24px),
-                                contentDescription = null
+                                contentDescription = stringResource(R.string.menu_item_edit_favs)
                             )
                         }
                     }
